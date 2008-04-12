@@ -9,6 +9,9 @@ import sys
 import re
 import curses
 import select
+import datetime
+import subprocess
+import time
 
 AUTHFILE = '.mlbtv'
 DEFAULT_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
@@ -114,7 +117,7 @@ def mainloop(myscr,cfg):
                 dif = datetime.timedelta(1)
                 t -= dif
             mysched = MLBSchedule((t.year, t.month, t.day))
-            available = getListings(mysched,cfg['speed'],cfg['blackout'])
+            available = mysched.getListings(cfg['speed'],cfg['blackout'])
             current_cursor = 0
 
         # right (foward)
@@ -126,7 +129,7 @@ def mainloop(myscr,cfg):
                 dif = datetime.timedelta(1)
                 t += dif
             mysched = MLBSchedule((t.year, t.month, t.day))
-            available = getListings(mysched,cfg['speed'],cfg['blackout'])
+            available = mysched.getListings(cfg['speed'],cfg['blackout'])
             current_cursor = 0
 
         if c in ('Enter', 10):
@@ -140,10 +143,10 @@ def mainloop(myscr,cfg):
                 g = GameStream(gameid, cfg['user'], cfg['pass'])
                 try:
                     u = g.url()
-                    if '%s' in myplayer:
-                        cmd_str = myplayer.replace('%s', '"' + u + '"')
+                    if '%s' in cfg['video_player']:
+                        cmd_str = cfg['video_player'].replace('%s', '"' + u + '"')
                     else:
-                        cmd_str = myplayer + ' "' + u + '" '
+                        cmd_str = cfg['video_player'] + ' "' + u + '" '
                     play_process=subprocess.Popen(cmd_str,shell=True)
                     play_process.wait()
                     # And try this now: logging out. Hopefully, this will
