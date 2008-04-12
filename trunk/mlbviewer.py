@@ -3,6 +3,7 @@
 from MLBviewer import MLBSchedule
 from MLBviewer import GameStream
 from MLBviewer import LircConnection
+from MLBviewer import MLBConfig
 import os
 import sys
 import re
@@ -176,33 +177,12 @@ def mainloop(myscr,cfg):
 
 
 if __name__ == "__main__":
-    conf = os.path.join(os.environ['HOME'], AUTHFILE)
-    fp = open(conf)
+    myconf = os.path.join(os.environ['HOME'], AUTHFILE)
+    mydefaults = {'speed': DEFAULT_SPEED,
+                  'video_player': DEFAULT_PLAYER,
+                  'blackout': []}
 
+    mycfg = MLBConfig(mydefaults)
+    mycfg.loads(myconf)
     
-    # Start with the default settings in place
-    datadct = {'speed': DEFAULT_SPEED,
-               'video_player': DEFAULT_PLAYER,
-               'blackout': []}
-
-    for line in fp:
-        # Skip all the comments
-        if line.startswith('#'):
-            pass
-        # Skip all the blank lines
-        elif re.match(r'^\s*$',line):
-            pass
-        else:
-            # Break at the first equals sign
-            key, val = line.split('=')[0], '='.join(line.split('=')[1:])
-            key = key.strip()
-            val = val.strip()
-            # These are the ones that take multiple values
-            if key in ('blackout'):
-                datadct[key].append(val)
-            # And these are the ones that only take one value, and so,
-            # replace the defaults.
-            else:
-                datadct[key] = val
-    
-    curses.wrapper(mainloop,datadct)
+    curses.wrapper(mainloop, mycfg.data)
