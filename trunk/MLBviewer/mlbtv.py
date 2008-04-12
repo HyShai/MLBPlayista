@@ -224,4 +224,17 @@ class GameStream:
         game_url = re.search(pattern, self.__getInfo()).groups()[1]
         return game_url
 
+    def urlDebug(self):
+        # url_pattern
+        pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
+        game_info = self.__getInfo()
+        try:
+            game_url = re.search(pattern, game_info).groups()[1]
+        except:
+            self.logout()
+            raise Exception, game_info
+        return game_url
+
+
+
 
