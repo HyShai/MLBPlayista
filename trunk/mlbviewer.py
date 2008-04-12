@@ -53,6 +53,7 @@ def mainloop(myscr,cfg):
         "W" : "Status: Not Yet Available",
         "F" : "Status: Final",
         "P" : "Status: Not Yet Available",
+        "IP": "Status: Available Soon",
         "PO": "Status: Postponed",
         "GO": "Status: Game Over - stream not yet avaialble",
         "LB": "Status: Local Blackout"}
