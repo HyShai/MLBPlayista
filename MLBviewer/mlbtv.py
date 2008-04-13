@@ -129,7 +129,7 @@ class MLBSchedule:
         # steps above. Fills it up with data.
         self.data = self.__jsonToPython()
 
-    def trimTvList(self):
+    def trimList(self):
         # This offers only the useful information for watching tv from
         # the getData step.
         if not self.data:
@@ -140,7 +140,14 @@ class MLBSchedule:
                 # All contingent on it having a tv broadcast.
                 if elem['mlbtv']:
                     dct = {}
-                    dct['event_time'] = elem['event_time']
+                    time_string = elem['event_time'].strip()
+                    ampm = time_string[-2:].lower()
+                    hrs, mins = time_string[:-2].split(':')
+                    hrs = int(hrs)
+                    mins = int(mins)
+                    if ampm == 'pm':
+                         hrs += 12
+                    dct['event_time'] = datetime.time(hrs,mins)
                     dct['status'] = elem['status']
                     dct['home'] = [team['code'] for team in elem['teams'] if
                                    team['isHome']][0]
@@ -153,17 +160,25 @@ class MLBSchedule:
                         ' at ' +\
                         ' '.join(TEAMCODES[dct['home']][1:]).strip()
                     dct['text'] = text
+                    dct['video'] = {}
                     for url in elem['mlbtv']['urls']:
-                        dct[url['speed']] = url['url']['id']
+                        dct['video'][url['speed']] = url['url']['id']
+                    dct['audio'] = {}
+                    for audio_feed in ('home_audio', 'away_audio','alt_home_audio', 'alt_away_audio'):
+                        if elem[audio_feed]:
+                            dct['audio'][audio_feed] = elem[audio_feed]['urls'][0]['url']['id']
+                        else:
+                            dct['audio'][audio_feed] = None
                     out.append((elem['gameid'], dct))
         return out
 
     def getListings(self, myspeed, blackout):
         self.getData()
-        listings = self.trimTvList()
+        listings = self.trimList()
 
-        return  [(elem[1]['text'],elem[1]['event_time'],\
-                      elem[1][str(myspeed)],\
+        return  [(elem[1]['text'],\
+                      elem[1]['event_time'].strftime('%l:%M %p'),
+                      elem[1]['video'][str(myspeed)],\
                       (elem[1]['status'], "LB")[
                                   (elem[1]['home'] in blackout or
                                    elem[1]['away'] in blackout)\
