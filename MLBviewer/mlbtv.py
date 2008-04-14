@@ -26,6 +26,13 @@ import curses
 import subprocess
 import select
 
+# Set this to True if you want to see all the html pages in the logfile
+#DEBUG = True
+#DEBUG = None
+
+AUTHDIR = '.mlbtv'
+COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
+LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
 
 TEAMCODES = {
     'ana': ('LAA', 'Los Angeles', 'Angels', 'of Anaheim'),
@@ -87,9 +94,11 @@ class MLBSchedule:
             + "/day_" + padstr(self.day) + "/gamesbydate.jsp"
         self.data = []
 
-
     def __getSchedule(self):
-        fp = urllib.urlopen(self.url)
+        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
+        data = None
+        req = urllib2.Request(self.url,data,txheaders)
+        fp = urllib2.urlopen(req)
         out = fp.read()
         fp.close()
         return out
@@ -188,67 +197,161 @@ class MLBSchedule:
 
 
 class GameStream:
-    def __init__(self,game_id, email, passwd, session_cookies=None):
+
+    def __init__(self,game_id, email, passwd, debug, session_cookies=None):
         self.id = game_id
         self.email = email
         self.passwd = passwd
+        self.debug = debug
         self.session_cookies = session_cookies
-    
-    def __getInfo(self):
-        # Make the workflow url
-        url = "http://www.mlb.com/enterworkflow.do?" +\
-            "flowId=media.media&keepWfParams=true&mediaId=" +\
-            str(self.id) + "&catCode=mlb_lg&av=v"
-        # Some preliminary setup...
-        if not self.session_cookies:
-            self.session_cookies = cookielib.CookieJar()
+        self.error_str = "Uncaught error"
+        self.log = open(LOGFILE,"w")
+        self.log.write(str(datetime.datetime.now()) + '\n')
+
+    def login(self):
+        # BEGIN login()
+        # meant to be called by workflow()
+        self.session_cookies = cookielib.LWPCookieJar()
+        if self.session_cookies != None:
+           if os.path.isfile(COOKIEFILE):
+              self.session_cookies.load(COOKIEFILE)
+        else:
+           self.error_str = "Couldn't open cookie jar"
+           raise Exception,self.error_str
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.session_cookies))
         urllib2.install_opener(opener)
+
+        # First visit the login page and get the session cookie
+        login_url = 'https://secure.mlb.com/enterworkflow.do?flowId=registration.wizard&c_id=mlb'
+        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
+        data = None
+        req = urllib2.Request(login_url,data,txheaders)
+        handle = urllib2.urlopen(req)
+        self.log.write('Did we receive a cookie from the wizard?\n')
+        for index, cookie in enumerate(self.session_cookies):
+           print >> self.log, index, ' : ' , cookie
+        self.session_cookies.save(COOKIEFILE)
+
+        # now authenticate
+        auth_url = 'https://secure.mlb.com/authenticate.do'
+        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
+                     'Referer' : 'https://secure.mlb.com/enterworkflow.do?flowId=registration.wizard&c_id=mlb'}
+        auth_values = {'uri' : '/account/login_register.jsp',
+                       'registrationAction' : 'identify',
+                       'emailAddress' : self.email,
+                       'password' : self.passwd}
+        auth_data = urllib.urlencode(auth_values)
+        req = urllib2.Request(auth_url,auth_data,txheaders)
+        handle = urllib2.urlopen(req)
+        auth_page = handle.read()
+        self.log.write('Did we receive a cookie from authenticate?\n')
+        for index, cookie in enumerate(self.session_cookies):
+           print >> self.log, index, ' : ' , cookie
+        self.session_cookies.save(COOKIEFILE)
+
+        pattern = re.compile(r'Welcome to your personal mlb.com account.')
+        if not re.search(pattern,auth_page):
+           self.error_str = "Login was unsuccessful."
+           self.log.write(auth_page)
+           raise Exception, self.error_str
+        else:
+           self.log.write('Logged in successfully!\n')
+        if self.debug:
+           self.log.write("DEBUG>>> writing login page")
+           self.log.write(auth_page)
+        # END login()
+
+    def workflow(self):
+        # This is the workhorse routine.
+        # 1. Login
+        # 2. Get the url from the workflow page
+        # 3. Logout
+        # 4. Return the raw workflow response page
+        # The hope is that this sequence will always be the same and leave
+        # it to url() to determine if an error occurs.  This way, hopefully, 
+        # error or no, we'll always log out.
+        if self.session_cookies is None:
+            self.login()
+        wf_url = "http://www.mlb.com/enterworkflow.do?" +\
+            "flowId=media.media&keepWfParams=true&mediaId=" +\
+            str(self.id) + "&catCode=mlb_lg&a=v"
         # Open the workflow url...
-        fp = urllib2.urlopen(url)
+        # Referrer should look something like this but we'll need to pull
+        # more info from listings for this:
+        """ http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=200804102514514&w_id=643428&w=reflector%3A19440&pid=mlb_lg&gid=2008/04/12/tormlb-texmlb-1&fid=mlb_lg400&cid=mlb&v=3 """
+        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
+        wf_data = None
+        req = urllib2.Request(wf_url,wf_data,txheaders)
+        handle = urllib2.urlopen(req)
+        url_data = handle.read()
+        self.log.write('Did we receive a cookie from workflow?\n')
+        for index, cookie in enumerate(self.session_cookies):
+           print >> self.log, index, ' : ' , cookie
+        self.session_cookies.save(COOKIEFILE)
+        #handle.close()
+        if self.debug:
+           self.log.write("DEBUG>>> writing workflow page")
+           self.log.write(url_data)
+        self.logout()
+        return url_data
 
-        if 'mp_login' in fp.url:
-            forms = ClientForm.ParseResponse(fp, backwards_compat=False)
-            fp.close()
-    
-            # Now set up the login info
-            form = forms[0]
-            form["emailAddress"]  = self.email
-            form["password"] = self.passwd
-            # And submit
-            fp = urllib2.urlopen(form.click())
-        
-        data = fp.read()
-        fp.close()
-        return data
-
-    def logout(self):
+    def logout(self): 
         """Logs out from the mlb.com session. Meant to prevent
         multiple login errors."""
-        if not self.session_cookies:
-            self.session_cookies = cookielib.CookieJar()
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.session_cookies))
-        urllib2.install_opener(opener)
         LOGOUT_URL="https://secure.mlb.com/enterworkflow.do?flowId=registration.logout&c_id=mlb"
-        urllib2.urlopen(LOGOUT_URL)
-
+        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
+                     'Referer' : 'http://mlb.mlb.com/index.jsp'}
+        data = None
+        req = urllib2.Request(LOGOUT_URL,data,txheaders)
+        handle = urllib2.urlopen(req)
+        logout_info = handle.read()
+        handle.close()
+        pattern = re.compile(r'You are now logged out.')
+        if not re.search(pattern,logout_info):
+           self.error_str = "Logout was unsuccessful. Check " + LOGFILE
+           self.log.write(logout_info)
+           raise Exception, self.error_str
+        else:
+           self.log.write('Logged out successfully!\n')
+        if self.debug:
+           self.log.write("DEBUG>>> writing logout page")
+           self.log.write(logout_info)
+        # clear session cookies since they're no longer valid
+        self.session_cookies.clear_session_cookies()
+        # session is bogus now - force a new login each time
+        self.session_cookies = None
+        # END logout
 
     def url(self):
         # url_pattern
+        game_info = self.workflow()
         pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
-        game_url = re.search(pattern, self.__getInfo()).groups()[1]
+        try:
+           game_url = re.search(pattern, game_info).groups()[1]
+        except:
+           pattern = re.compile(r'(url:.*\")(null(.*))')
+           null_match = re.search(pattern,game_info)
+           pattern = re.compile(r'Customers are not permitted concurrent use of a single subscription.')
+           concur_match = re.search(pattern,game_info)
+           pattern = re.compile(r'you are blacked out')
+           blackout_match = re.search(pattern,game_info)
+           if null_match:
+               self.error_str = "Received a null: url, stream not available?"
+           elif concur_match:
+               self.error_str = "Receiving concurrent use error. :-("
+           elif blackout_match:
+               self.error_str = "You are blacked out from watching this game."
+           else:
+               self.error_str = "Unknown error in GameStream(): Check " +\
+                   LOGFILE + " for details"
+           self.log.write(self.error_str + '\n')
+           if self.debug:
+               self.log.write(game_info)
+           self.log.write('Try the gameid script with gameid = ' + self.id +'\n')
+           raise Exception, self.error_str 
         return game_url
 
-    def urlDebug(self):
-        # url_pattern
-        pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
-        game_info = self.__getInfo()
-        try:
-            game_url = re.search(pattern, game_info).groups()[1]
-        except:
-            self.logout()
-            raise Exception, game_info
-        return game_url
+
 
 
 

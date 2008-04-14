@@ -13,10 +13,23 @@ import datetime
 import subprocess
 import time
 
-AUTHFILE = '.mlbtv'
+# # Set this to True if you want to see all the html pages in the logfile
+# DEBUG = True
+# #DEBUG = None
+
+AUTHDIR = '.mlbtv'
+AUTHFILE = 'config'
 DEFAULT_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
 DEFAULT_SPEED = 400 
 
+KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
+                'Enter'      : 'Play video of highlighted game',
+                'Left/Right' : 'Navigate one day forward or back',
+                'r'          : 'Refresh listings',
+                'q'          : 'Quit mlbviewer',
+                'h'          : 'Display version and keybindings',
+                'a'          : 'Play Gameday audio of highlighted game (Coming Soon)',
+              }
 
 def mainloop(myscr,cfg):
 
@@ -141,25 +154,40 @@ def mainloop(myscr,cfg):
                     irc_conn.connected = False
 
                 gameid = available[current_cursor][2]
-                g = GameStream(gameid, cfg['user'], cfg['pass'])
+                g = GameStream(gameid, cfg['user'], cfg['pass'], cfg['debug'])
                 try:
                     u = g.url()
-                    if '%s' in cfg['video_player']:
-                        cmd_str = cfg['video_player'].replace('%s', '"' + u + '"')
-                    else:
-                        cmd_str = cfg['video_player'] + ' "' + u + '" '
-                    play_process=subprocess.Popen(cmd_str,shell=True)
-                    play_process.wait()
-                    # And try this now: logging out. Hopefully, this will
-                    # prevent the concurrent login error.
-                    g.logout()
                 except:
-                    g.logout()
                     myscr.clear()
-                    ERROR_STRING = "There was an error (I'll be more helpful in the real beta)"
-                    myscr.addstr(0,0,ERROR_STRING)
+                    myscr.addstr(0,0,'Error occurred in GameStream:')
+                    myscr.addstr(2,0,g.error_str)
+                    #myscr.addstr(curses.LINES-1,'Press a key to continue...')
                     myscr.refresh()
                     time.sleep(3)
+                    # I'd rather leave an error on the screen but you'll need
+                    # to write a lirc handler for getch()
+                    #myscr.getch()
+                else:
+                    try:
+                        if '%s' in cfg['video_player']:
+                            cmd_str = cfg['video_player'].replace('%s', 
+                                                                  '"' + u + '"')
+                        else:
+                            cmd_str = cfg['video_player'] + ' "' + u + '" '
+                        myscr.clear()
+                        myscr.addstr(0,0,cmd_str)
+                        # DEBUG code - I just want to see that we got the url
+                        #myscr.addstr(curses.LINES-1,0,'Press a key to continue...')
+                        myscr.refresh()
+                        time.sleep(3)
+                        #myscr.getch()
+                        play_process=subprocess.Popen(cmd_str,shell=True)
+                        play_process.wait()
+                    except:
+                        myscr.clear()
+                        myscr.addstr(0,0,'Error in playprocess')
+                        myscr.refresh()
+                        time.sleep(3)
 
                 # Turn the ir_program back on                
                 if LIRC:
@@ -168,7 +196,6 @@ def mainloop(myscr,cfg):
         	    irc_conn.getconfig()
                     irc_socket=irc_conn.conn
                     inputlst = [sys.stdin, irc_socket]
-
             except IndexError:
                 pass
 
@@ -181,10 +208,11 @@ def mainloop(myscr,cfg):
 
 
 if __name__ == "__main__":
-    myconf = os.path.join(os.environ['HOME'], AUTHFILE)
+    myconf = os.path.join(os.environ['HOME'], AUTHDIR, AUTHFILE)
     mydefaults = {'speed': DEFAULT_SPEED,
                   'video_player': DEFAULT_PLAYER,
-                  'blackout': []}
+                  'blackout': [],
+                  'debug': 0}
 
     mycfg = MLBConfig(mydefaults)
     mycfg.loads(myconf)
