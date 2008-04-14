@@ -30,7 +30,7 @@ import select
 #DEBUG = True
 #DEBUG = None
 
-AUTHDIR = '.mlbtv'
+AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
 LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
 
