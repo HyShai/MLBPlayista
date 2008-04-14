@@ -17,7 +17,7 @@ import time
 # DEBUG = True
 # #DEBUG = None
 
-AUTHDIR = '.mlbtv'
+AUTHDIR = '.mlb'
 AUTHFILE = 'config'
 DEFAULT_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
 DEFAULT_SPEED = 400 
@@ -208,6 +208,7 @@ def mainloop(myscr,cfg):
 
 
 if __name__ == "__main__":
+
     myconf = os.path.join(os.environ['HOME'], AUTHDIR, AUTHFILE)
     mydefaults = {'speed': DEFAULT_SPEED,
                   'video_player': DEFAULT_PLAYER,
