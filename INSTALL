@@ -1,0 +1,5 @@
+For local use:
+     python mlbviewer.py from this directory.
+
+For system install:
+    python setup.py install
