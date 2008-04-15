@@ -55,7 +55,11 @@ def mainloop(myscr,cfg):
         inputlst = [sys.stdin]
 
 
-    curses.use_default_colors()
+    if hasattr(curses, 'use_default_colors'):
+        try:
+            curses.use_default_colors()
+        except _curses.error:
+            pass
 
     myscr = curses.initscr()
 
