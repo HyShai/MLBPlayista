@@ -25,8 +25,20 @@ class MLBConfig:
                 key = key.strip()
                 val = val.strip()
                 # These are the ones that take multiple values
-                if key in ('blackout'):
+                if key in ('blackout', 'audio_follow'):
                     self.data[key].append(val)
+                # These are the booleans:
+                elif key in ('show_player_command', 'debug'):
+                    if val.isdigit():
+                        self.data[key] = bool(int(val))
+                    else:
+                        if val.lower() in ('false', 'no', 'none'):
+                            self.data[key] = False
+                        elif val.lower() in ('true', 'yes'):
+                            self.data[key] = True
+                        # Otherwise stick with the default.
+                        else:
+                            pass
                 # And these are the ones that only take one value, and so,
                 # replace the defaults.
                 else:

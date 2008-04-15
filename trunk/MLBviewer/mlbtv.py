@@ -20,7 +20,7 @@ import re
 import time
 import datetime
 import cookielib
-import ClientForm
+
 import os
 import curses
 import subprocess
@@ -181,13 +181,16 @@ class MLBSchedule:
                     out.append((elem['gameid'], dct))
         return out
 
-    def getListings(self, myspeed, blackout):
+    def getListings(self, myspeed, blackout, audiofollow):
         self.getData()
         listings = self.trimList()
 
         return  [(elem[1]['text'],\
                       elem[1]['event_time'].strftime('%l:%M %p'),
                       elem[1]['video'][str(myspeed)],\
+                      (elem[1]['audio']['home_audio'],
+                       elem[1]['audio']['away_audio'])[elem[1]['away'] \
+                                                           in audiofollow],
                       (elem[1]['status'], "LB")[
                                   (elem[1]['home'] in blackout or
                                    elem[1]['away'] in blackout)\
@@ -197,17 +200,17 @@ class MLBSchedule:
 
 
 class GameStream:
-
-    def __init__(self,game_id, email, passwd, debug, session_cookies=None):
+    def __init__(self,game_id, email, passwd, debug=None, streamtype='video'):
         self.id = game_id
         self.email = email
         self.passwd = passwd
-        self.debug = debug
-        self.session_cookies = session_cookies
+        self.session_cookies = None
+        self.streamtype = streamtype
         self.error_str = "Uncaught error"
         self.log = open(LOGFILE,"w")
         self.log.write(str(datetime.datetime.now()) + '\n')
-
+        self.debug = debug
+    
     def login(self):
         # BEGIN login()
         # meant to be called by workflow()
@@ -226,7 +229,11 @@ class GameStream:
         txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
         data = None
         req = urllib2.Request(login_url,data,txheaders)
-        handle = urllib2.urlopen(req)
+        try:
+            handle = urllib2.urlopen(req)
+        except:
+            self.error_str = 'Error occurred in HTTP request to login page'
+            raise Exception, self.error_str
         self.log.write('Did we receive a cookie from the wizard?\n')
         for index, cookie in enumerate(self.session_cookies):
            print >> self.log, index, ' : ' , cookie
@@ -242,7 +249,11 @@ class GameStream:
                        'password' : self.passwd}
         auth_data = urllib.urlencode(auth_values)
         req = urllib2.Request(auth_url,auth_data,txheaders)
-        handle = urllib2.urlopen(req)
+        try:
+            handle = urllib2.urlopen(req)
+        except:
+            self.error_str = 'Error occurred in HTTP request to auth page'
+            raise Exception, self.error_str
         auth_page = handle.read()
         self.log.write('Did we receive a cookie from authenticate?\n')
         for index, cookie in enumerate(self.session_cookies):
@@ -252,6 +263,11 @@ class GameStream:
         pattern = re.compile(r'Welcome to your personal mlb.com account.')
         if not re.search(pattern,auth_page):
            self.error_str = "Login was unsuccessful."
+          # begin patch for maintenance operations
+           maint_pat = re.compile(r'We are currently performing maintenance operations')
+           if re.search(maint_pat,auth_page):
+               self.error_str += "\n\nSite is performing maintenance operations"
+           # end patch for maintenance operations
            self.log.write(auth_page)
            raise Exception, self.error_str
         else:
@@ -260,7 +276,7 @@ class GameStream:
            self.log.write("DEBUG>>> writing login page")
            self.log.write(auth_page)
         # END login()
-
+ 
     def workflow(self):
         # This is the workhorse routine.
         # 1. Login
@@ -274,7 +290,13 @@ class GameStream:
             self.login()
         wf_url = "http://www.mlb.com/enterworkflow.do?" +\
             "flowId=media.media&keepWfParams=true&mediaId=" +\
-            str(self.id) + "&catCode=mlb_lg&a=v"
+            str(self.id)
+        # The workflow urls for audio and video have slightly
+        # different endings.
+        if self.streamtype == 'audio':
+            wf_url += "&catCode=mlb_ga&a=a"
+        else:
+            wf_url += "&catCode=mlb_lg&a=v"
         # Open the workflow url...
         # Referrer should look something like this but we'll need to pull
         # more info from listings for this:
@@ -282,7 +304,11 @@ class GameStream:
         txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
         wf_data = None
         req = urllib2.Request(wf_url,wf_data,txheaders)
-        handle = urllib2.urlopen(req)
+        try:
+            handle = urllib2.urlopen(req)
+        except:
+            self.error_str = 'Error occurred in HTTP request to workflow page'
+            raise Exception, self.error_str
         url_data = handle.read()
         self.log.write('Did we receive a cookie from workflow?\n')
         for index, cookie in enumerate(self.session_cookies):
@@ -325,7 +351,11 @@ class GameStream:
     def url(self):
         # url_pattern
         game_info = self.workflow()
-        pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
+        # The urls for audio and video have different protocols
+        if self.streamtype == 'audio':
+            pattern = re.compile(r'(url:.*\")(http:\/\/[^ ]*)(".*)')
+        else:
+            pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
         try:
            game_url = re.search(pattern, game_info).groups()[1]
         except:
@@ -350,9 +380,6 @@ class GameStream:
            self.log.write('Try the gameid script with gameid = ' + self.id +'\n')
            raise Exception, self.error_str 
         return game_url
-
-
-
 
 
 
