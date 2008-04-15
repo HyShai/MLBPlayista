@@ -19,8 +19,11 @@ import time
 
 AUTHDIR = '.mlb'
 AUTHFILE = 'config'
-DEFAULT_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
+DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
+DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
 DEFAULT_SPEED = 400 
+
+VERSION='mlbviewer 0.1alpha6 jkr http://www.columbia.edu/~jr2075/mlbviewer.py'
 
 KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'Enter'      : 'Play video of highlighted game',
@@ -59,16 +62,16 @@ def mainloop(myscr,cfg):
     current_cursor = 0
 
     mysched = MLBSchedule()
-    available = mysched.getListings(cfg['speed'],cfg['blackout'])
+    available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
 
     statusline = {
         "I" : "Status: In Progress",
         "W" : "Status: Not Yet Available",
         "F" : "Status: Final",
         "P" : "Status: Not Yet Available",
-        "IP": "Status: Available Soon",
+        "IP": "Status: Pregame",
         "PO": "Status: Postponed",
-        "GO": "Status: Game Over - stream not yet avaialble",
+        "GO": "Status: Game Over - stream not yet available",
         "LB": "Status: Local Blackout"}
 
     while True:
@@ -87,7 +90,7 @@ def mainloop(myscr,cfg):
         for n in range(curses.LINES-3):
             if n < len(available):
                 s = available[n][0] + ':' + available[n][1]
-                if available[n][3] == 'F':
+                if available[n][4] == 'F':
                     s+= ' (Archived)'
                 padding = curses.COLS - (len(s) + 1)
                 s += ' '*padding
@@ -98,7 +101,7 @@ def mainloop(myscr,cfg):
             if available:
                 if n == current_cursor:
                     myscr.addstr(n+2,0,s, curses.A_REVERSE)
-                    myscr.addstr(curses.LINES-1,0,statusline.get(available[n][3],"Unknown Flag = "+available[n][3]))
+                    myscr.addstr(curses.LINES-1,0,statusline.get(available[n][4],"Unknown Flag = "+available[n][4]))
                 else:
                     myscr.addstr(n+2, 0, s)
 
@@ -131,7 +134,9 @@ def mainloop(myscr,cfg):
                 dif = datetime.timedelta(1)
                 t -= dif
             mysched = MLBSchedule((t.year, t.month, t.day))
-            available = mysched.getListings(cfg['speed'],cfg['blackout'])
+            available = mysched.getListings(cfg['speed'],
+                                            cfg['blackout'],
+                                            cfg['audio_follow'])
             current_cursor = 0
 
         # right (foward)
@@ -143,8 +148,21 @@ def mainloop(myscr,cfg):
                 dif = datetime.timedelta(1)
                 t += dif
             mysched = MLBSchedule((t.year, t.month, t.day))
-            available = mysched.getListings(cfg['speed'],cfg['blackout'])
+            available = mysched.getListings(cfg['speed'],
+                                            cfg['blackout'],
+                                            cfg['audio_follow'])
             current_cursor = 0
+
+        if c in ('Help', ord('h')):
+            myscr.clear()
+            myscr.addstr(0,0,VERSION)
+            n = 2
+            for elem in KEYBINDINGS:
+               myscr.addstr(n,0,elem)
+               myscr.addstr(n,20,KEYBINDINGS[elem])
+               n += 1
+            myscr.addstr(curses.LINES-1,0,'Press a key to continue...')
+            myscr.getch()
 
         if c in ('Enter', 10):
             try:
@@ -155,13 +173,11 @@ def mainloop(myscr,cfg):
 
                 gameid = available[current_cursor][2]
                 g = GameStream(gameid, cfg['user'], cfg['pass'], cfg['debug'])
-                try:
+                if cfg['debug']:
                     u = g.url()
-                except:
                     myscr.clear()
-                    myscr.addstr(0,0,'Error occurred in GameStream:')
-                    myscr.addstr(2,0,g.error_str)
-                    #myscr.addstr(curses.LINES-1,'Press a key to continue...')
+                    myscr.addstr(0,0,'Url received:')
+                    myscr.addstr(1,0,u)
                     myscr.refresh()
                     time.sleep(3)
                     # I'd rather leave an error on the screen but you'll need
@@ -169,25 +185,32 @@ def mainloop(myscr,cfg):
                     #myscr.getch()
                 else:
                     try:
-                        if '%s' in cfg['video_player']:
-                            cmd_str = cfg['video_player'].replace('%s', 
-                                                                  '"' + u + '"')
-                        else:
-                            cmd_str = cfg['video_player'] + ' "' + u + '" '
-                        myscr.clear()
-                        myscr.addstr(0,0,cmd_str)
-                        # DEBUG code - I just want to see that we got the url
-                        #myscr.addstr(curses.LINES-1,0,'Press a key to continue...')
-                        myscr.refresh()
-                        time.sleep(3)
-                        #myscr.getch()
-                        play_process=subprocess.Popen(cmd_str,shell=True)
-                        play_process.wait()
+                        u = g.url()
                     except:
                         myscr.clear()
-                        myscr.addstr(0,0,'Error in playprocess')
+                        myscr.addstr(0,0,'An error occurred in locating the game stream:')
+                        myscr.addstr(2,0,g.error_str)
                         myscr.refresh()
                         time.sleep(3)
+                    else:
+                        try:
+                            if '%s' in cfg['video_player']:
+                                cmd_str = cfg['video_player'].replace('%s', '"' + u + '"')
+                            else:
+                                cmd_str = cfg['video_player'] + ' "' + u + '" '
+                            if cfg['show_player_command']:
+                                myscr.clear()
+                                myscr.addstr(0,0,cmd_str)
+                                myscr.refresh()
+                                time.sleep(3)
+                            play_process=subprocess.Popen(cmd_str,shell=True)
+                            play_process.wait()
+                        except:
+                            myscr.clear()
+                            ERROR_STRING = "There was an error in the player process."
+                            myscr.addstr(0,0,ERROR_STRING)
+                            myscr.refresh()
+                            time.sleep(3)
 
                 # Turn the ir_program back on                
                 if LIRC:
@@ -199,9 +222,73 @@ def mainloop(myscr,cfg):
             except IndexError:
                 pass
 
+
+        if c in ('Audio', ord('a')):
+            try:
+                # Turn off socket
+                if LIRC:
+                    irc_socket.close()
+                    irc_conn.connected = False
+
+                gameid = available[current_cursor][3]
+                g = GameStream(gameid, cfg['user'], cfg['pass'], cfg['debug'],
+                               streamtype='audio')
+                if cfg['debug']:
+                    u = g.url()
+                    myscr.clear()
+                    myscr.addstr(0,0,'Url received:')
+                    myscr.addstr(1,0,u)
+                    myscr.refresh()
+                    time.sleep(3)
+                    # I'd rather leave an error on the screen but you'll need
+                    # to write a lirc handler for getch()
+                    #myscr.getch()
+                else:
+                    try:
+                        u = g.url()
+                    except:
+                        myscr.clear()
+                        myscr.addstr(0,0,'An error occurred in locating the game stream:')
+                        myscr.addstr(2,0,g.error_str)
+                        myscr.refresh()
+                        time.sleep(3)
+                    else:
+                        try:
+                            if '%s' in cfg['audio_player']:
+                                cmd_str = cfg['audio_player'].replace('%s', '"' + u + '"')
+                            else:
+                                cmd_str = cfg['audio_player'] + ' "' + u + '" '
+                            if cfg['show_player_command']:
+                                myscr.clear()
+                                myscr.addstr(0,0,cmd_str)
+                                myscr.refresh()
+                                time.sleep(3)
+                            play_process=subprocess.Popen(cmd_str,shell=True)
+                            play_process.wait()
+                        except:
+                            myscr.clear()
+                            ERROR_STRING = "There was an error in the player process."
+                            myscr.addstr(0,0,ERROR_STRING)
+                            myscr.refresh()
+                            time.sleep(3)
+
+                # Turn the ir_program back on                
+                if LIRC:
+                    irc_conn = LircConnection()
+                    irc_conn.connect()
+        	    irc_conn.getconfig()
+                    irc_socket=irc_conn.conn
+                    inputlst = [sys.stdin, irc_socket]
+            except IndexError:
+                pass
+
+
+
         if c in ('Refresh', ord('r')):
             # refresh
-            available=getListings(mysched,cfg['speed'],cfg['blackout'])
+            available=mysched.getListings(cfg['speed'],
+                                          cfg['blackout'],
+                                          cfg['audio_follow'])
 
         if c in ('Exit', ord('q')):
             break
@@ -211,8 +298,11 @@ if __name__ == "__main__":
 
     myconf = os.path.join(os.environ['HOME'], AUTHDIR, AUTHFILE)
     mydefaults = {'speed': DEFAULT_SPEED,
-                  'video_player': DEFAULT_PLAYER,
+                  'video_player': DEFAULT_V_PLAYER,
+                  'audio_player': DEFAULT_A_PLAYER,
+                  'audio_follow': [],
                   'blackout': [],
+                  'show_player_command': 0,
                   'debug': 0}
 
     mycfg = MLBConfig(mydefaults)
