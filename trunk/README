@@ -1,0 +1,32 @@
+This is a short and to the point readme. It will be longer and say
+more in the future. Watch baseball games by pressing return. Listen to
+them by pressing a. Up goes up, down goes down.
+
+The options in the config file ~/.mlb/config are
+
+user = x (mandatory) 
+
+pass = x (mandatory)
+
+speed =x (speed for streaming video, 800 or 400)
+
+video_player = x (use %s for url, otherwise it will come at the end)
+
+audio_player = x (use %s for url, otherwise it will come at the end)
+
+blackout = x (local team that you can't watch)
+blackout = y (another, but at least you live in a happening place)
+
+show_player_command = True/False (displays the command line the program uses to
+play the video)
+
+debug = True/False (informative errors to figure out what's going wrong)
+
+audio_follow = x (team whose local radio broadcasters you always want
+to listen to)
+
+Note that blackout and audio_follow use the following team codes:
+     'ana', 'ari', 'atl', 'bal', 'bos', 'chc', 'cin', 'cle', 'col',
+     'cws', 'det', 'fla', 'hou', 'kc', 'la', 'mil', 'min', 'nym',
+     'nyy', 'oak', 'phi', 'pit', 'sd', 'sea', 'sf', 'stl', 'tb',
+     'tex', 'tor', 'was'
