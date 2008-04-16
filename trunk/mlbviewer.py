@@ -86,6 +86,11 @@ def mainloop(myscr,cfg):
     statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
 
     mysched = MLBSchedule(time_shift=cfg['time_offset'])
+    # We'll make a note of the date, to return to it later.
+    today_year = mysched.year
+    today_month = mysched.month
+    today_day = mysched.day
+
     available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
 
     statusline = {
@@ -331,34 +336,58 @@ def mainloop(myscr,cfg):
                 pass
 
         if c in ('Jump', ord('j')):
-            query = prompter(statuswin, 'Date? [m/d/yy]: ')
-            pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})((/)([0-9]{2}))?')
-            parsed = re.match(pattern,query)
-            if not parsed:
-                error_str = "Date not in correct format"
-                statuswin.addstr(0,0,error_str,curses.A_BOLD)
-            else:
-                split = parsed.groups()
-                try:
-                    mymonth = int(split[0])
-                    myday = int(split[2])
-                    # Check to see if they entered a year. We'll forgive
-                    # them if they didn't. First we assume it's the same year.
-                    myyear = mysched.year
-                    # Then, if it's there, and it's in the right form, we
-                    # replace it.
-                    if len(split) == 5:
-                        if len(split[4]) == 2 and split[4].isdigit():
-                            myyear = int('20' + split[4])
 
-                    mysched = MLBSchedule((myyear, mymonth, myday))
-                    available = mysched.getListings(cfg['speed'],
-                                                    cfg['blackout'],
-                                                    cfg['audio_follow'])
-                    current_cursor = 0
-                except:
+            jump_prompt = 'Date (m/d/yy)? '
+            if datetime.datetime(mysched.year,mysched.month,mysched.day) <> \
+                    datetime.datetime(today_year,today_month,today_day):
+                jump_prompt += '(<enter> returns to today) '
+            query = prompter(statuswin, jump_prompt)
+            # Special case. If the response is blank, we jump back to
+            # today.
+            if query == '':
+                statuswin.clear()
+                status_str = "Jumping back to today"
+                statuswin.addstr(0,0,status_str,curses.A_BOLD)
+                statuswin.refresh()
+                time.sleep(1)
+
+                mysched = MLBSchedule((today_year, today_month, today_day))
+                available = mysched.getListings(cfg['speed'],
+                                                cfg['blackout'],
+                                                cfg['audio_follow'])
+                current_cursor = 0
+            else:
+                pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})((/)([0-9]{2}))?')
+                parsed = re.match(pattern,query)
+                if not parsed:
+                    statuswin.clear()
                     error_str = "Date not in correct format"
                     statuswin.addstr(0,0,error_str,curses.A_BOLD)
+                    statuswin.refresh()
+                    time.sleep(2)
+                else:
+                    split = parsed.groups()
+                    try:
+                        mymonth = int(split[0])
+                        myday = int(split[2])
+                        # Check to see if they entered a year. We'll
+                        # forgive them if they didn't. First we assume
+                        # it's the same year.
+                        myyear = mysched.year
+                        # Then, if it's there, and it's in the right form, we
+                        # replace it.
+                        if len(split) == 5:
+                            if len(split[4]) == 2 and split[4].isdigit():
+                                myyear = int('20' + split[4])
+
+                        mysched = MLBSchedule((myyear, mymonth, myday))
+                        available = mysched.getListings(cfg['speed'],
+                                                        cfg['blackout'],
+                                                        cfg['audio_follow'])
+                        current_cursor = 0
+                    except:
+                        error_str = "Date not in correct format"
+                        statuswin.addstr(0,0,error_str,curses.A_BOLD)
 
 
         if c in ('Refresh', ord('r')):
