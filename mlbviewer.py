@@ -67,7 +67,7 @@ def mainloop(myscr,cfg):
     
     # Print a simple splash for now just so we don't show dead screen while
     # we're fetching the listings
-    myscr.addstr(curses.LINES/2,30,'mlbviewer 0.1alpha6')
+    myscr.addstr(curses.LINES/2,9,VERSION)
     myscr.addstr(curses.LINES-1,0,'Please wait for listings to load...')
     myscr.refresh()
 
