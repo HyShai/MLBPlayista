@@ -67,9 +67,39 @@ TEAMCODES = {
     'was': ('WAS', 'Washington', 'Nationals', '')
     }
 
+def gameTimeConvert(datetime_tuple, explicit_shift=None):
+    """Convert from east coast time local time"""
+    STANDARD = datetime.datetime(2008,11,2)
+    if STANDARD < datetime.datetime.now():
+        dif = datetime.timedelta(0,18000)
+    else:
+        dif = datetime.timedelta(0,14400)
+    utc_tuple = datetime_tuple + dif
+    # We parse the explicit shift if there is one:
+    if explicit_shift:
+        pattern = re.compile(r'([+-]?)([0-9]{2})([0-9]{2})')
+        parsed = re.match(pattern,explicit_shift)
+        # So if we could parse it, we split it up.
+        if parsed:
+            mins = ( 60* int(parsed.groups()[1]) ) + int(parsed.groups()[2])
+            secs = 60 * mins
+            # here's the weird part: python does timezones in terms of
+            # a difference, so we have to reverse the signs. In other
+            # words, a '-' means that it's a positive difference.
+            if parsed.groups()[0] in ('+', ''):
+                secs *= -1
+            myzone = secs
+        # Otherwise we just go by the default machine time
+        else:
+            myzone = (time.timezone, time.altzone)[time.daylight]
+    else:
+        myzone = (time.timezone, time.altzone)[time.daylight]
+    return utc_tuple - datetime.timedelta(0,myzone)
+    
+
 class MLBSchedule:
 
-    def __init__(self,ymd_tuple=None):
+    def __init__(self,ymd_tuple=None,time_shift=None):
         # Default to today
         if not ymd_tuple:
             now = datetime.datetime.now()
@@ -82,6 +112,7 @@ class MLBSchedule:
         self.year = ymd_tuple[0]
         self.month = ymd_tuple[1]
         self.day = ymd_tuple[2]
+        self.shift = time_shift
         # First make the dates all strings, of the correct length
         def padstr(num):
             if len(str(num)) < 2: 
@@ -149,6 +180,11 @@ class MLBSchedule:
                 # All contingent on it having a tv broadcast.
                 if elem['mlbtv']:
                     dct = {}
+                    # I'm parsing the time by hand because strptime
+                    # doesn't work on windows and only works on
+                    # python>=2.5. The time format is always going to
+                    # be the same, so might as well just take care of
+                    # it ourselves.
                     time_string = elem['event_time'].strip()
                     ampm = time_string[-2:].lower()
                     hrs, mins = time_string[:-2].split(':')
@@ -156,7 +192,12 @@ class MLBSchedule:
                     mins = int(mins)
                     if ampm == 'pm':
                          hrs += 12
-                    dct['event_time'] = datetime.time(hrs,mins)
+                    raw_time = datetime.datetime(self.year, 
+                                                 self.month, 
+                                                 self.day, 
+                                                 hrs,
+                                                 mins)
+                    dct['event_time'] = gameTimeConvert(raw_time, self.shift)
                     dct['status'] = elem['status']
                     dct['home'] = [team['code'] for team in elem['teams'] if
                                    team['isHome']][0]
