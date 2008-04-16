@@ -379,6 +379,7 @@ class GameStream:
            if self.debug:
                self.log.write(game_info)
            self.log.write('Try the gameid script with gameid = ' + self.id +'\n')
+           self.log.close()
            raise Exception, self.error_str 
         self.log.write('\nURL received:\n' + game_url + '\n\n')
         self.log.close()
