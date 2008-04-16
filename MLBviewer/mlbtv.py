@@ -103,7 +103,12 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
     else:
         myzone = (time.timezone, time.altzone)[time.daylight]
     return utc_tuple - datetime.timedelta(0,myzone)
-    
+
+class Error(Exception):
+    pass
+
+class MLBUrlError(Error):
+    pass
 
 class MLBSchedule:
 
@@ -137,7 +142,10 @@ class MLBSchedule:
         txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
         data = None
         req = urllib2.Request(self.url,data,txheaders)
-        fp = urllib2.urlopen(req)
+        try:
+            fp = urllib2.urlopen(req)
+        except urllib2.HTTPError:
+            raise MLBUrlError
         out = fp.read()
         fp.close()
         return out

@@ -4,6 +4,7 @@ from MLBviewer import MLBSchedule
 from MLBviewer import GameStream
 from MLBviewer import LircConnection
 from MLBviewer import MLBConfig
+from MLBviewer import MLBUrlError
 import os
 import sys
 import re
@@ -169,9 +170,9 @@ def mainloop(myscr,cfg):
             # subtract a day:
             t = datetime.datetime(mysched.year, mysched.month, mysched.day)
             opening = datetime.datetime(2008,3,31)
-            if (t-opening).days > 0:
-                dif = datetime.timedelta(1)
-                t -= dif
+            #if (t-opening).days > 0:
+            dif = datetime.timedelta(1)
+            t -= dif
             mysched = MLBSchedule((t.year, t.month, t.day))
             available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
@@ -180,7 +181,7 @@ def mainloop(myscr,cfg):
 
         # right (foward)
         if c in ('Right', curses.KEY_RIGHT):
-            # subtract a day:
+            # add a day:
             t = datetime.datetime(mysched.year, mysched.month, mysched.day)
             now = datetime.datetime.now()
             # if (t-now).days < 2:
@@ -192,6 +193,59 @@ def mainloop(myscr,cfg):
                                             cfg['audio_follow'])
             current_cursor = 0
 
+        if c in ('Jump', ord('j')):
+
+            jump_prompt = 'Date (m/d/yy)? '
+            if datetime.datetime(mysched.year,mysched.month,mysched.day) <> \
+                    datetime.datetime(today_year,today_month,today_day):
+                jump_prompt += '(<enter> returns to today) '
+            query = prompter(statuswin, jump_prompt)
+            # Special case. If the response is blank, we jump back to
+            # today.
+            if query == '':
+                statuswin.clear()
+                status_str = "Jumping back to today"
+                statuswin.addstr(0,0,status_str,curses.A_BOLD)
+                statuswin.refresh()
+                time.sleep(1)
+
+                mysched = MLBSchedule((today_year, today_month, today_day))
+                available = mysched.getListings(cfg['speed'],
+                                                cfg['blackout'],
+                                                cfg['audio_follow'])
+                current_cursor = 0
+            else:
+                pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})(/)([0-9]{2})')
+                parsed = re.match(pattern,query)
+                if not parsed:
+                    statuswin.clear()
+                    error_str = "Date not in correct format"
+                    statuswin.addstr(0,0,error_str,curses.A_BOLD)
+                    statuswin.refresh()
+                    time.sleep(2)
+                else:
+                    split = parsed.groups()
+                    prev_tuple = (mysched.year,mysched.month, mysched.day)
+                    mymonth = int(split[0])
+                    myday = int(split[2])
+                    myyear = int('20' + split[4])
+                                
+
+                    newsched = MLBSchedule((myyear, mymonth, myday))
+                    try:
+                        available = newsched.getListings(cfg['speed'],
+                                                         cfg['blackout'],
+                                                         cfg['audio_follow'])
+                        mysched = newsched
+                        current_cursor = 0
+                    except MLBUrlError:
+                        statuswin.clear()
+                        error_str = "Could not fetch a schedule for that day."
+                        statuswin.addstr(0,0,error_str,curses.A_BOLD)
+                        statuswin.refresh()
+                        time.sleep(1.5)
+
+
         if c in ('Help', ord('h')):
             myscr.clear()
             myscr.addstr(0,0,VERSION)
@@ -202,6 +256,9 @@ def mainloop(myscr,cfg):
                n += 1
             myscr.addstr(curses.LINES-1,0,'Press a key to continue...')
             myscr.getch()
+
+
+
 
         if c in ('Enter', 10):
             try:
@@ -335,59 +392,6 @@ def mainloop(myscr,cfg):
             except IndexError:
                 pass
 
-        if c in ('Jump', ord('j')):
-
-            jump_prompt = 'Date (m/d/yy)? '
-            if datetime.datetime(mysched.year,mysched.month,mysched.day) <> \
-                    datetime.datetime(today_year,today_month,today_day):
-                jump_prompt += '(<enter> returns to today) '
-            query = prompter(statuswin, jump_prompt)
-            # Special case. If the response is blank, we jump back to
-            # today.
-            if query == '':
-                statuswin.clear()
-                status_str = "Jumping back to today"
-                statuswin.addstr(0,0,status_str,curses.A_BOLD)
-                statuswin.refresh()
-                time.sleep(1)
-
-                mysched = MLBSchedule((today_year, today_month, today_day))
-                available = mysched.getListings(cfg['speed'],
-                                                cfg['blackout'],
-                                                cfg['audio_follow'])
-                current_cursor = 0
-            else:
-                pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})((/)([0-9]{2}))?')
-                parsed = re.match(pattern,query)
-                if not parsed:
-                    statuswin.clear()
-                    error_str = "Date not in correct format"
-                    statuswin.addstr(0,0,error_str,curses.A_BOLD)
-                    statuswin.refresh()
-                    time.sleep(2)
-                else:
-                    split = parsed.groups()
-                    try:
-                        mymonth = int(split[0])
-                        myday = int(split[2])
-                        # Check to see if they entered a year. We'll
-                        # forgive them if they didn't. First we assume
-                        # it's the same year.
-                        myyear = mysched.year
-                        # Then, if it's there, and it's in the right form, we
-                        # replace it.
-                        if len(split) == 5:
-                            if len(split[4]) == 2 and split[4].isdigit():
-                                myyear = int('20' + split[4])
-
-                        mysched = MLBSchedule((myyear, mymonth, myday))
-                        available = mysched.getListings(cfg['speed'],
-                                                        cfg['blackout'],
-                                                        cfg['audio_follow'])
-                        current_cursor = 0
-                    except:
-                        error_str = "Date not in correct format"
-                        statuswin.addstr(0,0,error_str,curses.A_BOLD)
 
 
         if c in ('Refresh', ord('r')):
