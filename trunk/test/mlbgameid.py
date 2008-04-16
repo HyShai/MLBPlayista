@@ -136,12 +136,18 @@ except IOError, e:
        print "This usually means the server doesn't exist, is down, or we don't have an internet connection."
        sys.exit()
 
-pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
+vid_pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
+aud_pattern = re.compile(r'(url:.*\")(http:\/\/[^ ]*)(".*)')
 
+
+# handle http urls for audio and older video
 try:
-   game_url = re.search(pattern, game_info).groups()[1]
+   game_url = re.search(vid_pattern, game_info).groups()[1]
 except:
-   raise Exception, game_info
+   try:
+       game_url = re.search(aud_pattern, game_info).groups()[1]
+   except:
+       raise Exception, game_info
 
 print
 if cj == None:
