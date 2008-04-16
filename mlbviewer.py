@@ -29,6 +29,7 @@ VERSION= 'mlbviewer 0.1alpha5  http://sourceforge.net/projects/mlbviewer'
 KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'Enter'      : 'Play video of highlighted game',
                 'Left/Right' : 'Navigate one day forward or back',
+                'j'          : 'Jump to a date',
                 'r'          : 'Refresh listings',
                 'q'          : 'Quit mlbviewer',
                 'h'          : 'Display version and keybindings',
