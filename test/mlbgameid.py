@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+ 
+# $Revision$
 
 import os.path
 import sys
