@@ -207,7 +207,7 @@ class GameStream:
         self.session_cookies = None
         self.streamtype = streamtype
         self.error_str = "Uncaught error"
-        self.log = open(LOGFILE,"w")
+        self.log = open(LOGFILE,"a")
         self.log.write(str(datetime.datetime.now()) + '\n')
         self.debug = debug
     
@@ -286,6 +286,7 @@ class GameStream:
         # The hope is that this sequence will always be the same and leave
         # it to url() to determine if an error occurs.  This way, hopefully, 
         # error or no, we'll always log out.
+        self.log.write('Querying enterworkflow.do for gameid = ' + self.id + '\n')
         if self.session_cookies is None:
             self.login()
         wf_url = "http://www.mlb.com/enterworkflow.do?" +\
@@ -379,6 +380,8 @@ class GameStream:
                self.log.write(game_info)
            self.log.write('Try the gameid script with gameid = ' + self.id +'\n')
            raise Exception, self.error_str 
+        self.log.write('\nURL received:\n' + game_url + '\n\n')
+        self.log.close()
         return game_url
 
 
