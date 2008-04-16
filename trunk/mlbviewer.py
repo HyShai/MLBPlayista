@@ -327,7 +327,8 @@ if __name__ == "__main__":
                   'audio_follow': [],
                   'blackout': [],
                   'show_player_command': 0,
-                  'debug': 0}
+                  'debug': 0,
+                  'time_offset': ''}
 
     mycfg = MLBConfig(mydefaults)
     mycfg.loads(myconf)
