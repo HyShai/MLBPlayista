@@ -24,7 +24,7 @@ DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
 DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
 DEFAULT_SPEED = 400 
 
-VERSION= 'mlbviewer 0.1alpha5  http://sourceforge.net/projects/mlbviewer'
+VERSION= 'mlbviewer 0.1alpha6-svn  http://sourceforge.net/projects/mlbviewer'
 
 KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'Enter'      : 'Play video of highlighted game',
@@ -80,7 +80,7 @@ def mainloop(myscr,cfg):
     
     # Print a simple splash for now just so we don't show dead screen while
     # we're fetching the listings
-    myscr.addstr(curses.LINES/2,9,VERSION)
+    myscr.addstr(curses.LINES/2,6,VERSION)
     myscr.addstr(curses.LINES-1,0,'Please wait for listings to load...')
     myscr.refresh()
 
