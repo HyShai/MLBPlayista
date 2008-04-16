@@ -64,6 +64,12 @@ def mainloop(myscr,cfg):
     myscr = curses.initscr()
 
     current_cursor = 0
+    
+    # Print a simple splash for now just so we don't show dead screen while
+    # we're fetching the listings
+    myscr.addstr(curses.LINES/2,30,'mlbviewer 0.1alpha6')
+    myscr.addstr(curses.LINES-1,0,'Please wait for listings to load...')
+    myscr.refresh()
 
     mysched = MLBSchedule()
     available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
@@ -177,7 +183,14 @@ def mainloop(myscr,cfg):
 
                 gameid = available[current_cursor][2]
                 g = GameStream(gameid, cfg['user'], cfg['pass'], cfg['debug'])
+                
+                # print a "Trying..." message so we don't look frozen
+                myscr.addstr(curses.LINES-1,0,'Fetching URL for game stream...')
+                myscr.refresh()
+
                 if cfg['debug']:
+                    myscr.addstr(curses.LINES-1,0,'Debug set, fetching URL but not playing...')
+                    myscr.refresh()
                     u = g.url()
                     myscr.clear()
                     myscr.addstr(0,0,'Url received:')
@@ -237,7 +250,14 @@ def mainloop(myscr,cfg):
                 gameid = available[current_cursor][3]
                 g = GameStream(gameid, cfg['user'], cfg['pass'], cfg['debug'],
                                streamtype='audio')
+                
+                # print a "Trying..." message so we don't look frozen
+                myscr.addstr(curses.LINES-1,0,'Fetching URL for game stream...')
+                myscr.refresh()
+
                 if cfg['debug']:
+                    myscr.addstr(curses.LINES-1,0,'Debug set, fetching URL but not playing...')
+                    myscr.refresh()
                     u = g.url()
                     myscr.clear()
                     myscr.addstr(0,0,'Url received:')
