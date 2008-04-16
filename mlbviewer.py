@@ -130,6 +130,8 @@ def mainloop(myscr,cfg):
                     status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
                 else:
                     myscr.addstr(n+2, 0, s)
+            else:
+                status_str = "No listings available for this day."
         # And write the status
         statuswin.addstr(0,0,status_str,curses.A_BOLD)
 
@@ -176,9 +178,9 @@ def mainloop(myscr,cfg):
             # subtract a day:
             t = datetime.datetime(mysched.year, mysched.month, mysched.day)
             now = datetime.datetime.now()
-            if (now-t).days > 0:
-                dif = datetime.timedelta(1)
-                t += dif
+            # if (t-now).days < 2:
+            dif = datetime.timedelta(1)
+            t += dif
             mysched = MLBSchedule((t.year, t.month, t.day))
             available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
