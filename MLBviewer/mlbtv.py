@@ -196,10 +196,10 @@ class MLBSchedule:
                     time_string = elem['event_time'].strip()
                     ampm = time_string[-2:].lower()
                     hrs, mins = time_string[:-2].split(':')
-                    hrs = int(hrs)
+                    hrs = int(hrs) % 12
                     mins = int(mins)
                     if ampm == 'pm':
-                         hrs += 12
+                        hrs += 12
                     # So that gives us the raw time, i.e., on the East
                     # Coast. Not knowing about DST or anything else.
                     raw_time = datetime.datetime(self.year, 
