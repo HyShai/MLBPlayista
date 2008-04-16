@@ -34,6 +34,17 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'a'          : 'Play Gameday audio of highlighted game'
               }
 
+def prompter(win,prompt):
+    win.clear()
+    win.addstr(0,0,prompt,curses.A_BOLD)
+    win.refresh()
+
+    curses.echo()
+    output = win.getstr(0,len(prompt))
+    curses.noecho()
+
+    return output
+
 def mainloop(myscr,cfg):
 
     try: 
@@ -71,6 +82,9 @@ def mainloop(myscr,cfg):
     myscr.addstr(curses.LINES-1,0,'Please wait for listings to load...')
     myscr.refresh()
 
+    # This will be used for statuslines
+    statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
+
     mysched = MLBSchedule(time_shift=cfg['time_offset'])
     available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
 
@@ -86,6 +100,8 @@ def mainloop(myscr,cfg):
 
     while True:
         myscr.clear()
+        statuswin.clear()
+
         datestr= "AVAILABLE GAMES FOR " +\
             str(mysched.month) + '/' +\
             str(mysched.day) + '/' +\
@@ -96,8 +112,8 @@ def mainloop(myscr,cfg):
         myscr.addstr(0,0,datestr)
         # Draw a line
         myscr.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
-        
-        for n in range(curses.LINES-3):
+
+        for n in range(curses.LINES-4):
             if n < len(available):
                 s = available[n][0] + ':' + available[n][1]
                 if available[n][4] == 'F':
@@ -111,12 +127,18 @@ def mainloop(myscr,cfg):
             if available:
                 if n == current_cursor:
                     myscr.addstr(n+2,0,s, curses.A_REVERSE)
-                    myscr.addstr(curses.LINES-1,0,statusline.get(available[n][4],"Unknown Flag = "+available[n][4]))
+                    status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
                 else:
                     myscr.addstr(n+2, 0, s)
+        # And write the status
+        statuswin.addstr(0,0,status_str,curses.A_BOLD)
 
-        myscr.refresh()
+        # And refresh
+        myscr.refresh() 
+        statuswin.refresh()       
 
+        
+        # And now we do input.
         inputs, outputs, excepts = select.select(inputlst, [], [])
 
         if sys.stdin in inputs:
@@ -306,6 +328,35 @@ def mainloop(myscr,cfg):
             except IndexError:
                 pass
 
+        if c in ('Jump', ord('j')):
+            query = prompter(statuswin, 'Date? [m/d/yy]: ')
+            pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})((/)([0-9]{2}))?')
+            parsed = re.match(pattern,query)
+            if not parsed:
+                error_str = "Date not in correct format"
+                statuswin.addstr(0,0,error_str,curses.A_BOLD)
+            else:
+                split = parsed.groups()
+                try:
+                    mymonth = int(split[0])
+                    myday = int(split[2])
+                    # Check to see if they entered a year. We'll forgive
+                    # them if they didn't. First we assume it's the same year.
+                    myyear = mysched.year
+                    # Then, if it's there, and it's in the right form, we
+                    # replace it.
+                    if len(split) == 5:
+                        if len(split[4]) == 2 and split[4].isdigit():
+                            myyear = int('20' + split[4])
+
+                    mysched = MLBSchedule((myyear, mymonth, myday))
+                    available = mysched.getListings(cfg['speed'],
+                                                    cfg['blackout'],
+                                                    cfg['audio_follow'])
+                    current_cursor = 0
+                except:
+                    error_str = "Date not in correct format"
+                    statuswin.addstr(0,0,error_str,curses.A_BOLD)
 
 
         if c in ('Refresh', ord('r')):
