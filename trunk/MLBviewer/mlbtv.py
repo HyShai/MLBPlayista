@@ -67,18 +67,23 @@ TEAMCODES = {
     'was': ('WAS', 'Washington', 'Nationals', '')
     }
 
-def gameTimeConvert(datetime_tuple, explicit_shift=None):
-    """Convert from east coast time local time"""
+def gameTimeConvert(datetime_tuple, time_shift=None):
+    """Convert from east coast time to local time. This either uses
+    the machine's localtime or if, it is given, an explicit timezone
+    shift. 
+    
+    The timezone shift should be of the form '-0500', '+0330'. If no
+    sign is given, it is assumed to be positive."""
     STANDARD = datetime.datetime(2008,11,2)
-    if STANDARD < datetime.datetime.now():
+    if STANDARD <= datetime.datetime.now():
         dif = datetime.timedelta(0,18000)
     else:
         dif = datetime.timedelta(0,14400)
     utc_tuple = datetime_tuple + dif
     # We parse the explicit shift if there is one:
-    if explicit_shift:
+    if time_shift:
         pattern = re.compile(r'([+-]?)([0-9]{2})([0-9]{2})')
-        parsed = re.match(pattern,explicit_shift)
+        parsed = re.match(pattern,time_shift)
         # So if we could parse it, we split it up.
         if parsed:
             mins = ( 60* int(parsed.groups()[1]) ) + int(parsed.groups()[2])
@@ -91,6 +96,9 @@ def gameTimeConvert(datetime_tuple, explicit_shift=None):
             myzone = secs
         # Otherwise we just go by the default machine time
         else:
+            # If time.daylight returns 0 (false) it will choose the
+            # first element; if it returns 1 (true) it will return the
+            # second element.
             myzone = (time.timezone, time.altzone)[time.daylight]
     else:
         myzone = (time.timezone, time.altzone)[time.daylight]
@@ -192,12 +200,17 @@ class MLBSchedule:
                     mins = int(mins)
                     if ampm == 'pm':
                          hrs += 12
+                    # So that gives us the raw time, i.e., on the East
+                    # Coast. Not knowing about DST or anything else.
                     raw_time = datetime.datetime(self.year, 
                                                  self.month, 
                                                  self.day, 
                                                  hrs,
                                                  mins)
+                    # And now we convert that to the user's local, or
+                    # chosen time zone.
                     dct['event_time'] = gameTimeConvert(raw_time, self.shift)
+                    # The game status comes straight out of the dictionary.
                     dct['status'] = elem['status']
                     dct['home'] = [team['code'] for team in elem['teams'] if
                                    team['isHome']][0]
@@ -425,6 +438,3 @@ class GameStream:
         self.log.write('\nURL received:\n' + game_url + '\n\n')
         self.log.close()
         return game_url
-
-
-
