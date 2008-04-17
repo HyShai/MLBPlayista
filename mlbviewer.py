@@ -92,6 +92,7 @@ def mainloop(myscr,cfg):
     for i in xrange(len(lines)):
         myscr.addstr(curses.LINES/2+i, (curses.COLS-len(lines[i]))/2, lines[i])
     statuswin.addstr(0,0,'Please wait for listings to load...')
+    statuswin.refresh()
     myscr.refresh()
 
     mysched = MLBSchedule(time_shift=cfg['time_offset'])
