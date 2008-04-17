@@ -49,6 +49,9 @@ def prompter(win,prompt):
 
 def mainloop(myscr,cfg):
 
+    if cfg['x_display']:
+        os.environ['DISPLAY'] = cfg['x_display']
+
     try: 
         curses.curs_set(0)
     except curses.error: 
@@ -421,6 +424,7 @@ if __name__ == "__main__":
                   'blackout': [],
                   'show_player_command': 0,
                   'debug': 0,
+                  'x_display': '',
                   'time_offset': ''}
 
     mycfg = MLBConfig(mydefaults)
