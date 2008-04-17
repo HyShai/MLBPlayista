@@ -259,7 +259,8 @@ class MLBSchedule:
                                   (elem[1]['home'] in blackout or
                                    elem[1]['away'] in blackout)\
                                       and elem[1]['status'] in ('I','W','P')
-                                  ])\
+                                  ],
+                  elem[0])\
                      for elem in listings]
 
 
