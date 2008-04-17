@@ -282,8 +282,8 @@ def mainloop(myscr,cfg):
                     irc_socket.close()
                     irc_conn.connected = False
 
-                gameid = available[current_cursor][2]['id']
-                g = GameStream(gameid, cfg['user'], cfg['pass'], cfg['debug'])
+                streamid = available[current_cursor][2]['id']
+                g = GameStream(streamid, cfg['user'], cfg['pass'], cfg['debug'])
                 
                 # print a "Trying..." message so we don't look frozen
                 myscr.addstr(curses.LINES-1,0,'Fetching URL for game stream...')
@@ -354,8 +354,8 @@ def mainloop(myscr,cfg):
                     irc_socket.close()
                     irc_conn.connected = False
 
-                gameid = available[current_cursor][3]['id']
-                g = GameStream(gameid, cfg['user'], cfg['pass'], cfg['debug'],
+                streamid = available[current_cursor][3]['id']
+                g = GameStream(streamid, cfg['user'], cfg['pass'], cfg['debug'],
                                streamtype='audio')
                 
                 # print a "Trying..." message so we don't look frozen
