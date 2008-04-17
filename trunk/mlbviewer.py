@@ -133,10 +133,16 @@ def mainloop(myscr,cfg):
             # Only draw the screen if there are any games
             if available:
                 if n == current_cursor:
-                    myscr.addstr(n+2,0,s, curses.A_REVERSE)
+                    if available[n][4] == 'I':
+                        myscr.addstr(n+2,0,s, curses.A_REVERSE|curses.A_BOLD)
+                    else:
+                        myscr.addstr(n+2,0,s, curses.A_REVERSE)
                     status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
                 else:
-                    myscr.addstr(n+2, 0, s)
+                    if n < len(available) and available[n][4] == 'I':
+                        myscr.addstr(n+2, 0, s, curses.A_BOLD)
+                    else:
+                        myscr.addstr(n+2, 0, s)
             else:
                 status_str = "No listings available for this day."
         # And write the status
