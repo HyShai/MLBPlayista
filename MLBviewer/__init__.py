@@ -1,6 +1,6 @@
 __author__ = "Jesse Rosenthal"
 __email__ = "jesse.k.rosenthal@gmail.com"
-__version__="0.1alpha6-svn"
+__version__="0.1alpha5-svn"
 
 __all__ = ["MLBSchedule", "Gamestream", "LircConnection", "MLBConfig"]
 
