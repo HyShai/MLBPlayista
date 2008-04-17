@@ -12,7 +12,7 @@ cookielib = None
 
 COOKIEFILE = '.mlbcookie.lwp'
 
-AUTHFILE = '.mlbtv'
+AUTHFILE = os.path.join(os.environ['HOME'],'.mlb/config')
  
 DEFAULT_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
 
