@@ -351,7 +351,7 @@ class GameStream:
         # The hope is that this sequence will always be the same and leave
         # it to url() to determine if an error occurs.  This way, hopefully, 
         # error or no, we'll always log out.
-        self.log.write('Querying enterworkflow.do for gameid = ' + self.id + '\n')
+        self.log.write('Querying enterworkflow.do for streamid = ' + self.id + '\n')
         if self.session_cookies is None:
             self.login()
         wf_url = "http://www.mlb.com/enterworkflow.do?" +\
@@ -443,7 +443,7 @@ class GameStream:
            self.log.write(self.error_str + '\n')
            if self.debug:
                self.log.write(game_info)
-           self.log.write('Try the gameid script with gameid = ' + self.id +'\n')
+           self.log.write('Try the gameid script with streamid = ' + self.id +'\n')
            self.log.close()
            raise Exception, self.error_str 
         self.log.write('\nURL received:\n' + game_url + '\n\n')
