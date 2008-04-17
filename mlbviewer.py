@@ -282,7 +282,7 @@ def mainloop(myscr,cfg):
                     irc_socket.close()
                     irc_conn.connected = False
 
-                gameid = available[current_cursor][2]
+                gameid = available[current_cursor][2]['id']
                 g = GameStream(gameid, cfg['user'], cfg['pass'], cfg['debug'])
                 
                 # print a "Trying..." message so we don't look frozen
@@ -354,7 +354,7 @@ def mainloop(myscr,cfg):
                     irc_socket.close()
                     irc_conn.connected = False
 
-                gameid = available[current_cursor][3]
+                gameid = available[current_cursor][3]['id']
                 g = GameStream(gameid, cfg['user'], cfg['pass'], cfg['debug'],
                                streamtype='audio')
                 

@@ -235,11 +235,11 @@ class MLBSchedule:
                     dct['text'] = text
                     dct['video'] = {}
                     for url in elem['mlbtv']['urls']:
-                        dct['video'][url['speed']] = url['url']['id']
+                        dct['video'][url['speed']] = url['url']
                     dct['audio'] = {}
                     for audio_feed in ('home_audio', 'away_audio','alt_home_audio', 'alt_away_audio'):
                         if elem[audio_feed]:
-                            dct['audio'][audio_feed] = elem[audio_feed]['urls'][0]['url']['id']
+                            dct['audio'][audio_feed] = elem[audio_feed]['urls'][0]['url']
                         else:
                             dct['audio'][audio_feed] = None
                     out.append((elem['gameid'], dct))
