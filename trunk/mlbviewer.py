@@ -422,6 +422,10 @@ def mainloop(myscr,cfg):
                                           cfg['audio_follow'])
 
         if c in ('Exit', ord('q')):
+            curses.nocbreak()
+            myscr.keypad(0)
+            curses.echo()
+            curses.endwin()
             break
 
 
