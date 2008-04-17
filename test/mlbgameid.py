@@ -176,8 +176,7 @@ print 'The game url parsed is: '
 print game_url
 #sys.exit()
 
-#cmd_str = datadct['video_player'] + ' "' + game_url + '"'
-cmd_str = datadct['video_player_testing'] + ' "' + game_url + '"'
+cmd_str = datadct['video_player'] + ' "' + game_url + '"'
 playprocess = subprocess.Popen(cmd_str,shell=True)
 playprocess.wait()
 
