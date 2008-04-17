@@ -5,6 +5,7 @@ from MLBviewer import GameStream
 from MLBviewer import LircConnection
 from MLBviewer import MLBConfig
 from MLBviewer import MLBUrlError
+from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE
 import os
 import sys
 import re
@@ -18,13 +19,13 @@ import time
 # DEBUG = True
 # #DEBUG = None
 
-AUTHDIR = '.mlb'
-AUTHFILE = 'config'
+# AUTHDIR = '.mlb'
+# AUTHFILE = 'config'
 DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
 DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
 DEFAULT_SPEED = 400 
 
-VERSION= 'mlbviewer 0.1alpha5-svn  http://sourceforge.net/projects/mlbviewer'
+#VERSION= 'mlbviewer 0.1alpha5-svn  http://sourceforge.net/projects/mlbviewer'
 
 KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'Enter'      : 'Play video of highlighted game',
@@ -79,16 +80,19 @@ def mainloop(myscr,cfg):
 
     myscr = curses.initscr()
 
+    # This will be used for statuslines
+    statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
+
+
     current_cursor = 0
     
     # Print a simple splash for now just so we don't show dead screen while
     # we're fetching the listings
-    myscr.addstr(curses.LINES/2,6,VERSION)
-    myscr.addstr(curses.LINES-1,0,'Please wait for listings to load...')
+    lines = ('mlbviewer', VERSION, URL)
+    for i in xrange(len(lines)):
+        myscr.addstr(curses.LINES/2+i, (curses.COLS-len(lines[i]))/2, lines[i])
+    statuswin.addstr(0,0,'Please wait for listings to load...')
     myscr.refresh()
-
-    # This will be used for statuslines
-    statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
 
     mysched = MLBSchedule(time_shift=cfg['time_offset'])
     # We'll make a note of the date, to return to it later.
