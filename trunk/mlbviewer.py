@@ -320,6 +320,12 @@ def mainloop(myscr,cfg):
                                 myscr.addstr(0,0,cmd_str)
                                 myscr.refresh()
                                 time.sleep(3)
+			    else:
+			        statuswin.clear()
+                                statuswin.addstr(0,0,"Buffering stream")
+                                statuswin.refresh()
+                                time.sleep(.5)
+
                             play_process=subprocess.Popen(cmd_str,shell=True)
                             play_process.wait()
                         except:
