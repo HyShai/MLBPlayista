@@ -22,6 +22,8 @@ play the video)
 
 debug = True/False (informative errors to figure out what's going wrong)
 
+x_display = x (use this to set your DISPLAY variable, useful for remote launch)
+
 audio_follow = x (team whose local radio broadcasters you always want
 to listen to)
 
