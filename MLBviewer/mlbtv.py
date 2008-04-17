@@ -34,6 +34,7 @@ import select
 AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
 LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
+USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
 
 TEAMCODES = {
     'ana': ('LAA', 'Los Angeles', 'Angels', 'of Anaheim'),
@@ -140,7 +141,7 @@ class MLBSchedule:
         self.data = []
 
     def __getSchedule(self):
-        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
+        txheaders = {'User-agent' : USERAGENT}
         data = None
         req = urllib2.Request(self.url,data,txheaders)
         try:
@@ -289,7 +290,7 @@ class GameStream:
 
         # First visit the login page and get the session cookie
         login_url = 'https://secure.mlb.com/enterworkflow.do?flowId=registration.wizard&c_id=mlb'
-        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
+        txheaders = {'User-agent' : USERAGENT}
         data = None
         req = urllib2.Request(login_url,data,txheaders)
         try:
@@ -304,7 +305,7 @@ class GameStream:
 
         # now authenticate
         auth_url = 'https://secure.mlb.com/authenticate.do'
-        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
+        txheaders = {'User-agent' : USERAGENT,
                      'Referer' : 'https://secure.mlb.com/enterworkflow.do?flowId=registration.wizard&c_id=mlb'}
         auth_values = {'uri' : '/account/login_register.jsp',
                        'registrationAction' : 'identify',
@@ -365,7 +366,7 @@ class GameStream:
         # Referrer should look something like this but we'll need to pull
         # more info from listings for this:
         """ http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=200804102514514&w_id=643428&w=reflector%3A19440&pid=mlb_lg&gid=2008/04/12/tormlb-texmlb-1&fid=mlb_lg400&cid=mlb&v=3 """
-        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
+        txheaders = {'User-agent' : USERAGENT}
         wf_data = None
         req = urllib2.Request(wf_url,wf_data,txheaders)
         try:
@@ -389,7 +390,7 @@ class GameStream:
         """Logs out from the mlb.com session. Meant to prevent
         multiple login errors."""
         LOGOUT_URL="https://secure.mlb.com/enterworkflow.do?flowId=registration.logout&c_id=mlb"
-        txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
+        txheaders = {'User-agent' : USERAGENT,
                      'Referer' : 'http://mlb.mlb.com/index.jsp'}
         data = None
         req = urllib2.Request(LOGOUT_URL,data,txheaders)
