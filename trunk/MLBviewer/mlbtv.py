@@ -29,6 +29,7 @@ import select
 # Set this to True if you want to see all the html pages in the logfile
 #DEBUG = True
 #DEBUG = None
+#from __init__ import AUTHDIR
 
 AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
