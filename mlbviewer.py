@@ -321,7 +321,7 @@ def mainloop(myscr,cfg):
                                 myscr.refresh()
                                 time.sleep(3)
 			    else:
-			        statuswin.clear()
+                                statuswin.clear()
                                 statuswin.addstr(0,0,"Buffering stream")
                                 statuswin.refresh()
                                 time.sleep(.5)
