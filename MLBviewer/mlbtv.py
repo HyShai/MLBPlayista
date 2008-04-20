@@ -265,8 +265,10 @@ class MLBSchedule:
 
 
 class GameStream:
-    def __init__(self,game_id, email, passwd, debug=None, streamtype='video'):
-        self.id = game_id
+    def __init__(self,stream, email, passwd, debug=None, streamtype='video'):
+        self.stream = stream
+        self.id = self.stream['id']
+        self.gameid = stream['gid']
         self.email = email
         self.passwd = passwd
         self.session_cookies = None
@@ -299,9 +301,10 @@ class GameStream:
         except:
             self.error_str = 'Error occurred in HTTP request to login page'
             raise Exception, self.error_str
-        self.log.write('Did we receive a cookie from the wizard?\n')
-        for index, cookie in enumerate(self.session_cookies):
-           print >> self.log, index, ' : ' , cookie
+        if self.debug:
+            self.log.write('Did we receive a cookie from the wizard?\n')
+            for index, cookie in enumerate(self.session_cookies):
+                print >> self.log, index, ' : ' , cookie
         self.session_cookies.save(COOKIEFILE)
 
         # now authenticate
@@ -320,9 +323,10 @@ class GameStream:
             self.error_str = 'Error occurred in HTTP request to auth page'
             raise Exception, self.error_str
         auth_page = handle.read()
-        self.log.write('Did we receive a cookie from authenticate?\n')
-        for index, cookie in enumerate(self.session_cookies):
-           print >> self.log, index, ' : ' , cookie
+        if self.debug:
+            self.log.write('Did we receive a cookie from authenticate?\n')
+            for index, cookie in enumerate(self.session_cookies):
+                print >> self.log, index, ' : ' , cookie
         self.session_cookies.save(COOKIEFILE)
 
         pattern = re.compile(r'Welcome to your personal mlb.com account.')
@@ -351,7 +355,7 @@ class GameStream:
         # The hope is that this sequence will always be the same and leave
         # it to url() to determine if an error occurs.  This way, hopefully, 
         # error or no, we'll always log out.
-        self.log.write('Querying enterworkflow.do for streamid = ' + self.id + '\n')
+        self.log.write('Querying enterworkflow.do for { \'gameid\' : ' + self.gameid + ', \'streamid\' : ' + self.id + ', \'streamtype\' : ' + self.streamtype + '}\n')
         if self.session_cookies is None:
             self.login()
         wf_url = "http://www.mlb.com/enterworkflow.do?" +\
@@ -367,18 +371,25 @@ class GameStream:
         # Referrer should look something like this but we'll need to pull
         # more info from listings for this:
         """ http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=200804102514514&w_id=643428&w=reflector%3A19440&pid=mlb_lg&gid=2008/04/12/tormlb-texmlb-1&fid=mlb_lg400&cid=mlb&v=3 """
-        txheaders = {'User-agent' : USERAGENT}
-        wf_data = None
-        req = urllib2.Request(wf_url,wf_data,txheaders)
+        referrer_str = "http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?" +\
+            self.stream['mid'] + '&w_id=' + self.stream['w_id'] + '&w=' + self.stream['w'] +\
+            '&pid=' + self.stream['pid'] + '&fid=' + self.stream['fid'] +\
+            '&cid=mlb&v=' + self.stream['v']
+        txheaders = {'User-agent' : USERAGENT,
+                     'Referrer'   : referrer_str }
+        #wf_data = None
+        #req = urllib2.Request(wf_url,wf_data,txheaders)
+        req = urllib2.Request(url=wf_url,headers=txheaders)
         try:
             handle = urllib2.urlopen(req)
         except:
             self.error_str = 'Error occurred in HTTP request to workflow page'
             raise Exception, self.error_str
         url_data = handle.read()
-        self.log.write('Did we receive a cookie from workflow?\n')
-        for index, cookie in enumerate(self.session_cookies):
-           print >> self.log, index, ' : ' , cookie
+        if self.debug:
+            self.log.write('Did we receive a cookie from workflow?\n')
+            for index, cookie in enumerate(self.session_cookies):
+                print >> self.log, index, ' : ' , cookie
         self.session_cookies.save(COOKIEFILE)
         #handle.close()
         if self.debug:
@@ -409,6 +420,7 @@ class GameStream:
            self.log.write("DEBUG>>> writing logout page")
            self.log.write(logout_info)
         # clear session cookies since they're no longer valid
+        self.log.write('Clearing session cookies\n')
         self.session_cookies.clear_session_cookies()
         # session is bogus now - force a new login each time
         self.session_cookies = None
