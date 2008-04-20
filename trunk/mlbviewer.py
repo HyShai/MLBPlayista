@@ -15,6 +15,7 @@ import datetime
 import subprocess
 import time
 
+
 # # Set this to True if you want to see all the html pages in the logfile
 # DEBUG = True
 # #DEBUG = None
@@ -34,7 +35,9 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'r'          : 'Refresh listings',
                 'q'          : 'Quit mlbviewer',
                 'h'          : 'Display version and keybindings',
-                'a'          : 'Play Gameday audio of highlighted game'
+                'a'          : 'Play Gameday audio of highlighted game',
+                'd'          : 'Toggle debug (does not change config file)',
+                'p'          : 'Toggle speed (does not change config file)'
               }
 
 def prompter(win,prompt):
@@ -113,6 +116,10 @@ def mainloop(myscr,cfg):
         "GO": "Status: Game Over - stream not yet available",
         "LB": "Status: Local Blackout"}
 
+    speedtoggle = {
+        "400" : "[400K]",
+        "800" : "[800K]"}
+
     while True:
         myscr.clear()
         statuswin.clear()
@@ -153,6 +160,18 @@ def mainloop(myscr,cfg):
                         myscr.addstr(n+2, 0, s)
             else:
                 status_str = "No listings available for this day."
+
+        # Add the speed toggle plus padding
+        status_str_len = len(status_str) + len(speedtoggle.get(cfg['speed'])) + 2
+        if cfg['debug']:
+            status_str_len += len('[DEBUG]')
+        padding = curses.COLS - status_str_len
+        if cfg['debug']:
+            debug_str = '[DEBUG]'
+        else:
+            debug_str = ''
+        status_str += ' '*padding + debug_str + speedtoggle.get(cfg['speed'])
+
         # And write the status
         statuswin.addstr(0,0,status_str,curses.A_BOLD)
 
@@ -169,6 +188,29 @@ def mainloop(myscr,cfg):
         elif LIRC:
             if irc_socket in inputs:
                 c = irc_conn.next_code()
+
+        # speedtoggle
+        if c in ('Speed', ord('p')):
+            # there's got to be an easier way to do this
+            temp = speedtoggle.copy()
+            del temp[cfg['speed']]
+            for speed in temp:
+                cfg['speed'] = speed
+            del temp
+            statuswin.clear()
+            statuswin.addstr(0,0,'Refreshing listings...')
+            statuswin.refresh()
+            available = mysched.getListings(cfg['speed'],
+                                            cfg['blackout'],
+                                            cfg['audio_follow'])
+        # debug toggle
+        if c in ('Debug', ord('d')):
+            if cfg['debug']:
+                cfg['debug'] = False
+            else:
+                cfg['debug'] = True
+            #statuswin.clear()
+            #statuswin.refresh()
 
         # down
         if c in ('Down', curses.KEY_DOWN):
@@ -275,15 +317,30 @@ def mainloop(myscr,cfg):
 
 
 
-        if c in ('Enter', 10):
+        if c in ('Enter', 10, 'Audio', ord('a')):
+            if c in ('Audio', ord('a')):
+                audio = True
+                player = cfg['audio_player']
+            else:
+                audio = False
+                player = cfg['video_player']
             try:
                 # Turn off socket
                 if LIRC:
                     irc_socket.close()
                     irc_conn.connected = False
 
-                streamid = available[current_cursor][2]['id']
-                g = GameStream(streamid, cfg['user'], cfg['pass'], cfg['debug'])
+                #streamid = available[current_cursor][2]['id']
+                #g = GameStream(streamid, cfg['user'], cfg['pass'], cfg['debug'])
+                # pass the entire url tree to GameStream
+                if audio:
+                    stream = available[current_cursor][3]
+                    g = GameStream(stream, cfg['user'], cfg['pass'], 
+                                   cfg['debug'], streamtype='audio')
+                else:
+                    stream = available[current_cursor][2]
+                    g = GameStream(stream, cfg['user'], cfg['pass'], 
+                                   cfg['debug'])
                 
                 # print a "Trying..." message so we don't look frozen
                 myscr.addstr(curses.LINES-1,0,'Fetching URL for game stream...')
@@ -292,116 +349,56 @@ def mainloop(myscr,cfg):
                 if cfg['debug']:
                     myscr.addstr(curses.LINES-1,0,'Debug set, fetching URL but not playing...')
                     myscr.refresh()
+                try:
                     u = g.url()
+                except:
+                    # Debugging should make errors fatal in case there is a
+                    # logic, coding, or other uncaught error being hidden by
+                    # the following exception handling code
+                    if cfg['debug']:
+                        raise
                     myscr.clear()
-                    myscr.addstr(0,0,'Url received:')
-                    myscr.addstr(1,0,u)
+                    myscr.addstr(0,0,'An error occurred in locating the game stream:')
+                    myscr.addstr(2,0,g.error_str)
                     myscr.refresh()
                     time.sleep(3)
+                else:
+                    if cfg['debug']:
+                        myscr.clear()
+                        myscr.addstr(0,0,'Url received:')
+                        myscr.addstr(1,0,u)
+                        myscr.refresh()
+                        time.sleep(3)
                     # I'd rather leave an error on the screen but you'll need
                     # to write a lirc handler for getch()
                     #myscr.getch()
-                else:
+                    if cfg['debug']:
+                        continue
                     try:
-                        u = g.url()
-                    except:
-                        myscr.clear()
-                        myscr.addstr(0,0,'An error occurred in locating the game stream:')
-                        myscr.addstr(2,0,g.error_str)
-                        myscr.refresh()
-                        time.sleep(3)
-                    else:
-                        try:
-                            if '%s' in cfg['video_player']:
-                                cmd_str = cfg['video_player'].replace('%s', '"' + u + '"')
-                            else:
-                                cmd_str = cfg['video_player'] + ' "' + u + '" '
-                            if cfg['show_player_command']:
-                                myscr.clear()
-                                myscr.addstr(0,0,cmd_str)
-                                myscr.refresh()
-                                time.sleep(3)
-			    else:
+                        if '%s' in player:
+                            cmd_str = player.replace('%s', '"' + u + '"')
+                        else:
+                            cmd_str = player + ' "' + u + '" '
+                        if cfg['show_player_command']:
+                            myscr.clear()
+                            myscr.addstr(0,0,cmd_str)
+                            myscr.refresh()
+                            time.sleep(3)
+		        else:
+                            if not audio:
                                 statuswin.clear()
                                 statuswin.addstr(0,0,"Buffering stream")
                                 statuswin.refresh()
                                 time.sleep(.5)
 
-                            play_process=subprocess.Popen(cmd_str,shell=True)
-                            play_process.wait()
-                        except:
-                            myscr.clear()
-                            ERROR_STRING = "There was an error in the player process."
-                            myscr.addstr(0,0,ERROR_STRING)
-                            myscr.refresh()
-                            time.sleep(3)
-
-                # Turn the ir_program back on                
-                if LIRC:
-                    irc_conn = LircConnection()
-                    irc_conn.connect()
-        	    irc_conn.getconfig()
-                    irc_socket=irc_conn.conn
-                    inputlst = [sys.stdin, irc_socket]
-            except IndexError:
-                pass
-
-
-        if c in ('Audio', ord('a')):
-            try:
-                # Turn off socket
-                if LIRC:
-                    irc_socket.close()
-                    irc_conn.connected = False
-
-                streamid = available[current_cursor][3]['id']
-                g = GameStream(streamid, cfg['user'], cfg['pass'], cfg['debug'],
-                               streamtype='audio')
-                
-                # print a "Trying..." message so we don't look frozen
-                myscr.addstr(curses.LINES-1,0,'Fetching URL for game stream...')
-                myscr.refresh()
-
-                if cfg['debug']:
-                    myscr.addstr(curses.LINES-1,0,'Debug set, fetching URL but not playing...')
-                    myscr.refresh()
-                    u = g.url()
-                    myscr.clear()
-                    myscr.addstr(0,0,'Url received:')
-                    myscr.addstr(1,0,u)
-                    myscr.refresh()
-                    time.sleep(3)
-                    # I'd rather leave an error on the screen but you'll need
-                    # to write a lirc handler for getch()
-                    #myscr.getch()
-                else:
-                    try:
-                        u = g.url()
+                        play_process=subprocess.Popen(cmd_str,shell=True)
+                        play_process.wait()
                     except:
                         myscr.clear()
-                        myscr.addstr(0,0,'An error occurred in locating the game stream:')
-                        myscr.addstr(2,0,g.error_str)
+                        ERROR_STRING = "There was an error in the player process."
+                        myscr.addstr(0,0,ERROR_STRING)
                         myscr.refresh()
                         time.sleep(3)
-                    else:
-                        try:
-                            if '%s' in cfg['audio_player']:
-                                cmd_str = cfg['audio_player'].replace('%s', '"' + u + '"')
-                            else:
-                                cmd_str = cfg['audio_player'] + ' "' + u + '" '
-                            if cfg['show_player_command']:
-                                myscr.clear()
-                                myscr.addstr(0,0,cmd_str)
-                                myscr.refresh()
-                                time.sleep(3)
-                            play_process=subprocess.Popen(cmd_str,shell=True)
-                            play_process.wait()
-                        except:
-                            myscr.clear()
-                            ERROR_STRING = "There was an error in the player process."
-                            myscr.addstr(0,0,ERROR_STRING)
-                            myscr.refresh()
-                            time.sleep(3)
 
                 # Turn the ir_program back on                
                 if LIRC:
@@ -412,8 +409,6 @@ def mainloop(myscr,cfg):
                     inputlst = [sys.stdin, irc_socket]
             except IndexError:
                 pass
-
-
 
         if c in ('Refresh', ord('r')):
             # refresh
