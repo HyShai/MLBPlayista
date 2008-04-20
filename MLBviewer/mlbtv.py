@@ -371,7 +371,7 @@ class GameStream:
         # Referrer should look something like this but we'll need to pull
         # more info from listings for this:
         """ http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=200804102514514&w_id=643428&w=reflector%3A19440&pid=mlb_lg&gid=2008/04/12/tormlb-texmlb-1&fid=mlb_lg400&cid=mlb&v=3 """
-        referrer_str = "http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?" +\
+        referrer_str = "http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=" +\
             self.stream['mid'] + '&w_id=' + self.stream['w_id'] + '&w=' + self.stream['w'] +\
             '&pid=' + self.stream['pid'] + '&fid=' + self.stream['fid'] +\
             '&cid=mlb&v=' + self.stream['v']
