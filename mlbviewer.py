@@ -407,8 +407,8 @@ def mainloop(myscr,cfg):
         	    irc_conn.getconfig()
                     irc_socket=irc_conn.conn
                     inputlst = [sys.stdin, irc_socket]
-                except IndexError:
-                    pass
+            except IndexError:
+                pass
 
         if c in ('Refresh', ord('r')):
             # refresh
