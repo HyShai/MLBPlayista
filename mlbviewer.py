@@ -10,6 +10,7 @@ import os
 import sys
 import re
 import curses
+import curses.textpad
 import select
 import datetime
 import subprocess
@@ -45,9 +46,10 @@ def prompter(win,prompt):
     win.addstr(0,0,prompt,curses.A_BOLD)
     win.refresh()
 
-    curses.echo()
-    output = win.getstr(0,len(prompt))
-    curses.noecho()
+    responsewin = win.derwin(0, len(prompt))
+    responsebox = curses.textpad.Textbox(responsewin)
+    responsebox.edit()
+    output = responsebox.gather()
 
     return output
 
