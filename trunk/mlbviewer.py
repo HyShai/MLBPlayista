@@ -5,6 +5,7 @@ from MLBviewer import GameStream
 from MLBviewer import LircConnection
 from MLBviewer import MLBConfig
 from MLBviewer import MLBUrlError
+from MLBviewer import MLBJsonError
 from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE
 import os
 import sys
@@ -115,7 +116,14 @@ def mainloop(myscr,cfg):
     today_month = mysched.month
     today_day = mysched.day
 
-    available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
+    try:
+        available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
+    except MLBJsonError:
+        available = []
+        status_str = "There was a parser problem with the listings page"
+        statuswin.addstr(0,0,status_str)
+        statuswin.refresh()
+        time.sleep(2)
 
     statusline = {
         "I" : "Status: In Progress",
@@ -231,6 +239,10 @@ def mainloop(myscr,cfg):
         if c in ('Highlights', ord('t')):
             if 'topPlays' in CURRENT_SCREEN:
                 continue
+            try:
+                GAMEID = available[current_cursor][5]
+            except IndexError:
+                continue
             DISABLED_FEATURES = ['Jump', ord('j'), \
                                  'Left', curses.KEY_LEFT, \
                                  'Right', curses.KEY_RIGHT, \
@@ -240,7 +252,6 @@ def mainloop(myscr,cfg):
             # Switch to 400 for highlights since all highlights are 400k
             # This is really just to toggle the indicator
             cfg['speed'] = '400'
-            GAMEID = available[current_cursor][5]
             available = mysched.getTopPlays(GAMEID)
             CURRENT_SCREEN = 'topPlays'
             current_cursor = 0
@@ -252,9 +263,16 @@ def mainloop(myscr,cfg):
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
             cfg['speed'] = str(RESTORE_SPEED)
-            available = mysched.getListings(cfg['speed'],
+            try:
+                available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
+            except MLBJsonError:
+                available = []
+                status_str = "There was a parser problem with the listings page"
+                statuswin.addstr(0,0,status_str)
+                statuswin.refresh()
+                time.sleep(2)
 
         if c in DISABLED_FEATURES:
             status_str = 'That key is not supported in this screen'
@@ -274,9 +292,17 @@ def mainloop(myscr,cfg):
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
-            available = mysched.getListings(cfg['speed'],
+            try:
+                available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
+            except MLBJsonError:
+                available = []
+                status_str = "There was a parser problem with the listings page"
+                statuswin.addstr(0,0,status_str)
+                statuswin.refresh()
+                time.sleep(2)
+
         # debug toggle
         if c in ('Debug', ord('d')):
             if cfg['debug']:
@@ -311,6 +337,16 @@ def mainloop(myscr,cfg):
             available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
+            try:
+                available = mysched.getListings(cfg['speed'],
+                                            cfg['blackout'],
+                                            cfg['audio_follow'])
+            except MLBJsonError:
+                available = []
+                status_str = "There was a parser problem with the listings page"
+                statuswin.addstr(0,0,status_str)
+                statuswin.refresh()
+                time.sleep(2)
             current_cursor = 0
 
         # right (foward)
@@ -325,9 +361,16 @@ def mainloop(myscr,cfg):
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
-            available = mysched.getListings(cfg['speed'],
+            try:
+                available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
+            except MLBJsonError:
+                available = []
+                status_str = "There was a parser problem with the listings page"
+                statuswin.addstr(0,0,status_str)
+                statuswin.refresh()
+                time.sleep(2)
             current_cursor = 0
 
         if c in ('Jump', ord('j')):
@@ -350,9 +393,16 @@ def mainloop(myscr,cfg):
                 statuswin.clear()
                 statuswin.addstr(0,0,'Refreshing listings...')
                 statuswin.refresh()
-                available = mysched.getListings(cfg['speed'],
+                try:
+                    available = mysched.getListings(cfg['speed'],
                                                 cfg['blackout'],
                                                 cfg['audio_follow'])
+                except MLBJsonError:
+                    available = []
+                    status_str = "There was a parser problem with the listings page"
+                    statuswin.addstr(0,0,status_str)
+                    statuswin.refresh()
+                    time.sleep(2)
                 current_cursor = 0
             else:
                 pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})(/)([0-9]{2})')
@@ -384,6 +434,12 @@ def mainloop(myscr,cfg):
                         statuswin.addstr(0,0,error_str,curses.A_BOLD)
                         statuswin.refresh()
                         time.sleep(1.5)
+                    except MLBJsonError:
+                        available = []
+                        status_str = "There was a parser problem with the listings page"
+                        statuswin.addstr(0,0,status_str)
+                        statuswin.refresh()
+                        time.sleep(2)
 
 
         if c in ('Help', ord('h')):
@@ -509,9 +565,16 @@ def mainloop(myscr,cfg):
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
-            available=mysched.getListings(cfg['speed'],
-                                          cfg['blackout'],
-                                          cfg['audio_follow'])
+            try:
+                available = mysched.getListings(cfg['speed'],
+                                            cfg['blackout'],
+                                            cfg['audio_follow'])
+            except MLBJsonError:
+                status_str = "There was a parser problem with the listings page"
+                statuswin.addstr(0,0,status_str)
+                statuswin.refresh()
+                time.sleep(2)
+                available = []
             if 'topPlays' in CURRENT_SCREEN:
                 available = mysched.getTopPlays(GAMEID)
 
