@@ -38,7 +38,8 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'h'          : 'Display version and keybindings',
                 'a'          : 'Play Gameday audio of highlighted game',
                 'd'          : 'Toggle debug (does not change config file)',
-                'p'          : 'Toggle speed (does not change config file)'
+                'p'          : 'Toggle speed (does not change config file)',
+                't'          : 'Display top plays listing for current game'
               }
 
 def prompter(win,prompt):
@@ -54,6 +55,12 @@ def prompter(win,prompt):
     return output
 
 def mainloop(myscr,cfg):
+
+    DISABLED_FEATURES = []
+    CURRENT_SCREEN = 'listings'
+    # Toggle the speed to 400k for top plays.  
+    # Initialize the value here in case 'l' selected before 't'
+    RESTORE_SPEED = cfg['speed']
 
     if cfg['x_display']:
         os.environ['DISPLAY'] = cfg['x_display']
@@ -87,6 +94,7 @@ def mainloop(myscr,cfg):
 
     # This will be used for statuslines
     statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
+    titlewin  = curses.newwin(2,curses.COLS-1,0,0)
 
 
     current_cursor = 0
@@ -99,6 +107,7 @@ def mainloop(myscr,cfg):
     statuswin.addstr(0,0,'Please wait for listings to load...')
     statuswin.refresh()
     myscr.refresh()
+    titlewin.refresh()
 
     mysched = MLBSchedule(time_shift=cfg['time_offset'])
     # We'll make a note of the date, to return to it later.
@@ -125,23 +134,44 @@ def mainloop(myscr,cfg):
     while True:
         myscr.clear()
         statuswin.clear()
+        titlewin.clear()
 
-        datestr= "AVAILABLE GAMES FOR " +\
-            str(mysched.month) + '/' +\
-            str(mysched.day) + '/' +\
-            str(mysched.year) + ' ' +\
-            '(Use arrow keys to change days)'
+        # if we're in top plays screen, listings title is replaced with top
+        # plays title
+        if 'topPlays' in CURRENT_SCREEN:
+            # probably a better way to do this, but some games don't have
+            # highlights :(
+            if not available:
+                titlestr = "NO TOP PLAYS AVAILABLE FOR THIS GAME"
+            else:
+                titlestr = "TOP PLAYS FOR " + available[current_cursor][0] +\
+                ' (' +\
+                str(mysched.month) + '/' +\
+                str(mysched.day) + '/' +\
+                str(mysched.year) + ')' 
+                
+        else:
+            titlestr = "AVAILABLE GAMES FOR " +\
+                str(mysched.month) + '/' +\
+                str(mysched.day) + '/' +\
+                str(mysched.year) + ' ' +\
+                '(Use arrow keys to change days)'
 
         # Draw the date
-        myscr.addstr(0,0,datestr)
+        titlewin.addstr(0,0,titlestr)
+            
+
         # Draw a line
-        myscr.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
+        titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
 
         for n in range(curses.LINES-4):
             if n < len(available):
-                s = available[n][0] + ':' + available[n][1]
-                if available[n][4] == 'F':
-                    s+= ' (Archived)'
+                if 'topPlays' in CURRENT_SCREEN:
+                    s = available[n][1]
+                else:
+                    s = available[n][0] + ':' + available[n][1]
+                    if available[n][4] == 'F':
+                        s+= ' (Archived)'
                 padding = curses.COLS - (len(s) + 1)
                 s += ' '*padding
             else:
@@ -154,14 +184,20 @@ def mainloop(myscr,cfg):
                         myscr.addstr(n+2,0,s, curses.A_REVERSE|curses.A_BOLD)
                     else:
                         myscr.addstr(n+2,0,s, curses.A_REVERSE)
-                    status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
+                    if 'topPlays' in CURRENT_SCREEN:
+                        status_str = 'Press L to return to listings...'
+                    else:
+                        status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
                 else:
                     if n < len(available) and available[n][4] == 'I':
                         myscr.addstr(n+2, 0, s, curses.A_BOLD)
                     else:
                         myscr.addstr(n+2, 0, s)
             else:
-                status_str = "No listings available for this day."
+                if 'topPlays' in CURRENT_SCREEN:
+                    status_str = 'Press L to return to listings...'
+                else:
+                    status_str = "No listings available for this day."
 
         # Add the speed toggle plus padding
         status_str_len = len(status_str) + len(speedtoggle.get(cfg['speed'])) + 2
@@ -179,6 +215,7 @@ def mainloop(myscr,cfg):
 
         # And refresh
         myscr.refresh() 
+        titlewin.refresh()
         statuswin.refresh()       
 
         
@@ -190,6 +227,41 @@ def mainloop(myscr,cfg):
         elif LIRC:
             if irc_socket in inputs:
                 c = irc_conn.next_code()
+
+        if c in ('Highlights', ord('t')):
+            if 'topPlays' in CURRENT_SCREEN:
+                continue
+            DISABLED_FEATURES = ['Jump', ord('j'), \
+                                 'Left', curses.KEY_LEFT, \
+                                 'Right', curses.KEY_RIGHT, \
+                                 'Speed', ord('p'),
+                                 'Audio', ord('a')]
+            RESTORE_SPEED = cfg['speed']
+            # Switch to 400 for highlights since all highlights are 400k
+            # This is really just to toggle the indicator
+            cfg['speed'] = '400'
+            GAMEID = available[current_cursor][5]
+            available = mysched.getTopPlays(GAMEID)
+            CURRENT_SCREEN = 'topPlays'
+            current_cursor = 0
+
+        if c in ('Listings', ord('l'), ord('L')):
+            DISABLED_FEATURES = []
+            CURRENT_SCREEN = 'listings'
+            statuswin.clear()
+            statuswin.addstr(0,0,'Refreshing listings...')
+            statuswin.refresh()
+            cfg['speed'] = str(RESTORE_SPEED)
+            available = mysched.getListings(cfg['speed'],
+                                            cfg['blackout'],
+                                            cfg['audio_follow'])
+
+        if c in DISABLED_FEATURES:
+            status_str = 'That key is not supported in this screen'
+            statuswin.addstr(0,0,status_str)
+            statuswin.refresh()
+            time.sleep(1)
+            continue
 
         # speedtoggle
         if c in ('Speed', ord('p')):
@@ -233,6 +305,9 @@ def mainloop(myscr,cfg):
             dif = datetime.timedelta(1)
             t -= dif
             mysched = MLBSchedule((t.year, t.month, t.day))
+            statuswin.clear()
+            statuswin.addstr(0,0,'Refreshing listings...')
+            statuswin.refresh()
             available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
@@ -247,6 +322,9 @@ def mainloop(myscr,cfg):
             dif = datetime.timedelta(1)
             t += dif
             mysched = MLBSchedule((t.year, t.month, t.day))
+            statuswin.clear()
+            statuswin.addstr(0,0,'Refreshing listings...')
+            statuswin.refresh()
             available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
@@ -269,6 +347,9 @@ def mainloop(myscr,cfg):
                 time.sleep(1)
 
                 mysched = MLBSchedule((today_year, today_month, today_day))
+                statuswin.clear()
+                statuswin.addstr(0,0,'Refreshing listings...')
+                statuswin.refresh()
                 available = mysched.getListings(cfg['speed'],
                                                 cfg['blackout'],
                                                 cfg['audio_follow'])
@@ -307,7 +388,9 @@ def mainloop(myscr,cfg):
 
         if c in ('Help', ord('h')):
             myscr.clear()
+            titlewin.clear()
             myscr.addstr(0,0,VERSION)
+            myscr.addstr(0,20,URL)
             n = 2
             for elem in KEYBINDINGS:
                myscr.addstr(n,0,elem)
@@ -326,23 +409,28 @@ def mainloop(myscr,cfg):
             else:
                 audio = False
                 player = cfg['video_player']
+                # if top_plays_player defined, let's use it
+                if 'topPlays' in CURRENT_SCREEN:
+                    if cfg['top_plays_player']:
+                        player = cfg['top_plays_player']
             try:
                 # Turn off socket
                 if LIRC:
                     irc_socket.close()
                     irc_conn.connected = False
 
-                #streamid = available[current_cursor][2]['id']
-                #g = GameStream(streamid, cfg['user'], cfg['pass'], cfg['debug'])
-                # pass the entire url tree to GameStream
+                if 'topPlays' in CURRENT_SCREEN:
+                    doAuth=False
+                else:
+                    doAuth=True
                 if audio:
                     stream = available[current_cursor][3]
                     g = GameStream(stream, cfg['user'], cfg['pass'], 
-                                   cfg['debug'], streamtype='audio')
+                                   cfg['debug'], streamtype='audio',auth=doAuth)
                 else:
                     stream = available[current_cursor][2]
                     g = GameStream(stream, cfg['user'], cfg['pass'], 
-                                   cfg['debug'])
+                                   cfg['debug'],auth=doAuth)
                 
                 # print a "Trying..." message so we don't look frozen
                 myscr.addstr(curses.LINES-1,0,'Fetching URL for game stream...')
@@ -360,6 +448,7 @@ def mainloop(myscr,cfg):
                     if cfg['debug']:
                         raise
                     myscr.clear()
+                    titlewin.clear()
                     myscr.addstr(0,0,'An error occurred in locating the game stream:')
                     myscr.addstr(2,0,g.error_str)
                     myscr.refresh()
@@ -367,6 +456,7 @@ def mainloop(myscr,cfg):
                 else:
                     if cfg['debug']:
                         myscr.clear()
+                        titlewin.clear()
                         myscr.addstr(0,0,'Url received:')
                         myscr.addstr(1,0,u)
                         myscr.refresh()
@@ -383,6 +473,7 @@ def mainloop(myscr,cfg):
                             cmd_str = player + ' "' + u + '" '
                         if cfg['show_player_command']:
                             myscr.clear()
+                            titlewin.clear()
                             myscr.addstr(0,0,cmd_str)
                             myscr.refresh()
                             time.sleep(3)
@@ -397,6 +488,7 @@ def mainloop(myscr,cfg):
                         play_process.wait()
                     except:
                         myscr.clear()
+                        titlewin.clear()
                         ERROR_STRING = "There was an error in the player process."
                         myscr.addstr(0,0,ERROR_STRING)
                         myscr.refresh()
@@ -414,9 +506,14 @@ def mainloop(myscr,cfg):
 
         if c in ('Refresh', ord('r')):
             # refresh
+            statuswin.clear()
+            statuswin.addstr(0,0,'Refreshing listings...')
+            statuswin.refresh()
             available=mysched.getListings(cfg['speed'],
                                           cfg['blackout'],
                                           cfg['audio_follow'])
+            if 'topPlays' in CURRENT_SCREEN:
+                available = mysched.getTopPlays(GAMEID)
 
         if c in ('Exit', ord('q')):
             curses.nocbreak()
@@ -437,6 +534,7 @@ if __name__ == "__main__":
                   'show_player_command': 0,
                   'debug': 0,
                   'x_display': '',
+                  'top_plays_player': '',
                   'time_offset': ''}
 
     mycfg = MLBConfig(mydefaults)

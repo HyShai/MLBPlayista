@@ -143,12 +143,15 @@ class MLBSchedule:
     def __getSchedule(self):
         txheaders = {'User-agent' : USERAGENT}
         data = None
+        p404_pat = re.compile(r'no longer exists')
         req = urllib2.Request(self.url,data,txheaders)
         try:
             fp = urllib2.urlopen(req)
         except urllib2.HTTPError:
             raise MLBUrlError
         out = fp.read()
+        if re.search(p404_pat,out):
+            raise MLBUrlError
         fp.close()
         return out
 
@@ -191,7 +194,7 @@ class MLBSchedule:
         # This offers only the useful information for watching tv from
         # the getData step.
         if not self.data:
-            raise Exception
+            raise Exception,"No data in listings"
         else:
             out = []
             for elem in self.data:
@@ -242,7 +245,43 @@ class MLBSchedule:
                             dct['audio'][audio_feed] = elem[audio_feed]['urls'][0]['url']
                         else:
                             dct['audio'][audio_feed] = None
+                    # Top plays are indexed by the text since they are all 400k
+                    dct['top_plays'] = {}
+                    if elem['top_play_index']:
+                        for url in elem['top_play_index']:
+                             try:
+                                 text = url['text']
+                             except TypeError:
+                                 # there's an error in 4/1/2008 listing
+                                 continue
+                             text = text.replace('\"','\'')
+                             dct['top_plays']['game'] = dct['text']
+                             dct['top_plays'][text] = url['urls'][0]['url']
+                    if elem['game_wrapup']:
+                             text = elem['game_wrapup']['text']
+                             text = text.replace('\"','\'')
+                             dct['top_plays']['game'] = dct['text']
+                             dct['top_plays'][text] = elem['game_wrapup']['urls'][0]['url']
                     out.append((elem['gameid'], dct))
+        return out
+
+    def getTopPlays(self,gameid):
+        out = []
+        plays = self.trimList()
+
+        for elem in plays:
+            if elem[0] == gameid:
+                for play in elem[1]['top_plays'].keys():
+                    if play != 'game':
+                        dummy  = ''
+                        title  = elem[1]['top_plays']['game']
+                        text   = play
+                        status = elem[1]['status']
+                        recap_pat = re.compile(r'Recap')
+                        if re.search(recap_pat,play):
+                            out.insert(0,(title,text,elem[1]['top_plays'][text],status,elem[0]))   
+                        else:
+                            out.append((title,text,elem[1]['top_plays'][text],status,elem[0]))
         return out
 
     def getListings(self, myspeed, blackout, audiofollow):
@@ -265,7 +304,8 @@ class MLBSchedule:
 
 
 class GameStream:
-    def __init__(self,stream, email, passwd, debug=None, streamtype='video'):
+    def __init__(self,stream, email, passwd, debug=None,\
+                     auth=True, streamtype='video'):
         self.stream = stream
         self.id = self.stream['id']
         self.gameid = stream['gid']
@@ -276,6 +316,7 @@ class GameStream:
         self.error_str = "Uncaught error"
         self.log = open(LOGFILE,"a")
         self.log.write(str(datetime.datetime.now()) + '\n')
+        self.auth = auth
         self.debug = debug
     
     def login(self):
@@ -357,7 +398,8 @@ class GameStream:
         # error or no, we'll always log out.
         self.log.write('Querying enterworkflow.do for { \'gameid\' : ' + self.gameid + ', \'streamid\' : ' + self.id + ', \'streamtype\' : ' + self.streamtype + '}\n')
         if self.session_cookies is None:
-            self.login()
+            if self.auth:
+                self.login()
         wf_url = "http://www.mlb.com/enterworkflow.do?" +\
             "flowId=media.media&keepWfParams=true&mediaId=" +\
             str(self.id)
@@ -387,15 +429,18 @@ class GameStream:
             raise Exception, self.error_str
         url_data = handle.read()
         if self.debug:
-            self.log.write('Did we receive a cookie from workflow?\n')
-            for index, cookie in enumerate(self.session_cookies):
-                print >> self.log, index, ' : ' , cookie
-        self.session_cookies.save(COOKIEFILE)
+            if self.auth:
+                self.log.write('Did we receive a cookie from workflow?\n')
+                for index, cookie in enumerate(self.session_cookies):
+                    print >> self.log, index, ' : ' , cookie
+        if self.auth:
+            self.session_cookies.save(COOKIEFILE)
         #handle.close()
         if self.debug:
            self.log.write("DEBUG>>> writing workflow page")
            self.log.write(url_data)
-        self.logout()
+        if self.auth:
+            self.logout()
         return url_data
 
     def logout(self): 

@@ -8,9 +8,18 @@ user = x (mandatory)
 
 pass = x (mandatory)
 
+NOTE: Top Plays don't require a login, but these parameters are still mandatory.
+You can include them as user= and pass= without values if you don't have an 
+mlb.com account and only intend to use Top Plays feature.
+
 speed =x (speed for streaming video, 800 or 400)
 
 video_player = x (use %s for url, otherwise it will come at the end)
+
+top_plays_player = x (use %s for url, otherwise it will come at the end)
+
+(Optional, defaults to video_player setting, but you might want to set a 
+smaller cache size since these tend to be short streams anyway)
 
 audio_player = x (use %s for url, otherwise it will come at the end)
 
