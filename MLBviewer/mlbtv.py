@@ -195,14 +195,14 @@ class MLBSchedule:
         # steps above. Fills it up with data.
         try:
             self.data = self.__jsonToPython()
-        except ValueError:
-            self.data = ''
+        except ValueError,detail:
+            raise MLBJsonError,detail
 
     def trimList(self):
         # This offers only the useful information for watching tv from
         # the getData step.
         if not self.data:
-            raise MLBJsonError
+            raise MLBJsonError,detail
         else:
             out = []
             for elem in self.data:
