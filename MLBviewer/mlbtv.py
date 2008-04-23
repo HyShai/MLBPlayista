@@ -112,6 +112,9 @@ class Error(Exception):
 class MLBUrlError(Error):
     pass
 
+class MLBJsonError(Error):
+    pass
+
 class MLBSchedule:
 
     def __init__(self,ymd_tuple=None,time_shift=None):
@@ -188,13 +191,16 @@ class MLBSchedule:
     def getData(self):
         # This is the public method that puts together the private
         # steps above. Fills it up with data.
-        self.data = self.__jsonToPython()
+        try:
+            self.data = self.__jsonToPython()
+        except ValueError:
+            self.data = ''
 
     def trimList(self):
         # This offers only the useful information for watching tv from
         # the getData step.
         if not self.data:
-            raise Exception,"No data in listings"
+            raise MLBJsonError
         else:
             out = []
             for elem in self.data:
