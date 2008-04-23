@@ -145,9 +145,11 @@ aud_pattern = re.compile(r'(url:.*\")(http:\/\/[^ ]*)(".*)')
 # handle http urls for audio and older video
 try:
    game_url = re.search(vid_pattern, game_info).groups()[1]
+   player = datadct['video_player']
 except:
    try:
        game_url = re.search(aud_pattern, game_info).groups()[1]
+       player = datadct['audio_player']
    except:
        raise Exception, game_info
 
@@ -176,7 +178,7 @@ print 'The game url parsed is: '
 print game_url
 #sys.exit()
 
-cmd_str = datadct['video_player'] + ' "' + game_url + '"'
+cmd_str = player + ' "' + game_url + '"'
 playprocess = subprocess.Popen(cmd_str,shell=True)
 playprocess.wait()
 
