@@ -177,6 +177,8 @@ class MLBSchedule:
         # parenthesis, and enclose the entire thing in
         # brackets. (Close bracket.):
         mystr = ')'.join(mystr.split(')')[:-1]) + ']'
+        # First, escape any double quotes.
+        mystr = mystr.replace('\"', '\\\"')
         # Now turn single quotes into double quotes, which JSON
         # requires.
         mystr = mystr.replace('\'', '\"')
