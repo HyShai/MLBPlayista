@@ -334,9 +334,6 @@ def mainloop(myscr,cfg):
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
-            available = mysched.getListings(cfg['speed'],
-                                            cfg['blackout'],
-                                            cfg['audio_follow'])
             try:
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
