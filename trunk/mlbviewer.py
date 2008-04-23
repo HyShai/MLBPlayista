@@ -118,7 +118,9 @@ def mainloop(myscr,cfg):
 
     try:
         available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
-    except MLBJsonError:
+    except MLBJsonError, detail:
+        if cfg['debug']:
+            raise Exception, detail
         available = []
         status_str = "There was a parser problem with the listings page"
         statuswin.addstr(0,0,status_str)
@@ -267,7 +269,9 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError:
+            except MLBJsonError,detail:
+                if cfg['debug']:
+                    raise Exception,detail
                 available = []
                 status_str = "There was a parser problem with the listings page"
                 statuswin.addstr(0,0,status_str)
@@ -296,7 +300,9 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError:
+            except MLBJsonError,detail:
+                if cfg['debug']:
+                    raise Exception,detail
                 available = []
                 status_str = "There was a parser problem with the listings page"
                 statuswin.addstr(0,0,status_str)
@@ -338,7 +344,9 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError:
+            except MLBJsonError,detail:
+                if cfg['debug']:
+                    raise Exception,detail
                 available = []
                 status_str = "There was a parser problem with the listings page"
                 statuswin.addstr(0,0,status_str)
@@ -362,7 +370,9 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError:
+            except MLBJsonError,detail:
+                if cfg['debug']:
+                    raise Exception,detail
                 available = []
                 status_str = "There was a parser problem with the listings page"
                 statuswin.addstr(0,0,status_str)
@@ -394,7 +404,9 @@ def mainloop(myscr,cfg):
                     available = mysched.getListings(cfg['speed'],
                                                 cfg['blackout'],
                                                 cfg['audio_follow'])
-                except MLBJsonError:
+                except MLBJsonError,detail:
+                    if cfg['debug']:
+                        raise Exception,detail
                     available = []
                     status_str = "There was a parser problem with the listings page"
                     statuswin.addstr(0,0,status_str)
@@ -431,7 +443,9 @@ def mainloop(myscr,cfg):
                         statuswin.addstr(0,0,error_str,curses.A_BOLD)
                         statuswin.refresh()
                         time.sleep(1.5)
-                    except MLBJsonError:
+                    except MLBJsonError,detail:
+                        if cfg['debug']:
+                            raise Exception,detail
                         available = []
                         status_str = "There was a parser problem with the listings page"
                         statuswin.addstr(0,0,status_str)
@@ -566,7 +580,9 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError:
+            except MLBJsonError,detail:
+                if cfg['debug']:
+                    raise Exception,detail
                 status_str = "There was a parser problem with the listings page"
                 statuswin.addstr(0,0,status_str)
                 statuswin.refresh()
