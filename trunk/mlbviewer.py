@@ -17,18 +17,10 @@ import datetime
 import subprocess
 import time
 
-
-# # Set this to True if you want to see all the html pages in the logfile
-# DEBUG = True
-# #DEBUG = None
-
-# AUTHDIR = '.mlb'
-# AUTHFILE = 'config'
 DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
 DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
 DEFAULT_SPEED = 400 
 
-#VERSION= 'mlbviewer 0.1alpha5-svn  http://sourceforge.net/projects/mlbviewer'
 
 KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'Enter'      : 'Play video of highlighted game',
@@ -42,6 +34,38 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'p'          : 'Toggle speed (does not change config file)',
                 't'          : 'Display top plays listing for current game'
               }
+
+def doinstall(config,dct,dir=None):
+    if dir:
+        try:
+            os.mkdir(dir)
+        except:
+            print 'Could not create directory: ' + dir + '\n'
+            print 'See README for configuration instructions\n'
+            sys.exit()
+    # now write the config file
+    try:
+        fp = open(config,'w')
+    except:
+        print 'Could not write config file: ' + config
+        print 'Please check directory permissions.'
+        sys.exit()
+    fp.write('# See README for explanation of these settings.\n')
+    fp.write('# user and pass are required except for Top Plays\n')
+    fp.write('user=\n')
+    fp.write('pass=\n')
+    for k in dct.keys():
+         fp.write(k + '=' + str(dct[k]) + '\n')
+    fp.close()
+    print
+    print 'Configuration complete!  You are now ready to use mlbviewer.'
+    print
+    print 'Configuration file written to: '
+    print
+    print config
+    print
+    print 'Please review the settings.  You will need to set user and pass.'
+    sys.exit()
 
 def prompter(win,prompt):
     win.clear()
@@ -601,7 +625,9 @@ def mainloop(myscr,cfg):
 
 if __name__ == "__main__":
 
-    myconf = os.path.join(os.environ['HOME'], AUTHDIR, AUTHFILE)
+    myconfdir = os.path.join(os.environ['HOME'],AUTHDIR)
+    myconf =  os.path.join(myconfdir,AUTHFILE)
+    #myconf = os.path.join(os.environ['HOME'], AUTHDIR, AUTHFILE)
     mydefaults = {'speed': DEFAULT_SPEED,
                   'video_player': DEFAULT_V_PLAYER,
                   'audio_player': DEFAULT_A_PLAYER,
@@ -612,6 +638,18 @@ if __name__ == "__main__":
                   'x_display': '',
                   'top_plays_player': '',
                   'time_offset': ''}
+
+    # Auto-install of default configuration file
+    try:
+        os.lstat(myconf)
+    except:
+        try:
+            os.lsdir(myconfdir)
+        except:
+            dir=myconfdir
+        else:
+            dir=None
+        doinstall(myconf,mydefaults,dir)
 
     mycfg = MLBConfig(mydefaults)
     mycfg.loads(myconf)
