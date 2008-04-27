@@ -19,7 +19,7 @@ import time
 
 DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
 DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
-DEFAULT_SPEED = 400 
+DEFAULT_SPEED = '400'
 
 
 KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
@@ -644,7 +644,7 @@ if __name__ == "__main__":
         os.lstat(myconf)
     except:
         try:
-            os.lsdir(myconfdir)
+            os.lstat(myconfdir)
         except:
             dir=myconfdir
         else:
