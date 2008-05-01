@@ -179,6 +179,7 @@ print game_url
 #sys.exit()
 
 cmd_str = player + ' "' + game_url + '"'
+print cmd_str + '\n'
 playprocess = subprocess.Popen(cmd_str,shell=True)
 playprocess.wait()
 
