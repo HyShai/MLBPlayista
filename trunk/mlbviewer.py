@@ -192,7 +192,7 @@ def mainloop(myscr,cfg):
                 str(mysched.year) + ' ' +\
                 '(Use arrow keys to change days)'
 
-        padding = curses.COLS - (len(titlestr) + 5)
+        padding = curses.COLS - (len(titlestr) + 6)
         titlestr += ' '*padding
         pos = len(titlestr)
 
