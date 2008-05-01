@@ -192,9 +192,14 @@ def mainloop(myscr,cfg):
                 str(mysched.year) + ' ' +\
                 '(Use arrow keys to change days)'
 
+        padding = curses.COLS - (len(titlestr) + 5)
+        titlestr += ' '*padding
+        pos = len(titlestr)
+
         # Draw the date
         titlewin.addstr(0,0,titlestr)
-            
+        titlewin.addstr(0,pos,'H', curses.A_BOLD)
+        titlewin.addstr(0,pos+1,'elp')
 
         # Draw a line
         titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
@@ -578,6 +583,10 @@ def mainloop(myscr,cfg):
 
                         play_process=subprocess.Popen(cmd_str,shell=True)
                         play_process.wait()
+                        # I want to see mplayer errors before returning to 
+                        # listings screen
+                        if ['show_player_command']:
+                            time.sleep(3)
                     except:
                         myscr.clear()
                         titlewin.clear()

@@ -1,6 +1,21 @@
-This is a short and to the point readme. It will be longer and say
-more in the future. Watch baseball games by pressing return. Listen to
-them by pressing a. Up goes up, down goes down.
+mlbviewer is hot key driven much like mplayer.  A later release will likely 
+include an on-screen menu.
+
+HOTKEYS
+
+h                   Display version and keybindings
+Up/Down             Highlight games in the current view
+Enter               Play video of highlighted game
+a                   Play Gameday audio of highlighted game
+t                   Display top plays listing for current game
+Left/Right          Navigate one day forward or back
+j                   Jump to a date
+p                   Toggle speed (does not change config file)
+r                   Refresh listings
+d                   Toggle debug (does not change config file)
+q                   Quit mlbviewer
+
+CONFIGURATION FILE SETTINGS
 
 The options in the config file ~/.mlb/config are
 
@@ -41,3 +56,82 @@ Note that blackout and audio_follow use the following team codes:
      'cws', 'det', 'fla', 'hou', 'kc', 'la', 'mil', 'min', 'nym',
      'nyy', 'oak', 'phi', 'pit', 'sd', 'sea', 'sf', 'stl', 'tb',
      'tex', 'tor', 'was'
+
+
+A WORD ON DEBUGGING
+
+By default, basic status messages are written to the log file in ~/.mlb/log.
+
+mlbviewer is written with stability in mind.  Sometimes this stability hides 
+errors that might be useful for the development team to figure out what's really
+going on.  The debug state is not meant for normal operation.  In fact, with
+debugging enabled, the audio or video URL will be retrieved, but the player 
+process won't be started.  Debugging also disables most of the exception 
+handling code.  In other words, debugging allows errors to drop through like a 
+lead ball and produce Tracebacks.  Finally, debugging also produces verbose
+network logging in the log file by dumping the raw web page and cookie content.
+Please use debugging only if you suspect mlbviewer is covering up an error.
+
+MLBGAMEID TEST TOOL
+
+Every stream (audio or video including top plays) has a stream ID, a six digit
+number, associated with it.  Every request to play a stream will output that 
+six digit stream ID to the log file (regardless of the debug setting.)  If 
+you want to test stream retrieval outside of mlbviewer (e.g. the error flies 
+by the screen too quickly before returning to the listings screen), you can use the mlbgameid.py script included in the test directory.  To use it, just call
+that script with the stream ID as the argument.  To find a stream ID for a 
+particular stream, select it first in mlbviewer (Enter or 'a') and then 
+check the log file for a line like this:
+
+Querying enterworkflow.do for { 'gameid' : 2008/04/30/kcamlb-texmlb-1, 'streamid' : 661986, 'streamtype' : video}
+
+The stream ID for this video is 661986.  You can then call mlbgameid like this:
+
+python test/mlbgameid.py 661986
+
+mlbgameid will produce a lot of output very much like debugging except it will 
+also execute your player command as specified in your configuration file.  The 
+output of mlbgameid is NOT written to the log file.
+
+ADDITIONAL HELP
+
+mlbviewer was born out of discussion in a forum on LinuxQuestions.org.  Some
+very valuable discussions, concerns, feature requests, and most importantly 
+bug reports were shared in this forum to make mlbviewer the robust and 
+fairly stable application that it is today.  If you have any questions, 
+concerns, feature requests, or bug reports, you can post to this thread:
+
+http://www.linuxquestions.org/questions/fedora-35/mlb.tv-in-linux-432479/
+
+You can also find lots of tips and tricks in there and some very helpful users
+who have probably encountered any issues you might have with mlbviewer or 
+supporting applications.
+
+If you want to lavish praise on us, we'll be happy to receive it there too.
+
+Tips and tricks (or the very least links to the original forum posts) will 
+also be summarized on a mini-HOWTO page at:
+
+http://www.eds.org/~straycat/mlblinux.php
+
+SVN
+
+mlbviewer has an svn repository on sourceforge.  You can checkout the latest
+development code at any time with the following command:
+
+svn co https://mlbviewer.svn.sourceforge.net/svnroot/mlbviewer/trunk mlbviewer
+
+You will need to install the subversion package if you don't have the svn 
+command.  
+
+Svn revisions are not official releases but they have the most recent bug
+fixes and new features being tested.  It is through the efforts of those 
+who want to test svn code that the development team gains confidence in 
+any new code.  Please post any comments about svn revisions to the Linux
+Questions forum above.
+
+THANKS AND....
+
+PLAY BALL!
+
+The mlbviewer Development Team

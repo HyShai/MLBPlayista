@@ -3,3 +3,7 @@ For local use:
 
 For system install:
     python setup.py install
+
+For help, wait for the listings to load and press the 'h' key.
+
+For more information, including configuration file settings, read the README.
