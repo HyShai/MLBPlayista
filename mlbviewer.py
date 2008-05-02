@@ -36,6 +36,7 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
               }
 
 def doinstall(config,dct,dir=None):
+    print "Creating configuration files"
     if dir:
         try:
             os.mkdir(dir)
@@ -53,9 +54,17 @@ def doinstall(config,dct,dir=None):
     fp.write('# See README for explanation of these settings.\n')
     fp.write('# user and pass are required except for Top Plays\n')
     fp.write('user=\n')
-    fp.write('pass=\n')
+    fp.write('pass=\n\n')
     for k in dct.keys():
-         fp.write(k + '=' + str(dct[k]) + '\n')
+        if type(dct[k]) == type(list()):
+            if len(dct[k]) > 0:
+                for item in dct[k]:
+                    fp.write(k + '=' + str(dct[k]) + '\n')
+                fp.write('\n')
+            else:
+                fp.write(k + '=' + '\n\n')
+        else:
+            fp.write(k + '=' + str(dct[k]) + '\n\n')
     fp.close()
     print
     print 'Configuration complete!  You are now ready to use mlbviewer.'
