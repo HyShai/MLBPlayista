@@ -247,6 +247,10 @@ class MLBSchedule:
                     dct['video'] = {}
                     for url in elem['mlbtv']['urls']:
                         dct['video'][url['speed']] = url['url']
+                        # national blackout
+                        if (url['blackout'] == 'national') and \
+                            elem['status'] in ('I','W','P','IP'):
+                            dct['status'] = 'NB'
                     dct['audio'] = {}
                     for audio_feed in ('home_audio', 'away_audio','alt_home_audio', 'alt_away_audio'):
                         if elem[audio_feed]:
