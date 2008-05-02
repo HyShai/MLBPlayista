@@ -78,7 +78,8 @@ Every stream (audio or video including top plays) has a stream ID, a six digit
 number, associated with it.  Every request to play a stream will output that 
 six digit stream ID to the log file (regardless of the debug setting.)  If 
 you want to test stream retrieval outside of mlbviewer (e.g. the error flies 
-by the screen too quickly before returning to the listings screen), you can use the mlbgameid.py script included in the test directory.  To use it, just call
+by the screen too quickly before returning to the listings screen), you can use
+the mlbgameid.py script included in the test directory.  To use it, just call
 that script with the stream ID as the argument.  To find a stream ID for a 
 particular stream, select it first in mlbviewer (Enter or 'a') and then 
 check the log file for a line like this:
