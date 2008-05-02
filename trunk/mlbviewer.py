@@ -169,6 +169,7 @@ def mainloop(myscr,cfg):
         "IP": "Status: Pregame",
         "PO": "Status: Postponed",
         "GO": "Status: Game Over - stream not yet available",
+        "NB": "Status: National Blackout",
         "LB": "Status: Local Blackout"}
 
     speedtoggle = {
