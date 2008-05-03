@@ -1,3 +1,25 @@
+Requirements
+------------
+
+For Linux and other *nixes:
+
+python
+python-simplejson  (http://www.undefined.org/python/)
+win32-codecs  (http://www.mplayerhq.hu/design7/dload.html#binary_codecs)
+mplayer, xine, vlc or any media player capable of playing Windows Media 
+streaming audio or video
+An MLB.TV account (http://mlb.mlb.com/mlb/subscriptions/index.jsp)
+
+For Windows:
+
+cygwin (http://www.cygwin.com)
+python
+python-simplejson
+mplayer or Windows Media Player
+
+Installation
+------------
+
 For local use:
      python mlbviewer.py from this directory.
 
