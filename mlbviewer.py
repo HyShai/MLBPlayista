@@ -166,6 +166,7 @@ def mainloop(myscr,cfg):
         "F" : "Status: Final",
         "P" : "Status: Not Yet Available",
         "S" : "Status: Suspended",
+        "D" : "Status: Delayed",
         "IP": "Status: Pregame",
         "PO": "Status: Postponed",
         "GO": "Status: Game Over - stream not yet available",
