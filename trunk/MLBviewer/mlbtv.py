@@ -38,6 +38,7 @@ USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/
 
 TEAMCODES = {
     'ana': ('LAA', 'Los Angeles', 'Angels', 'of Anaheim'),
+    'al' : ('AL', 'American', 'League', ''),
     'ari': ('ARZ', 'Arizona', 'Diamondbacks', ''),
     'atl': ('ATL', 'Atlanta', 'Braves', ''),
     'bal': ('BAL', 'Baltimore', 'Orioles',''),
@@ -54,6 +55,7 @@ TEAMCODES = {
     'la':  ('LA', 'Los Angeles', 'Dodgers', ''),
     'mil': ('MIL', 'Milwaukee', 'Brewers', ''),
     'min': ('MIN', 'Minnesota', 'Twins', ''),
+    'nl' : ('NL', 'National', 'League', ''),
     'nym': ('NYM', 'New York', 'Mets', ''),
     'nyy': ('NYY', 'New York', 'Yankees', ''),
     'oak': ('OAK', 'Oakland', 'Athletics', ''),
@@ -202,7 +204,7 @@ class MLBSchedule:
         # This offers only the useful information for watching tv from
         # the getData step.
         if not self.data:
-            raise MLBJsonError,detail
+            raise MLBJsonError
         else:
             out = []
             for elem in self.data:
@@ -246,11 +248,18 @@ class MLBSchedule:
                     dct['text'] = text
                     dct['video'] = {}
                     for url in elem['mlbtv']['urls']:
+                        # handle 2007 season where 700K is top quality
+                        # mask 700K to look like 800K
+                        if str(self.year) == '2007' and url['speed'] == '700':
+                            dct['video']['800'] = url['url']
                         dct['video'][url['speed']] = url['url']
                         # national blackout
-                        if (url['blackout'] == 'national') and \
-                            elem['status'] in ('I','W','P','IP'):
-                            dct['status'] = 'NB'
+                        try:
+                            if (url['blackout'] == 'national') and \
+                                elem['status'] in ('I','W','P','IP'):
+                                dct['status'] = 'NB'
+                        except:
+                            pass
                     dct['audio'] = {}
                     for audio_feed in ('home_audio', 'away_audio','alt_home_audio', 'alt_away_audio'):
                         if elem[audio_feed]:
@@ -269,11 +278,14 @@ class MLBSchedule:
                              text = text.replace('\"','\'')
                              dct['top_plays']['game'] = dct['text']
                              dct['top_plays'][text] = url['urls'][0]['url']
-                    if elem['game_wrapup']:
+                    try:
+                        if elem['game_wrapup']:
                              text = elem['game_wrapup']['text']
                              text = text.replace('\"','\'')
                              dct['top_plays']['game'] = dct['text']
                              dct['top_plays'][text] = elem['game_wrapup']['urls'][0]['url']
+                    except KeyError:
+                        pass
                     out.append((elem['gameid'], dct))
         return out
 
@@ -319,7 +331,7 @@ class GameStream:
     def __init__(self,stream, email, passwd, debug=None,\
                      auth=True, streamtype='video'):
         self.stream = stream
-        self.id = self.stream['id']
+        self.id = self.stream['w_id']
         self.gameid = stream['gid']
         self.email = email
         self.passwd = passwd
@@ -418,17 +430,20 @@ class GameStream:
         # The workflow urls for audio and video have slightly
         # different endings.
         if self.streamtype == 'audio':
-            wf_url += "&catCode=mlb_ga&a=a"
+            wf_url += "&catCode=mlb_ga&av=a"
         else:
-            wf_url += "&catCode=mlb_lg&a=v"
+            wf_url += "&catCode=mlb_lg&av=v"
         # Open the workflow url...
         # Referer should look something like this but we'll need to pull
         # more info from listings for this:
         """ http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=200804102514514&w_id=643428&w=reflector%3A19440&pid=mlb_lg&gid=2008/04/12/tormlb-texmlb-1&fid=mlb_lg400&cid=mlb&v=3 """
-        referer_str = "http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=" +\
+        try:
+            referer_str = "http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=" +\
             self.stream['mid'] + '&w_id=' + self.stream['w_id'] + '&w=' + self.stream['w'] +\
             '&pid=' + self.stream['pid'] + '&fid=' + self.stream['fid'] +\
             '&cid=mlb&v=' + self.stream['v']
+        except KeyError:
+            referer_str = ''
         txheaders = {'User-agent' : USERAGENT,
                      'Referer'   : referer_str }
         #wf_data = None
@@ -490,11 +505,12 @@ class GameStream:
         if self.streamtype == 'audio':
             pattern = re.compile(r'(url:.*\")(http:\/\/[^ ]*)(".*)')
         else:
-            pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
+            # also match http: urls for 2007 season
+            pattern = re.compile(r'(url:.*\")((mms:|http:)\/\/[^ ]*)(".*)')
         try:
            game_url = re.search(pattern, game_info).groups()[1]
         except:
-           pattern = re.compile(r'(url:.*\")(null(.*))')
+           pattern = re.compile(r'(url:.*\")(null:(.*))')
            null_match = re.search(pattern,game_info)
            pattern = re.compile(r'Customers are not permitted concurrent use of a single subscription.')
            concur_match = re.search(pattern,game_info)
@@ -515,6 +531,14 @@ class GameStream:
            self.log.write('Try the gameid script with streamid = ' + self.id +'\n')
            self.log.close()
            raise Exception, self.error_str 
+        else:
+           if self.streamtype == 'video':
+               oldstyle = 'http:'
+               match = re.match(oldstyle,game_url)
+               if match:
+                   mms_pat = re.compile(r'arl=(.*)')
+                   game_url = re.search(mms_pat, game_url).groups()[0]
+                   game_url = urllib.unquote(game_url)
         self.log.write('\nURL received:\n' + game_url + '\n\n')
         self.log.close()
         return game_url
