@@ -259,7 +259,11 @@ def mainloop(myscr,cfg):
             debug_str = '[DEBUG]'
         else:
             debug_str = ''
-        status_str += ' '*padding + debug_str + speedtoggle.get(cfg['speed'])
+        if str(mysched.year) == '2007' and cfg['speed'] == '800':
+            speedstr = '[700K]'
+        else:
+            speedstr = speedtoggle.get(cfg['speed'])
+        status_str += ' '*padding + debug_str + speedstr
 
         # And write the status
         statuswin.addstr(0,0,status_str,curses.A_BOLD)
