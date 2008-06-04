@@ -306,6 +306,7 @@ def mainloop(myscr,cfg):
         if c in ('Listings', ord('l'), ord('L')):
             DISABLED_FEATURES = []
             CURRENT_SCREEN = 'listings'
+            current_cursor = 0
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
@@ -531,18 +532,14 @@ def mainloop(myscr,cfg):
                     irc_socket.close()
                     irc_conn.connected = False
 
-                if 'topPlays' in CURRENT_SCREEN:
-                    doAuth=False
-                else:
-                    doAuth=True
                 if audio:
                     stream = available[current_cursor][3]
                     g = GameStream(stream, cfg['user'], cfg['pass'], 
-                                   cfg['debug'], streamtype='audio',auth=doAuth)
+                                   cfg['debug'], streamtype='audio')
                 else:
                     stream = available[current_cursor][2]
                     g = GameStream(stream, cfg['user'], cfg['pass'], 
-                                   cfg['debug'],auth=doAuth)
+                                   cfg['debug'])
                 
                 # print a "Trying..." message so we don't look frozen
                 myscr.addstr(curses.LINES-1,0,'Fetching URL for game stream...')

@@ -286,6 +286,14 @@ class MLBSchedule:
                              dct['top_plays'][text] = elem['game_wrapup']['urls'][0]['url']
                     except KeyError:
                         pass
+                    try:
+                        if elem['condensed_video']:
+                             text = elem['condensed_video']['text']
+                             text = text.replace('\"','\'')
+                             dct['top_plays']['game'] = dct['text']
+                             dct['top_plays'][text] = elem['condensed_video']['urls'][0]['url']
+                    except KeyError:
+                        pass
                     out.append((elem['gameid'], dct))
         return out
 
@@ -302,8 +310,11 @@ class MLBSchedule:
                         text   = play
                         status = elem[1]['status']
                         recap_pat = re.compile(r'Recap')
+                        cg_pat = re.compile(r'^CG')
                         if re.search(recap_pat,play):
                             out.insert(0,(title,text,elem[1]['top_plays'][text],status,elem[0]))   
+                        elif re.search(cg_pat,play):
+                            out.insert(0,(title,text,elem[1]['top_plays'][text],status,elem[0]))
                         else:
                             out.append((title,text,elem[1]['top_plays'][text],status,elem[0]))
         return out
@@ -340,7 +351,12 @@ class GameStream:
         self.error_str = "Uncaught error"
         self.log = open(LOGFILE,"a")
         self.log.write(str(datetime.datetime.now()) + '\n')
-        self.auth = auth
+        # Determine whether we need to login from the jsp itself
+        #self.auth = auth
+        if self.stream['login'] == 'Y':
+            self.auth = True
+        else:
+            self.auth = False
         self.debug = debug
     
     def login(self):
@@ -420,7 +436,7 @@ class GameStream:
         # The hope is that this sequence will always be the same and leave
         # it to url() to determine if an error occurs.  This way, hopefully, 
         # error or no, we'll always log out.
-        self.log.write('Querying enterworkflow.do for { \'gameid\' : ' + self.gameid + ', \'streamid\' : ' + self.id + ', \'streamtype\' : ' + self.streamtype + '}\n')
+        self.log.write('Querying enterworkflow.do for { \'gameid\' : ' + self.gameid + ', \'streamid\' : ' + self.id + ', \'streamtype\' : ' + self.streamtype + ', login: ' + str(self.auth) + '}\n')
         if self.session_cookies is None:
             if self.auth:
                 self.login()
@@ -445,14 +461,14 @@ class GameStream:
         except KeyError:
             referer_str = ''
         txheaders = {'User-agent' : USERAGENT,
-                     'Referer'   : referer_str }
+                     'Referer'    : referer_str }
         #wf_data = None
         #req = urllib2.Request(wf_url,wf_data,txheaders)
-        req = urllib2.Request(url=wf_url,headers=txheaders)
+        req = urllib2.Request(url=wf_url,headers=txheaders,data=None)
         try:
             handle = urllib2.urlopen(req)
-        except:
-            self.error_str = 'Error occurred in HTTP request to workflow page'
+        except Exception,detail:
+            self.error_str = 'Error occurred in HTTP request to workflow page:' + str(detail)
             raise Exception, self.error_str
         url_data = handle.read()
         if self.debug:
@@ -509,7 +525,7 @@ class GameStream:
             pattern = re.compile(r'(url:.*\")((mms:|http:)\/\/[^ ]*)(".*)')
         try:
            game_url = re.search(pattern, game_info).groups()[1]
-        except:
+        except Exception,detail:
            pattern = re.compile(r'(url:.*\")(null:(.*))')
            null_match = re.search(pattern,game_info)
            pattern = re.compile(r'Customers are not permitted concurrent use of a single subscription.')
@@ -530,6 +546,7 @@ class GameStream:
                self.log.write(game_info)
            self.log.write('Try the gameid script with streamid = ' + self.id +'\n')
            self.log.close()
+           self.error_str += ':' + str(detail)
            raise Exception, self.error_str 
         else:
            if self.streamtype == 'video':
