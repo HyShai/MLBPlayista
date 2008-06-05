@@ -290,6 +290,7 @@ class MLBSchedule:
                         if elem['condensed_video']:
                              text = elem['condensed_video']['text']
                              text = text.replace('\"','\'')
+                             text = re.sub(r'^CG','Condensed Game',text)
                              dct['top_plays']['game'] = dct['text']
                              dct['top_plays'][text] = elem['condensed_video']['urls'][0]['url']
                     except KeyError:
@@ -310,7 +311,7 @@ class MLBSchedule:
                         text   = play
                         status = elem[1]['status']
                         recap_pat = re.compile(r'Recap')
-                        cg_pat = re.compile(r'^CG')
+                        cg_pat = re.compile(r'^Condensed Game')
                         if re.search(recap_pat,play):
                             out.insert(0,(title,text,elem[1]['top_plays'][text],status,elem[0]))   
                         elif re.search(cg_pat,play):
