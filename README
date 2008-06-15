@@ -11,6 +11,7 @@ h                   Display version and keybindings
 Up/Down             Highlight games in the current view
 Enter               Play video of highlighted game
 a                   Play Gameday audio of highlighted game
+c                   Play Condensed Game Video (if available)
 t                   Display top plays listing for current game
 Left/Right          Navigate one day forward or back
 j                   Jump to a date
@@ -133,7 +134,24 @@ Svn revisions are not official releases but they have the most recent bug
 fixes and new features being tested.  It is through the efforts of those 
 who want to test svn code that the development team gains confidence in 
 any new code.  Please post any comments about svn revisions to the Linux
-Questions forum above.
+Questions forum above.  
+
+When reporting bugs, please state the svn revision you are using.  This can be 
+found with the 'svn info' command:
+
+matthew@tango:~/mlbtv/svn/mlbviewer$ svn info
+Path: .
+URL: https://mlbviewer.svn.sourceforge.net/svnroot/mlbviewer/trunk
+Repository Root: https://mlbviewer.svn.sourceforge.net/svnroot/mlbviewer
+Repository UUID: d37ac8f2-af4a-0410-91f3-abd50a2159f9
+Revision: 75
+Node Kind: directory
+Schedule: normal
+Last Changed Author: daftcat75
+Last Changed Rev: 75
+Last Changed Date: 2008-06-04 17:06:52 -0700 (Wed, 04 Jun 2008)
+
+In the output above, the revision is 75.
 
 THANKS AND....
 

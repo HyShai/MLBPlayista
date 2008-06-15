@@ -25,6 +25,7 @@ DEFAULT_SPEED = '400'
 KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'Enter'      : 'Play video of highlighted game',
                 'Left/Right' : 'Navigate one day forward or back',
+                'c'          : 'Play Condensed Game Video (if available)',
                 'j'          : 'Jump to a date',
                 'r'          : 'Refresh listings',
                 'q'          : 'Quit mlbviewer',
@@ -164,6 +165,7 @@ def mainloop(myscr,cfg):
         "I" : "Status: In Progress",
         "W" : "Status: Not Yet Available",
         "F" : "Status: Final",
+        "CG": "Status: Final (Condensed Game Available)",
         "P" : "Status: Not Yet Available",
         "S" : "Status: Suspended",
         "D" : "Status: Delayed",
@@ -294,6 +296,7 @@ def mainloop(myscr,cfg):
                                  'Left', curses.KEY_LEFT, \
                                  'Right', curses.KEY_RIGHT, \
                                  'Speed', ord('p'),
+                                 'Condensed', ord('c'),
                                  'Audio', ord('a')]
             RESTORE_SPEED = cfg['speed']
             # Switch to 400 for highlights since all highlights are 400k
@@ -509,16 +512,22 @@ def mainloop(myscr,cfg):
                myscr.addstr(n,0,elem)
                myscr.addstr(n,20,KEYBINDINGS[elem])
                n += 1
-            myscr.addstr(curses.LINES-1,0,'Press a key to continue...')
+            statuswin.clear()
+            statuswin.addstr(0,0,'Press a key to continue...')
+            myscr.refresh()
+            statuswin.refresh()
             myscr.getch()
 
 
 
-
-        if c in ('Enter', 10, 'Audio', ord('a')):
+        if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c')):
             if c in ('Audio', ord('a')):
                 audio = True
                 player = cfg['audio_player']
+            elif c in ('Condensed', ord('c')):
+                audio = False
+                if cfg['top_plays_player']:
+                    player = cfg['top_plays_player']
             else:
                 audio = False
                 player = cfg['video_player']
@@ -537,16 +546,32 @@ def mainloop(myscr,cfg):
                     g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'], streamtype='audio')
                 else:
-                    stream = available[current_cursor][2]
+                    if c in ('Condensed', ord('c')):
+                        if available[current_cursor][4] in ('CG'):
+                            gameid = available[current_cursor][5]
+                            stream = mysched.getCondensedVideo(gameid)
+                        else:
+                            statuswin.clear()
+                            statuswin.addstr(0,0,'Condensed Game Not Yet Available')
+                            myscr.refresh()
+                            statuswin.refresh()
+                            time.sleep(2)
+                            continue
+                    else:
+                        stream = available[current_cursor][2]
                     g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'])
                 
                 # print a "Trying..." message so we don't look frozen
-                myscr.addstr(curses.LINES-1,0,'Fetching URL for game stream...')
+                statuswin.clear()
+                statuswin.addstr(0,0,'Fetching URL for game stream...')
+                statuswin.refresh()
                 myscr.refresh()
 
                 if cfg['debug']:
-                    myscr.addstr(curses.LINES-1,0,'Debug set, fetching URL but not playing...')
+                    statuswin.clear()
+                    statuswin.addstr(0,0,'Debug set, fetching URL but not playing...')
+                    statuswin.refresh()
                     myscr.refresh()
                 try:
                     u = g.url()
