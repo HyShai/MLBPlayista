@@ -22,7 +22,6 @@ import datetime
 import cookielib
 
 import os
-import curses
 import subprocess
 import select
 
@@ -287,15 +286,22 @@ class MLBSchedule:
                     except KeyError:
                         pass
                     try:
+                        dct['condensed'] = {}
                         if elem['condensed_video']:
-                             text = elem['condensed_video']['text']
-                             text = text.replace('\"','\'')
-                             text = re.sub(r'^CG','Condensed Game',text)
-                             dct['top_plays']['game'] = dct['text']
-                             dct['top_plays'][text] = elem['condensed_video']['urls'][0]['url']
+                             dct['status'] = 'CG'
+                             dct['condensed'] = elem['condensed_video']['urls'][0]['url']
                     except KeyError:
                         pass
                     out.append((elem['gameid'], dct))
+        return out
+
+    def getCondensedVideo(self,gameid):
+        out = {}
+        condensed = self.trimList()
+
+        for elem in condensed:
+            if elem[0] == gameid:
+                out = elem[1]['condensed']
         return out
 
     def getTopPlays(self,gameid):
@@ -311,11 +317,8 @@ class MLBSchedule:
                         text   = play
                         status = elem[1]['status']
                         recap_pat = re.compile(r'Recap')
-                        cg_pat = re.compile(r'^Condensed Game')
                         if re.search(recap_pat,play):
                             out.insert(0,(title,text,elem[1]['top_plays'][text],status,elem[0]))   
-                        elif re.search(cg_pat,play):
-                            out.insert(0,(title,text,elem[1]['top_plays'][text],status,elem[0]))
                         else:
                             out.append((title,text,elem[1]['top_plays'][text],status,elem[0]))
         return out
