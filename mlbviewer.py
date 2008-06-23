@@ -223,7 +223,7 @@ def mainloop(myscr,cfg):
                     s = available[n][1]
                 else:
                     s = available[n][0] + ':' + available[n][1]
-                    if available[n][4] == 'F':
+                    if available[n][4] in ('F', 'CG'):
                         s+= ' (Archived)'
                 padding = curses.COLS - (len(s) + 1)
                 s += ' '*padding
