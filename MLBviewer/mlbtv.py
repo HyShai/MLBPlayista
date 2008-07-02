@@ -414,7 +414,7 @@ class GameStream:
                 print >> self.log, index, ' : ' , cookie
         self.session_cookies.save(COOKIEFILE)
 
-        pattern = re.compile(r'Welcome to your personal MLB.com account.')
+        pattern = re.compile(r'Welcome to your personal (MLB|mlb).com account.')
         if not re.search(pattern,auth_page):
            self.error_str = "Login was unsuccessful."
           # begin patch for maintenance operations
