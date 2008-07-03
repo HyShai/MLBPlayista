@@ -67,7 +67,9 @@ TEAMCODES = {
     'tb':  ('TB', 'Tampa Bay', 'Rays', ''),
     'tex': ('TEX', 'Texas', 'Rangers', ''),
     'tor': ('TOR', 'Toronto', 'Blue Jays', ''),
-    'was': ('WAS', 'Washington', 'Nationals', '')
+    'was': ('WAS', 'Washington', 'Nationals', ''),
+    'wft': ('WFT', 'World', 'Futures', 'Team' ),
+    'uft': ('UFT', 'USA', 'Futures', 'Team' ),
     }
 
 def gameTimeConvert(datetime_tuple, time_shift=None):
@@ -208,7 +210,7 @@ class MLBSchedule:
             out = []
             for elem in self.data:
                 # All contingent on it having a tv broadcast.
-                if elem['mlbtv']:
+                if elem['gameid']:
                     dct = {}
                     # I'm parsing the time by hand because strptime
                     # doesn't work on windows and only works on
@@ -246,19 +248,23 @@ class MLBSchedule:
                         ' '.join(TEAMCODES[dct['home']][1:]).strip()
                     dct['text'] = text
                     dct['video'] = {}
-                    for url in elem['mlbtv']['urls']:
-                        # handle 2007 season where 700K is top quality
-                        # mask 700K to look like 800K
-                        if str(self.year) == '2007' and url['speed'] == '700':
-                            dct['video']['800'] = url['url']
-                        dct['video'][url['speed']] = url['url']
-                        # national blackout
-                        try:
-                            if (url['blackout'] == 'national') and \
-                                elem['status'] in ('I','W','P','IP'):
-                                dct['status'] = 'NB'
-                        except:
-                            pass
+                    try:
+                        for url in elem['mlbtv']['urls']:
+                            # handle 2007 season where 700K is top quality
+                            # mask 700K to look like 800K
+                            if str(self.year) == '2007' and url['speed'] == '700':
+                                dct['video']['800'] = url['url']
+                            dct['video'][url['speed']] = url['url']
+                            # national blackout
+                            try:
+                                if (url['blackout'] == 'national') and \
+                                    elem['status'] in ('I','W','P','IP'):
+                                    dct['status'] = 'NB'
+                            except:
+                                pass
+                    except TypeError:
+                        dct['video']['400'] = None
+                        dct['video']['800'] = None
                     dct['audio'] = {}
                     for audio_feed in ('home_audio', 'away_audio','alt_home_audio', 'alt_away_audio'):
                         if elem[audio_feed]:
@@ -346,21 +352,25 @@ class GameStream:
     def __init__(self,stream, email, passwd, debug=None,\
                      auth=True, streamtype='video'):
         self.stream = stream
-        self.id = self.stream['w_id']
-        self.gameid = stream['gid']
+        self.error_str = "Uncaught error"
+        try:
+            self.id = self.stream['w_id']
+            self.gameid = stream['gid']
+        except:
+            self.error_str = "No stream available for selected game."
+        else:
+            if self.stream['login'] == 'Y':
+                self.auth = True
+            else:
+                self.auth = False
         self.email = email
         self.passwd = passwd
         self.session_cookies = None
         self.streamtype = streamtype
-        self.error_str = "Uncaught error"
         self.log = open(LOGFILE,"a")
         self.log.write(str(datetime.datetime.now()) + '\n')
         # Determine whether we need to login from the jsp itself
         #self.auth = auth
-        if self.stream['login'] == 'Y':
-            self.auth = True
-        else:
-            self.auth = False
         self.debug = debug
     
     def login(self):

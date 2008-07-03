@@ -419,7 +419,7 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError,detail:
+            except (MLBJsonError, MLBUrlError ),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
