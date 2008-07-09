@@ -109,7 +109,7 @@ else:
     cj.save(COOKIEFILE,ignore_discard=True) 
 
 page = handle.read()
-pattern = re.compile(r'Welcome to your personal mlb.com account.')
+pattern = re.compile(r'Welcome to your personal (MLB|mlb).com account.')
 try:
     loggedin = re.search(pattern, page).groups()
     print "Logged in successfully!"
