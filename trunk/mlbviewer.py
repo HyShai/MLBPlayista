@@ -7,6 +7,7 @@ from MLBviewer import MLBConfig
 from MLBviewer import MLBUrlError
 from MLBviewer import MLBJsonError
 from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE
+from MLBviewer import TEAMCODES
 import os
 import sys
 import re
@@ -222,7 +223,12 @@ def mainloop(myscr,cfg):
                 if 'topPlays' in CURRENT_SCREEN:
                     s = available[n][1]
                 else:
-                    s = available[n][0] + ':' + available[n][1]
+                    home = available[n][0]['home']
+                    away = available[n][0]['away']
+                    #s = available[n][0] + ':' + available[n][1]
+                    s = ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
+                        ' '.join(TEAMCODES[home][1:]).strip() + ':' +\
+                        available[n][1].strftime('%l:%M %p')
                     if available[n][4] in ('F', 'CG'):
                         s+= ' (Archived)'
                 padding = curses.COLS - (len(s) + 1)

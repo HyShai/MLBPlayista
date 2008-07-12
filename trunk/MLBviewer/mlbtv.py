@@ -201,7 +201,7 @@ class MLBSchedule:
         except ValueError,detail:
             raise MLBJsonError,detail
 
-    def trimList(self):
+    def trimList(self,blackout=()):
         # This offers only the useful information for watching tv from
         # the getData step.
         if not self.data:
@@ -235,11 +235,14 @@ class MLBSchedule:
                     # chosen time zone.
                     dct['event_time'] = gameTimeConvert(raw_time, self.shift)
                     # The game status comes straight out of the dictionary.
-                    dct['status'] = elem['status']
                     dct['home'] = [team['code'] for team in elem['teams'] if
                                    team['isHome']][0]
                     dct['away'] = [team['code'] for team in elem['teams'] if not
                                    team['isHome']][0]
+                    dct['status'] = (elem['status'],"LB")[\
+                        (dct['home'] in blackout or
+                         dct['away'] in blackout)\
+                         and elem['status'] in ('I','W','P','IP')]
                     # A messy but effective way to join the team name
                     # together. Damn Angels making everything more
                     # difficult.
@@ -247,6 +250,9 @@ class MLBSchedule:
                         ' at ' +\
                         ' '.join(TEAMCODES[dct['home']][1:]).strip()
                     dct['text'] = text
+                    dct['teams'] = {}
+                    dct['teams']['home'] = dct['home']
+                    dct['teams']['away'] = dct['away']
                     dct['video'] = {}
                     try:
                         for url in elem['mlbtv']['urls']:
@@ -331,19 +337,15 @@ class MLBSchedule:
 
     def getListings(self, myspeed, blackout, audiofollow):
         self.getData()
-        listings = self.trimList()
+        listings = self.trimList(blackout)
 
-        return  [(elem[1]['text'],\
-                      elem[1]['event_time'].strftime('%l:%M %p'),
+        return  [(elem[1]['teams'],\
+                      elem[1]['event_time'],
                       elem[1]['video'][str(myspeed)],\
                       (elem[1]['audio']['home_audio'],
                        elem[1]['audio']['away_audio'])[elem[1]['away'] \
                                                            in audiofollow],
-                      (elem[1]['status'], "LB")[
-                                  (elem[1]['home'] in blackout or
-                                   elem[1]['away'] in blackout)\
-                                      and elem[1]['status'] in ('I','W','P', 'IP')
-                                  ],
+                      elem[1]['status'],
                   elem[0])\
                      for elem in listings]
 
