@@ -37,6 +37,16 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 't'          : 'Display top plays listing for current game'
               }
 
+COLORS = { 'black'   : curses.COLOR_BLACK,
+           'red'     : curses.COLOR_RED,
+           'green'   : curses.COLOR_GREEN,
+           'yellow'  : curses.COLOR_YELLOW,
+           'blue'    : curses.COLOR_BLUE,
+           'magenta' : curses.COLOR_MAGENTA,
+           'cyan'    : curses.COLOR_CYAN,
+           'white'   : curses.COLOR_WHITE
+         }
+
 def doinstall(config,dct,dir=None):
     print "Creating configuration files"
     if dir:
@@ -123,6 +133,13 @@ def mainloop(myscr,cfg):
     if hasattr(curses, 'use_default_colors'):
         try:
             curses.use_default_colors()
+            if cfg['use_color']:
+                try:
+                    curses.init_pair(1, COLORS[cfg['fg_color']],
+                                        COLORS[cfg['bg_color']])
+                except KeyError:
+                    cfg['use_color'] = False
+                    curses.init_pair(1, -1, -1)
         except curses.error:
             pass
 
@@ -226,13 +243,17 @@ def mainloop(myscr,cfg):
                     home = available[n][0]['home']
                     away = available[n][0]['away']
                     #s = available[n][0] + ':' + available[n][1]
-                    s = ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
-                        ' '.join(TEAMCODES[home][1:]).strip() + ':' +\
-                        available[n][1].strftime('%l:%M %p')
+                    #s = ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
+                    #    ' '.join(TEAMCODES[home][1:]).strip() + ': ' +\
+                    #    available[n][1].strftime('%l:%M %p')
+                    s = available[n][1].strftime('%l:%M %p') + ': ' +\
+                        ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
+                        ' '.join(TEAMCODES[home][1:]).strip()
                     if available[n][4] in ('F', 'CG'):
                         s+= ' (Archived)'
                 padding = curses.COLS - (len(s) + 1)
-                s += ' '*padding
+                if n == current_cursor:
+                    s += ' '*padding
             else:
                 s = ' '*(curses.COLS-1)
 
@@ -240,18 +261,28 @@ def mainloop(myscr,cfg):
             if available:
                 if n == current_cursor:
                     if available[n][4] == 'I':
-                        myscr.addstr(n+2,0,s, curses.A_REVERSE|curses.A_BOLD)
+                        #myscr.addstr(n+2,0,s, curses.A_REVERSE|curses.A_BOLD)
+                        cursesflags = curses.A_REVERSE|curses.A_BOLD
                     else:
-                        myscr.addstr(n+2,0,s, curses.A_REVERSE)
+                        #myscr.addstr(n+2,0,s, curses.A_REVERSE)
+                        cursesflags = curses.A_REVERSE
                     if 'topPlays' in CURRENT_SCREEN:
                         status_str = 'Press L to return to listings...'
                     else:
                         status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
                 else:
                     if n < len(available) and available[n][4] == 'I':
-                        myscr.addstr(n+2, 0, s, curses.A_BOLD)
+                        cursesflags = curses.A_BOLD
+                        #myscr.addstr(n+2, 0, s, curses.A_BOLD)
                     else:
-                        myscr.addstr(n+2, 0, s)
+                        cursesflags = 0
+                        #myscr.addstr(n+2, 0, s)
+                if home in cfg['favorite'] or away in cfg['favorite']:
+                    if cfg['use_color']:
+                        cursesflags = cursesflags|curses.color_pair(1)
+                    else:
+                        cursesflags = cursesflags|curses.A_UNDERLINE
+                myscr.addstr(n+2, 0, s, cursesflags)
             else:
                 if 'topPlays' in CURRENT_SCREEN:
                     status_str = 'Press L to return to listings...'
@@ -686,6 +717,10 @@ if __name__ == "__main__":
                   'audio_player': DEFAULT_A_PLAYER,
                   'audio_follow': [],
                   'blackout': [],
+                  'favorite': [],
+                  'use_color': 0,
+                  'bg_color': 'black',
+                  'fg_color': 'cyan',
                   'show_player_command': 0,
                   'debug': 0,
                   'x_display': '',
