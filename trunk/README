@@ -62,6 +62,31 @@ Note that blackout and audio_follow use the following team codes:
      'nyy', 'oak', 'phi', 'pit', 'sd', 'sea', 'sf', 'stl', 'tb',
      'tex', 'tor', 'was'
 
+favorite = x (team to highlight in listings using codes above, specify
+multiple favorite= lines if you have more than one favorite team you'd like
+to highlight)
+
+use_color = True/False (if this is set, either default colors, currently cyan
+on black, or colors of your choosing will highlight teams specified in favorite;
+if set to false or absent from config, favorite highlighting defaults to 
+underlining)
+
+fg_color = x (the foreground color for favorite highlighting)
+
+bg_color = x (the background color for favorite highlighting)
+
+Valid color choices are:
+    'black', 'white', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan'
+
+If an invalid color is specified, color is disabled and favorite highlighting
+defaults to underlining.
+
+If favorite is configured, use_color, bg_color, and fg_color are optional and 
+will highlighting defaults to underline.  If use_color is set to True, fg_color
+and bg_color are optional, and highlighting will default to cyan on black.  If
+only one of fg_color or bg_color is specified, the other will take on the 
+default value.
+
 
 A WORD ON DEBUGGING
 
