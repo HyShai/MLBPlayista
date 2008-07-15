@@ -565,6 +565,8 @@ def mainloop(myscr,cfg):
                 audio = False
                 if cfg['top_plays_player']:
                     player = cfg['top_plays_player']
+                else:
+                    player = cfg['video_player']
             else:
                 audio = False
                 player = cfg['video_player']
