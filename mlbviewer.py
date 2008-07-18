@@ -287,10 +287,11 @@ def mainloop(myscr,cfg):
                         cursesflags = 0
                         #myscr.addstr(n+2, 0, s)
                 if home in cfg['favorite'] or away in cfg['favorite']:
-                    if cfg['use_color']:
+                    if cfg['use_color'] and 'listings' in CURRENT_SCREEN:
                         cursesflags = cursesflags|curses.color_pair(1)
                     else:
-                        cursesflags = cursesflags|curses.A_UNDERLINE
+                        if 'listings' in CURRENT_SCREEN:
+                            cursesflags = cursesflags|curses.A_UNDERLINE
                 myscr.addstr(n+2, 0, s, cursesflags)
             else:
                 if 'topPlays' in CURRENT_SCREEN:
@@ -483,7 +484,7 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError,detail:
+            except (KeyError,MLBJsonError),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
@@ -527,7 +528,7 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError,detail:
+            except ( KeyError, MLBJsonError ),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
@@ -553,7 +554,7 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except (MLBJsonError, MLBUrlError ),detail:
+            except (MLBJsonError, MLBUrlError, KeyError ),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
@@ -620,7 +621,7 @@ def mainloop(myscr,cfg):
                                                          cfg['audio_follow'])
                         mysched = newsched
                         current_cursor = 0
-                    except MLBUrlError:
+                    except (KeyError,MLBUrlError):
                         statuswin.clear()
                         error_str = "Could not fetch a schedule for that day."
                         statuswin.addstr(0,0,error_str,curses.A_BOLD)
