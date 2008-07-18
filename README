@@ -7,18 +7,21 @@ include an on-screen menu.
 
 HOTKEYS
 
-h                   Display version and keybindings
-Up/Down             Highlight games in the current view
-Enter               Play video of highlighted game
 a                   Play Gameday audio of highlighted game
 c                   Play Condensed Game Video (if available)
-t                   Display top plays listing for current game
-Left/Right          Navigate one day forward or back
+b                   View bookmarks
+d                   Toggle debug (does not change config file)
+h                   Display version and keybindings
 j                   Jump to a date
+m                   Bookmark a game
+Left/Right          Navigate one day forward or back
+Up/Down             Highlight games in the current view
+q                   Quit mlbviewer
 p                   Toggle speed (does not change config file)
 r                   Refresh listings
-d                   Toggle debug (does not change config file)
-q                   Quit mlbviewer
+t                   Display top plays listing for current game
+Enter               Play video of highlighted game
+x (or Bksp)         Delete a bookmark
 
 CONFIGURATION FILE SETTINGS
 
@@ -86,6 +89,23 @@ will highlighting defaults to underline.  If use_color is set to True, fg_color
 and bg_color are optional, and highlighting will default to cyan on black.  If
 only one of fg_color or bg_color is specified, the other will take on the 
 default value.
+
+BOOKMARKS
+
+Do you remember what day Bonds hit 756?  Do you remember what day Griffey hit
+600?  Do you remember what day the Angels no-hit the Dodgers and lost?  Now
+you don't have to.  Simply highlight a game, press 'm' to mark it, and give it
+a title.  The video, audio, and condensed game (if available) will be added
+to your bookmarks file in $HOME/.mlb/bookmarks.pf.  To view and select streams
+from your bookmarks, press the 'b' key.  To delete a bookmark, press 'x' or 
+Backspace and confirm the deletion.  You should refresh your bookmarks view 
+after you've deleted a bookmark by pressing 'b' again.  If bookmarks list is 
+bigger than the window size, a --More-- dialog will appear at the bottom.  You 
+can use the Spacebar to move to the next page of bookmarks.  If there are no
+more bookmarks to view, an --End-- dialog will appear.
+
+This is a new feature bound to have bugs.  Please submit bug reports either
+to the LinuxQuestions.org thread or to the Sourceforge discussion forums.
 
 
 A WORD ON DEBUGGING
