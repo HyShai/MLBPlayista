@@ -176,7 +176,7 @@ def mainloop(myscr,cfg):
 
     try:
         available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
-    except MLBJsonError, detail:
+    except (KeyError, MLBJsonError), detail:
         if cfg['debug']:
             raise Exception, detail
         available = []
@@ -453,7 +453,7 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError,detail:
+            except (KeyError,MLBJsonError),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
@@ -588,7 +588,7 @@ def mainloop(myscr,cfg):
                     available = mysched.getListings(cfg['speed'],
                                                 cfg['blackout'],
                                                 cfg['audio_follow'])
-                except MLBJsonError,detail:
+                except (KeyError,MLBJsonError),detail:
                     if cfg['debug']:
                         raise Exception,detail
                     available = []
@@ -817,7 +817,7 @@ def mainloop(myscr,cfg):
                 available = mysched.getListings(cfg['speed'],
                                             cfg['blackout'],
                                             cfg['audio_follow'])
-            except MLBJsonError,detail:
+            except ( KeyError, MLBJsonError ),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 status_str = "There was a parser problem with the listings page"
