@@ -17,17 +17,23 @@ import select
 import datetime
 import subprocess
 import time
+import pickle
+import copy
 
 DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
 DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
 DEFAULT_SPEED = '400'
 
+BOOKMARK_FILE = os.path.join(AUTHDIR, 'bookmarks.pf')
 
 KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'Enter'      : 'Play video of highlighted game',
                 'Left/Right' : 'Navigate one day forward or back',
                 'c'          : 'Play Condensed Game Video (if available)',
                 'j'          : 'Jump to a date',
+                'm'          : 'Bookmark a game',
+                'b'          : 'View bookmarks',
+                'x (or Bksp)': 'Delete a bookmark',
                 'r'          : 'Refresh listings',
                 'q'          : 'Quit mlbviewer',
                 'h'          : 'Display version and keybindings',
@@ -215,7 +221,8 @@ def mainloop(myscr,cfg):
                 str(mysched.month) + '/' +\
                 str(mysched.day) + '/' +\
                 str(mysched.year) + ')' 
-                
+        elif 'bookmarks' in CURRENT_SCREEN:
+            titlestr = "BOOKMARKS"        
         else:
             titlestr = "AVAILABLE GAMES FOR " +\
                 str(mysched.month) + '/' +\
@@ -239,6 +246,8 @@ def mainloop(myscr,cfg):
             if n < len(available):
                 if 'topPlays' in CURRENT_SCREEN:
                     s = available[n][1]
+                elif 'bookmarks' in CURRENT_SCREEN:
+                    s = available[n][0]['home']
                 else:
                     home = available[n][0]['home']
                     away = available[n][0]['away']
@@ -286,6 +295,8 @@ def mainloop(myscr,cfg):
             else:
                 if 'topPlays' in CURRENT_SCREEN:
                     status_str = 'Press L to return to listings...'
+                elif 'bookmarks' in CURRENT_SCREEN:
+                    status_str = 'Press B to refresh bookmarks...'
                 else:
                     status_str = "No listings available for this day."
 
@@ -303,6 +314,13 @@ def mainloop(myscr,cfg):
         else:
             speedstr = speedtoggle.get(cfg['speed'])
         status_str += ' '*padding + debug_str + speedstr
+
+        # Print an indicator if more bookmarks than lines
+        if 'bookmarks' in CURRENT_SCREEN:
+            if more == True:
+                myscr.addstr(curses.LINES-2,0,'--More--',curses.A_REVERSE)
+            else:
+                myscr.addstr(curses.LINES-2,0,'--End--',curses.A_REVERSE)
 
         # And write the status
         statuswin.addstr(0,0,status_str,curses.A_BOLD)
@@ -325,6 +343,8 @@ def mainloop(myscr,cfg):
         if c in ('Highlights', ord('t')):
             if 'topPlays' in CURRENT_SCREEN:
                 continue
+            if 'bookmarks' in CURRENT_SCREEN:
+                continue
             try:
                 GAMEID = available[current_cursor][5]
             except IndexError:
@@ -341,6 +361,83 @@ def mainloop(myscr,cfg):
             cfg['speed'] = '400'
             available = mysched.getTopPlays(GAMEID)
             CURRENT_SCREEN = 'topPlays'
+            current_cursor = 0
+
+        if c in ('Space', 32):
+            if 'bookmarks' in CURRENT_SCREEN:
+                if more == True:
+                    current_cursor = 0
+                    more_offset += more_end
+                    more_beg = more_end
+                    more_end = more_beg + curses.LINES-4
+                    if more_end > len(bookmarks):
+                        more = False
+                        #more_end = len(bookmarks)
+                    available = copy.deepcopy(bookmarks[more_beg:more_end])
+                else:
+                    continue
+     
+        if c in ('Delete', ord('x'), 8):
+            if 'bookmarks' in CURRENT_SCREEN:
+                confirm = prompter(statuswin,'Delete bookmark? [n] ')
+                confirm_pat = re.compile(r'(y|yes)')
+                if re.search(confirm_pat,confirm):
+                    try:
+                        bk = open(BOOKMARK_FILE)
+                        bookmarks = pickle.load(bk)
+                        bk.close()
+                    except Exception,detail:
+                        statuswin.clear()
+                        statuswin.addstr(0,0,detail,curses.A_BOLD)
+                        statuswin.refresh()
+                        time.sleep(1)
+                    else:
+                        del bookmarks[current_cursor + more_offset]
+                        del available[current_cursor]
+                        current_cursor = 0
+                        bk = open(BOOKMARK_FILE,'w')
+                        pickle.dump(bookmarks,bk)
+                        bk.close()
+                        statuswin.clear()
+                        statuswin.addstr(0,0,'Bookmark deleted.',curses.A_BOLD)
+                        statuswin.refresh()
+                        time.sleep(1)
+
+
+        if c in ('Bookmarks', ord('b')):
+            if 'topPlays' in CURRENT_SCREEN:
+                cfg['speed'] = str(RESTORE_SPEED)
+            try:
+                bk = open(BOOKMARK_FILE)
+                bookmarks = pickle.load(bk)
+                bk.close()
+                if len(bookmarks) > curses.LINES-5:
+                    more = True
+                    more_offset = 0
+                    more_beg = 0
+                    more_end = curses.LINES-4
+                    more_len = len(bookmarks)
+                    available = copy.deepcopy(bookmarks[:curses.LINES-4])
+                else:
+                    more = False
+                    more_offset = 0
+                    available = copy.deepcopy(bookmarks)
+            except Exception,detail:
+                #raise Exception,detail
+                statuswin.clear()
+                statuswin.addstr(0,0,'No bookmarks found.',curses.A_BOLD)
+                statuswin.refresh()
+                available = []
+                time.sleep(1)
+                continue
+            DISABLED_FEATURES = ['Jump', ord('j'), \
+                                 'Left', curses.KEY_LEFT, \
+                                 'Right', curses.KEY_RIGHT, \
+                                 'Speed', ord('p'),\
+                                 'Refresh', ord('r'),\
+                                 'Highlights', ord('t'),\
+                                 'Mark', ord('m')]
+            CURRENT_SCREEN = 'bookmarks'
             current_cursor = 0
 
         if c in ('Listings', ord('l'), ord('L')):
@@ -555,6 +652,35 @@ def mainloop(myscr,cfg):
             statuswin.refresh()
             myscr.getch()
 
+        if c in ('Mark', ord('m')):
+            title = prompter(statuswin, 'Bookmark name? ')
+            if title == '':
+                statuswin.clear()
+                statuswin.addstr(0,0,'Can''t use null name.',curses.A_BOLD)
+                statuswin.refresh()
+                time.sleep(1)
+            else:
+                #raise Exception, repr(available[current_cursor])
+                try:
+                    bk = open(BOOKMARK_FILE)
+                    bookmarks = pickle.load(bk)
+                    bk.close()
+                except IOError,detail:
+                    nofile_pat = re.compile(r'No such file')
+                    if re.search(nofile_pat,str(detail)):
+                        bookmarks = []
+                # Overload the title into 'home' field so we don't disrupt the
+                # overall structure of the tuple
+                mark = copy.deepcopy(available[current_cursor])
+                mark[0]['home'] = title
+                bookmarks.append(mark)
+                bk = open(BOOKMARK_FILE, 'w')
+                pickle.dump(bookmarks,bk)
+                bk.close()
+                statuswin.clear()
+                statuswin.addstr(0,0,'Bookmark added: ' + title, curses.A_BOLD)
+                statuswin.refresh()
+                time.sleep(1)
 
 
         if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c')):
