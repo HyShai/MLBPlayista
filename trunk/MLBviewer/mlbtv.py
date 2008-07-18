@@ -24,6 +24,7 @@ import cookielib
 import os
 import subprocess
 import select
+from copy import deepcopy
 
 # Set this to True if you want to see all the html pages in the logfile
 #DEBUG = True
@@ -260,6 +261,7 @@ class MLBSchedule:
                             # mask 700K to look like 800K
                             if str(self.year) == '2007' and url['speed'] == '700':
                                 dct['video']['800'] = url['url']
+                                
                             dct['video'][url['speed']] = url['url']
                             # national blackout
                             try:
@@ -271,6 +273,10 @@ class MLBSchedule:
                     except TypeError:
                         dct['video']['400'] = None
                         dct['video']['800'] = None
+                    if dct['video'].has_key('400'):
+                        if dct['video'].has_key('800') == False:
+                            # don't let a black sheep ruin it for everyone
+                            dct['video']['800'] = deepcopy(dct['video']['400'])
                     dct['audio'] = {}
                     for audio_feed in ('home_audio', 'away_audio','alt_home_audio', 'alt_away_audio'):
                         if elem[audio_feed]:
