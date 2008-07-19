@@ -222,7 +222,7 @@ def mainloop(myscr,cfg):
                 str(mysched.day) + '/' +\
                 str(mysched.year) + ')' 
         elif 'bookmarks' in CURRENT_SCREEN:
-            titlestr = "BOOKMARKS"        
+            titlestr = "BOOKMARKS (Displaying " + str(len(available)) + ' of ' + str(len(bookmarks)) + ')'
         else:
             titlestr = "AVAILABLE GAMES FOR " +\
                 str(mysched.month) + '/' +\
