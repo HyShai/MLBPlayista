@@ -24,7 +24,7 @@ DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
 DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
 DEFAULT_SPEED = '400'
 
-BOOKMARK_FILE = os.path.join(AUTHDIR, 'bookmarks.pf')
+BOOKMARK_FILE = os.path.join(os.environ['HOME'], AUTHDIR, 'bookmarks.pf')
 
 KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'Enter'      : 'Play video of highlighted game',
