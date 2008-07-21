@@ -444,7 +444,7 @@ def mainloop(myscr,cfg):
             CURRENT_SCREEN = 'bookmarks'
             current_cursor = 0
 
-        if c in ('Listings', ord('l'), ord('L')):
+        if c in ('Listings', ord('l'), ord('L') , 27):
             DISABLED_FEATURES = []
             CURRENT_SCREEN = 'listings'
             current_cursor = 0
