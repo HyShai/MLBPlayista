@@ -292,7 +292,10 @@ def mainloop(myscr,cfg):
                     else:
                         if 'listings' in CURRENT_SCREEN:
                             cursesflags = cursesflags|curses.A_UNDERLINE
-                myscr.addstr(n+2, 0, s, cursesflags)
+                if n < len(available):
+                    myscr.addstr(n+2, 0, s, cursesflags)
+                else:
+                    myscr.addstr(n+2, 0, s)
             else:
                 if 'topPlays' in CURRENT_SCREEN:
                     status_str = 'Press L to return to listings...'
