@@ -43,6 +43,7 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 't'          : 'Display top plays listing for current game'
               }
 
+
 COLORS = { 'black'   : curses.COLOR_BLACK,
            'red'     : curses.COLOR_RED,
            'green'   : curses.COLOR_GREEN,
@@ -50,7 +51,8 @@ COLORS = { 'black'   : curses.COLOR_BLACK,
            'blue'    : curses.COLOR_BLUE,
            'magenta' : curses.COLOR_MAGENTA,
            'cyan'    : curses.COLOR_CYAN,
-           'white'   : curses.COLOR_WHITE
+           'white'   : curses.COLOR_WHITE,
+           'xterm'   : -1
          }
 
 def doinstall(config,dct,dir=None):
@@ -439,8 +441,7 @@ def mainloop(myscr,cfg):
                                  'Right', curses.KEY_RIGHT, \
                                  'Speed', ord('p'),\
                                  'Refresh', ord('r'),\
-                                 'Highlights', ord('t'),\
-                                 'Mark', ord('m')]
+                                 'Highlights', ord('t')]
             CURRENT_SCREEN = 'bookmarks'
             current_cursor = 0
 
@@ -610,6 +611,9 @@ def mainloop(myscr,cfg):
                     statuswin.refresh()
                     time.sleep(2)
                 else:
+                    statuswin.clear()
+                    statuswin.addstr(0,0,'Refreshing listings...')
+                    statuswin.refresh()
                     split = parsed.groups()
                     prev_tuple = (mysched.year,mysched.month, mysched.day)
                     mymonth = int(split[0])
@@ -675,14 +679,29 @@ def mainloop(myscr,cfg):
                         bookmarks = []
                 # Overload the title into 'home' field so we don't disrupt the
                 # overall structure of the tuple
-                mark = copy.deepcopy(available[current_cursor])
-                mark[0]['home'] = title
-                bookmarks.append(mark)
+                try:
+                    mark = copy.deepcopy(available[current_cursor])
+                except IndexError:
+                    continue
+                if 'bookmarks' in CURRENT_SCREEN:
+                    try:
+                        i = bookmarks.index(mark)
+                        bookmarks[i] = mark
+                        mark[0]['home'] = title
+                        available[current_cursor][0]['home'] = title
+                    except IndexError:
+                        #raise Exception,repr(mark)
+                        continue
+                    s = 'Bookmark edited: '
+                else:
+                    mark[0]['home'] = title
+                    bookmarks.append(mark)
+                    s= 'Bookmark added: '
                 bk = open(BOOKMARK_FILE, 'w')
                 pickle.dump(bookmarks,bk)
                 bk.close()
                 statuswin.clear()
-                statuswin.addstr(0,0,'Bookmark added: ' + title, curses.A_BOLD)
+                statuswin.addstr(0,0, s + title, curses.A_BOLD)
                 statuswin.refresh()
                 time.sleep(1)
 
