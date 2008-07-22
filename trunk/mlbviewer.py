@@ -31,7 +31,7 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'Left/Right' : 'Navigate one day forward or back',
                 'c'          : 'Play Condensed Game Video (if available)',
                 'j'          : 'Jump to a date',
-                'm'          : 'Bookmark a game',
+                'm'          : 'Bookmark a game or edit bookmark title',
                 'b'          : 'View bookmarks',
                 'x (or Bksp)': 'Delete a bookmark',
                 'r'          : 'Refresh listings',
@@ -650,7 +650,11 @@ def mainloop(myscr,cfg):
             myscr.addstr(0,0,VERSION)
             myscr.addstr(0,20,URL)
             n = 2
-            for elem in KEYBINDINGS:
+            helpkeys = []
+            helpkeys = KEYBINDINGS.keys()
+            helpkeys.sort()
+         
+            for elem in helpkeys:
                myscr.addstr(n,0,elem)
                myscr.addstr(n,20,KEYBINDINGS[elem])
                n += 1
