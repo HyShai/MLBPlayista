@@ -86,9 +86,8 @@ defaults to underlining.
 
 If favorite is configured, use_color, bg_color, and fg_color are optional and 
 will highlighting defaults to underline.  If use_color is set to True, fg_color
-and bg_color are optional, and highlighting will default to cyan on black.  If
-only one of fg_color or bg_color is specified, the other will take on the 
-default value.
+and bg_color are optional, and highlighting will default to cyan.  The 
+background color defaults to your xterm's settings.  
 
 BOOKMARKS
 
@@ -103,6 +102,9 @@ after you've deleted a bookmark by pressing 'b' again.  If bookmarks list is
 bigger than the window size, a --More-- dialog will appear at the bottom.  You 
 can use the Spacebar to move to the next page of bookmarks.  If there are no
 more bookmarks to view, an --End-- dialog will appear.
+
+You can edit the title of an existing bookmark by pressing 'm' on the 
+highlighted bookmark in the Bookmarks screen.
 
 This is a new feature bound to have bugs.  Please submit bug reports either
 to the LinuxQuestions.org thread or to the Sourceforge discussion forums.
