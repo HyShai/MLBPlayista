@@ -152,7 +152,9 @@ def mainloop(myscr,cfg):
             curses.use_default_colors()
             if cfg['use_color']:
                 try:
-                    curses.init_pair(1, COLORS[cfg['fg_color']],
+                    if cfg.has_key('fg_color'):
+                        cfg['favorite_color'] = cfg['fg_color']
+                    curses.init_pair(1, COLORS[cfg['favorite_color']],
                                         COLORS[cfg['bg_color']])
                 except KeyError:
                     cfg['use_color'] = False
@@ -887,8 +889,8 @@ if __name__ == "__main__":
                   'blackout': [],
                   'favorite': [],
                   'use_color': 0,
+                  'favorite_color': 'cyan',
                   'bg_color': 'xterm',
-                  'fg_color': 'cyan',
                   'show_player_command': 0,
                   'debug': 0,
                   'x_display': '',
