@@ -74,9 +74,7 @@ on black, or colors of your choosing will highlight teams specified in favorite;
 if set to false or absent from config, favorite highlighting defaults to 
 underlining)
 
-fg_color = x (the foreground color for favorite highlighting)
-
-bg_color = x (the background color for favorite highlighting)
+favorite_color = x (the foreground color for favorite highlighting)
 
 Valid color choices are:
     'black', 'white', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan'
@@ -84,10 +82,9 @@ Valid color choices are:
 If an invalid color is specified, color is disabled and favorite highlighting
 defaults to underlining.
 
-If favorite is configured, use_color, bg_color, and fg_color are optional and 
-will highlighting defaults to underline.  If use_color is set to True, fg_color
-and bg_color are optional, and highlighting will default to cyan.  The 
-background color defaults to your xterm's settings.  
+If favorite is configured, use_color, and favorite_color are optional and 
+will highlighting defaults to underline.  If use_color is set to True, 
+favorite_color is optional, and highlighting will default to cyan.  
 
 BOOKMARKS
 
