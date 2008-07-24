@@ -32,6 +32,7 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'c'          : 'Play Condensed Game Video (if available)',
                 'j'          : 'Jump to a date',
                 'm'          : 'Bookmark a game or edit bookmark title',
+                'l (or Esc)' : 'Return to listings',
                 'b'          : 'View bookmarks',
                 'x (or Bksp)': 'Delete a bookmark',
                 'r'          : 'Refresh listings',
@@ -42,6 +43,14 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'p'          : 'Toggle speed (does not change config file)',
                 't'          : 'Display top plays listing for current game'
               }
+
+HELPFILE = (
+    ('COMMANDS' , ( 'Enter', 'a', 'c', 'd' )),
+    ('LISTINGS', ( 'Up/Down', 'Left/Right', 'j', 'p', 'r' )),
+    ('SCREENS'  , ( 't', 'b', 'h', 'l (or Esc)' )),
+    ('BOOKMARKS', ( 'm', 'x (or Bksp)' ))
+    )
+
 
 
 COLORS = { 'black'   : curses.COLOR_BLACK,
@@ -650,14 +659,18 @@ def mainloop(myscr,cfg):
             myscr.addstr(0,0,VERSION)
             myscr.addstr(0,20,URL)
             n = 2
-            helpkeys = []
-            helpkeys = KEYBINDINGS.keys()
-            helpkeys.sort()
+            #helpkeys = []
+            #helpkeys = HELPFILE.keys()
+            #helpkeys.sort()
          
-            for elem in helpkeys:
-               myscr.addstr(n,0,elem)
-               myscr.addstr(n,20,KEYBINDINGS[elem])
+            for heading in HELPFILE:
+               myscr.addstr(n,0,heading[0],curses.A_UNDERLINE)
                n += 1
+               for helpkeys in heading[1:]:
+                   for k in helpkeys:
+                       myscr.addstr(n,0,k)
+                       myscr.addstr(n,20, ': ' + KEYBINDINGS[k])
+                       n += 1
             statuswin.clear()
             statuswin.addstr(0,0,'Press a key to continue...')
             myscr.refresh()
@@ -874,7 +887,7 @@ if __name__ == "__main__":
                   'blackout': [],
                   'favorite': [],
                   'use_color': 0,
-                  'bg_color': 'black',
+                  'bg_color': 'xterm',
                   'fg_color': 'cyan',
                   'show_player_command': 0,
                   'debug': 0,
