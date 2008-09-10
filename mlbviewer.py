@@ -655,6 +655,21 @@ def mainloop(myscr,cfg):
                         time.sleep(2)
 
 
+        if c in ('Zdebug', ord('z')):
+            gameid = available[current_cursor][5]
+            titlewin.clear()
+            titlewin.addstr(0,0,'LISTINGS DEBUG FOR ' + gameid)
+            titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
+            myscr.clear()
+            myscr.addstr(2,0,'getListings() for current_cursor:')
+            myscr.addstr(3,0,repr(available[current_cursor]))
+            statuswin.clear()
+            statuswin.addstr(0,0,'Press a key to continue...')
+            myscr.refresh()
+            titlewin.refresh()
+            statuswin.refresh()
+            myscr.getch()
+
         if c in ('Help', ord('h')):
             myscr.clear()
             titlewin.clear()
