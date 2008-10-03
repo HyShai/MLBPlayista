@@ -929,7 +929,17 @@ if __name__ == "__main__":
 
     # check to see if the start date is specified on command-line
     if len(sys.argv) > 1:
-        pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})(/)([0-9]{2})')
+        pattern = re.compile(r'(.*)=(.*)')
+        parsed = re.match(pattern,sys.argv[1])
+        if not parsed:
+            print 'Error: Arguments should be specified as variable=value'
+            sys.exit()
+        split = parsed.groups()
+        if split[0] not in ('startdate'):
+            print 'Error: unknown variable argument: '+split[0]
+            sys.exit()
+
+        pattern = re.compile(r'startdate=([0-9]{1,2})(/)([0-9]{1,2})(/)([0-9]{2})')
         parsed = re.match(pattern,sys.argv[1])
         if not parsed:
             print 'Error: listing start date not in mm/dd/yy format.'
