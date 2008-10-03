@@ -181,7 +181,7 @@ def mainloop(myscr,cfg):
     myscr.refresh()
     titlewin.refresh()
 
-    mysched = MLBSchedule(time_shift=cfg['time_offset'])
+    mysched = MLBSchedule(ymd_tuple=startdate,time_shift=cfg['time_offset'])
     # We'll make a note of the date, to return to it later.
     today_year = mysched.year
     today_month = mysched.month
@@ -926,5 +926,24 @@ if __name__ == "__main__":
 
     mycfg = MLBConfig(mydefaults)
     mycfg.loads(myconf)
-    
+
+    # check to see if the start date is specified on command-line
+    if len(sys.argv) > 1:
+        pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})(/)([0-9]{2})')
+        parsed = re.match(pattern,sys.argv[1])
+        if not parsed:
+            print 'Error: listing start date not in mm/dd/yy format.'
+            sys.exit()
+        split = parsed.groups()
+        startmonth = int(split[0])
+        startday  = int(split[2])
+        startyear  = int('20' + split[4])
+        startdate = (startyear, startmonth, startday)
+    else:
+        now = datetime.datetime.now()
+        dif = datetime.timedelta(1)
+        if now.hour < 9:
+            now = now - dif
+        startdate = (now.year, now.month, now.day)
+
     curses.wrapper(mainloop, mycfg.data)
