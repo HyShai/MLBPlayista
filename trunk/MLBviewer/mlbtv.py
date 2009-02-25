@@ -42,6 +42,7 @@ TEAMCODES = {
     'ari': ('ARZ', 'Arizona', 'Diamondbacks', ''),
     'atl': ('ATL', 'Atlanta', 'Braves', ''),
     'bal': ('BAL', 'Baltimore', 'Orioles',''),
+    'bc' : ('BC',  'Boston', 'College', ''),
     'bos': ('BOS', 'Boston', 'Red Sox', ''),
     'chc': ('CHC', 'Chicago', 'Cubs', ''),
     'cin': ('CIN', 'Cincinnati', 'Reds', ''),
@@ -71,6 +72,7 @@ TEAMCODES = {
     'was': ('WAS', 'Washington', 'Nationals', ''),
     'wft': ('WFT', 'World', 'Futures', 'Team' ),
     'uft': ('UFT', 'USA', 'Futures', 'Team' ),
+    'unk': ('UNK', 'Unknown', 'Teamcode'),
     }
 
 def gameTimeConvert(datetime_tuple, time_shift=None):
@@ -247,9 +249,19 @@ class MLBSchedule:
                     # A messy but effective way to join the team name
                     # together. Damn Angels making everything more
                     # difficult.
-                    text = ' '.join(TEAMCODES[dct['away']][1:]).strip() +\
-                        ' at ' +\
-                        ' '.join(TEAMCODES[dct['home']][1:]).strip()
+                    try:
+                        text = ' '.join(TEAMCODES[dct['away']][1:]).strip()
+                    except KeyError:
+			t = (dct['away'],)
+                        TEAMCODES[dct['away']] = TEAMCODES['unk'] + t
+                        text =  ' '.join(TEAMCODES[dct['away']][1:]).strip()
+                    text += ' at '
+                    try:
+                        text += ' '.join(TEAMCODES[dct['home']][1:]).strip()
+                    except KeyError:
+			t = (dct['home'],)
+                        TEAMCODES[dct['home']] = TEAMCODES['unk'] + t
+                        text =  ' '.join(TEAMCODES[dct['home']][1:]).strip()
                     dct['text'] = text
                     dct['teams'] = {}
                     dct['teams']['home'] = dct['home']
