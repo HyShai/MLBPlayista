@@ -292,6 +292,12 @@ def mainloop(myscr,cfg):
                         status_str = 'Press L to return to listings...'
                     else:
                         status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
+			if available[n][2] is None and available[n][3] is None:
+                            status_str += ' (No media available)'
+                        elif available[n][2] is None:
+                            status_str += ' (No video available)'
+                        else:
+                            status_str += ' (No audio available)'
                 else:
                     if n < len(available) and available[n][4] == 'I':
                         cursesflags = curses.A_BOLD
