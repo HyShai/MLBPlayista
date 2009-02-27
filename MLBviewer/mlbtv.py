@@ -73,7 +73,25 @@ TEAMCODES = {
     'wft': ('WFT', 'World', 'Futures', 'Team' ),
     'uft': ('UFT', 'USA', 'Futures', 'Team' ),
     'unk': ('UNK', 'Unknown', 'Teamcode'),
+    'tbd': ('TBD', 'TBD'),
+    't784': ('T784', 'WBC Canada'),
+    't805': ('T805', 'WBC Dominican Republic'),
+    't841': ('T841', 'WBC Italy'),
+    't878': ('T878', 'WBC Netherlands'),
+    't890': ('T890', 'WBC Panama'),
+    't897': ('T897', 'WBC Puerto Rico'),
+    't944': ('T944', 'WBC Venezuela'),
+    't940': ('T940', 'WBC United States'),
+    't918': ('T918', 'WBC South Africa'),
+    't867': ('T867', 'WBC Mexico'),
+    't760': ('T760', 'WBC Australia'),
+    't790': ('T790', 'WBC China'),
+    't843': ('T843', 'WBC Japan'),
+    't791': ('T791', 'WBC Taipei'),
+    't1171': ('T1171', 'WBC Korea'),
+    't2290': ('T2290', 'University of Michigan'),
     }
+
 
 def gameTimeConvert(datetime_tuple, time_shift=None):
     """Convert from east coast time to local time. This either uses
@@ -240,8 +258,12 @@ class MLBSchedule:
                     # The game status comes straight out of the dictionary.
                     dct['home'] = [team['code'] for team in elem['teams'] if
                                    team['isHome']][0]
+                    if dct['home'] is None:
+                        dct['home'] = 'tbd'
                     dct['away'] = [team['code'] for team in elem['teams'] if not
                                    team['isHome']][0]
+                    if dct['away'] is None:
+                        dct['away'] = 'tbd'
                     dct['status'] = (elem['status'],"LB")[\
                         (dct['home'] in blackout or
                          dct['away'] in blackout)\
