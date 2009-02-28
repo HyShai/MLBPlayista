@@ -42,7 +42,6 @@ TEAMCODES = {
     'ari': ('ARZ', 'Arizona', 'Diamondbacks', ''),
     'atl': ('ATL', 'Atlanta', 'Braves', ''),
     'bal': ('BAL', 'Baltimore', 'Orioles',''),
-    'bc' : ('BC',  'Boston', 'College', ''),
     'bos': ('BOS', 'Boston', 'Red Sox', ''),
     'chc': ('CHC', 'Chicago', 'Cubs', ''),
     'cin': ('CIN', 'Cincinnati', 'Reds', ''),
@@ -90,6 +89,17 @@ TEAMCODES = {
     't791': ('T791', 'WBC Taipei'),
     't1171': ('T1171', 'WBC Korea'),
     't2290': ('T2290', 'University of Michigan'),
+    't2330': ('T3330', 'Georgetown University'),
+    't2330': ('T3330', 'Georgetown University'),
+    't2291': ('T2291', 'St. Louis University'),
+    't2292': ('T2292', 'University of Southern Florida'),
+    'uga' : ('UGA',  'University of Georgia'),
+    'mcc' : ('MCC', 'Manatee Community College'),
+    'fso' : ('FSO', 'Florida Southern College'),
+    'fsu' : ('FSU', 'Florida State University'),
+    'mia' : ('MIA', 'University of Miami'),
+    'neu' : ('NEU',  'Northeastern University'),
+    'bc' : ('BC',  'Boston', 'College', ''),
     }
 
 
