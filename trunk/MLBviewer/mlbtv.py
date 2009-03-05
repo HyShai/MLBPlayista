@@ -305,6 +305,11 @@ class MLBSchedule:
                             # mask 700K to look like 800K
                             if str(self.year) == '2007' and url['speed'] == '700':
                                 dct['video']['800'] = url['url']
+
+                            # Wtf!? Why is WBC 600?  Why not 400 or 800?
+                            if str(self.year) == '2009' and url['speed'] == '600':
+                                dct['video']['400'] = url['url']
+                                dct['video']['800'] = url['url']
                                 
                             dct['video'][url['speed']] = url['url']
                             # national blackout
