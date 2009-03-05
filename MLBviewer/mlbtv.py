@@ -110,11 +110,19 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
     
     The timezone shift should be of the form '-0500', '+0330'. If no
     sign is given, it is assumed to be positive."""
-    STANDARD = datetime.datetime(2008,11,2)
-    if STANDARD <= datetime.datetime.now():
+    DAYLIGHT = {
+        '2007': (datetime.datetime(2007,3,11),datetime.datetime(2007,11,4)),
+        '2008': (datetime.datetime(2008,3,9),datetime.datetime(2008,11,2)),
+        '2009': (datetime.datetime(2009,3,8),datetime.datetime(2009,11,1)),
+        '2010': (datetime.datetime(2009,3,14),datetime.datetime(2009,11,7)),
+               }
+    now = datetime.datetime.now()            
+    if (now > DAYLIGHT[str(now.year)][0]) \
+       and (now < DAYLIGHT[str(now.year)][1]):
         dif = datetime.timedelta(0,18000)
     else:
         dif = datetime.timedelta(0,14400)
+
     utc_tuple = datetime_tuple + dif
     # We parse the explicit shift if there is one:
     if time_shift:
