@@ -34,7 +34,6 @@ def padstr(s,num):
 
 myconfdir = os.path.join(os.environ['HOME'],AUTHDIR)
 myconf =  os.path.join(myconfdir,AUTHFILE)
-#myconf = os.path.join(os.environ['HOME'], AUTHDIR, AUTHFILE)
 mydefaults = {'speed': DEFAULT_SPEED,
               'video_player': DEFAULT_V_PLAYER,
               'audio_player': DEFAULT_A_PLAYER,
@@ -95,6 +94,8 @@ except (KeyError, MLBJsonError), detail:
     print "There was a parser problem with the listings page"
     sys.exit()
 
+# This is more for documentation. Mlblistings.py is meant to produce more 
+# machine readable output rather than user-friendly output like mlbviewer.py.
 statusline = {
     "I" : "Status: In Progress",
     "W" : "Status: Not Yet Available",
@@ -115,6 +116,13 @@ print "MLB.TV Listings for " +\
     str(mysched.year)
 
 for n in range(len(available)):
+    # This is how you can recreate the mlbviewer output (e.g. user-friendly)
+    # You would uncomment the print str(s) line and comment out the 
+    # the print str(c) 
+    # Or mix and match between the lines to produce the output you find
+    # easiest for you (such as printing raw home and away teamcodes without 
+    # translating them in the TEAMCODES dictionary, e.g.
+    # "kc at tex"  instead of "Kansas City Royals at Texas Rangers"
     home = available[n][0]['home']
     away = available[n][0]['away']
     s = available[n][1].strftime('%l:%M %p') + ': ' +\
@@ -125,12 +133,12 @@ for n in range(len(available)):
         available[n][1].strftime('%l:%M %p') + ': ' +\
         available[n][5] 
     try:
-        c += ' A:' + str(available[n][3]["w_id"])
+        c += ' A:' + padstr(str(available[n][3]["w_id"]),7)
     except TypeError:
-        c += ' A:' + padstr('None',6)
+        c += ' A:' + padstr('None',7)
     try:
-        c += ' V:' + str(available[n][2]["w_id"])
+        c += ' V:' + padstr(str(available[n][2]["w_id"]),7)
     except TypeError:
-        c += ' V:' + padstr('None',6)
+        c += ' V:' + padstr('None',7)
     print str(c)
 
