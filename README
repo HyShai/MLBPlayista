@@ -143,6 +143,83 @@ mlbgameid will produce a lot of output very much like debugging except it will
 also execute your player command as specified in your configuration file.  The 
 output of mlbgameid is NOT written to the log file.
 
+MLBLISTINGS
+
+Spring Training and its limited gameday audio and video coverage pissing you 
+off?  Do you find yourself scrolling down the list looking for games with 
+media available?  Do you wish you could just get the listings and pipe the
+output to grep and awk?  
+
+Mlblistings.py is a test application that uses the MLBviewer library (which
+is why it's not located in the test directory) and prints the listings for
+a given day in a predictable "awk-able" format.
+
+Sample output:
+
+MLB.TV Listings for 3/5/2009
+[ F]  1:30 AM: 2009/03/05/chnint-jpnint-1 A:  None V:912731
+[ F]  9:05 AM: 2009/03/05/purint-bosmlb-1 A:  None V:  None
+[ F]  9:05 AM: 2009/03/05/usaint-phimlb-1 A:907247 V:  None
+[ F] 10:05 AM: 2009/03/05/flomlb-balmlb-1 A:  None V:  None
+[ F] 10:05 AM: 2009/03/05/panint-houmlb-1 A:912864 V:  None
+[ F] 10:05 AM: 2009/03/05/pitmlb-cinmlb-1 A:  None V:  None
+[ F] 10:05 AM: 2009/03/05/wasmlb-detmlb-1 A:  None V:  None
+[ F] 10:15 AM: 2009/03/05/canint-nyamlb-1 A:  None V:  None
+[ F] 11:05 AM: 2009/03/05/domint-slnmlb-1 A:907256 V:  None
+[ F] 11:05 AM: 2009/03/05/itaint-nynmlb-1 A:  None V:  None
+[ F] 11:05 AM: 2009/03/05/nedint-minmlb-1 A:  None V:  None
+[ F] 11:05 AM: 2009/03/05/venint-atlmlb-1 A:  None V:  None
+[ F] 12:05 PM: 2009/03/05/anamlb-seamlb-1 A:  None V:  None
+[ F] 12:05 PM: 2009/03/05/ausint-milmlb-1 A:907265 V:  None
+[ F] 12:05 PM: 2009/03/05/chamlb-lanmlb-1 A:  None V:  None
+[ F] 12:05 PM: 2009/03/05/oakmlb-sfnmlb-1 A:907269 V:  None
+[ F] 12:05 PM: 2009/03/05/rsaint-oakmlb-1 A:  None V:  None
+[ F] 12:05 PM: 2009/03/05/sdnmlb-texmlb-1 A:907278 V:  None
+[ F] 12:10 PM: 2009/03/05/mexint-colmlb-1 A:  None V:  None
+[ F]  1:05 PM: 2009/03/05/chamlb-chnmlb-1 A:  None V:913096
+
+The first line can be ignored or excluded with grep -v.
+
+The fields for the remaining lines are:
+
+1:Status Code (one of the following):
+        "I" : "Status: In Progress",
+        "W" : "Status: Not Yet Available",
+        "F" : "Status: Final",
+        "CG": "Status: Final (Condensed Game Available)",
+        "P" : "Status: Not Yet Available",
+        "S" : "Status: Suspended",
+        "D" : "Status: Delayed",
+        "IP": "Status: Pregame",
+        "PO": "Status: Postponed",
+        "GO": "Status: Game Over - stream not yet available",
+        "NB": "Status: National Blackout",
+        "LB": "Status: Local Blackout"
+
+2:Game Time: Translated using time_offset option in ~/.mlb/config, if present
+
+3:Gameid: These game id's are always of the format:
+          year/month/day/awayteam-hometeam-sequence
+          The sequence number is almost always 1 unless there is a doubleheader
+          that day.
+
+4:Audio Stream ID (or None, if none available)
+
+5:Video Stream ID (or None, if none available)
+
+The stream ID's can be used with the mlbgameid.py script in the test directory.
+
+The times are already in a format the 'at' command can accept so it is 
+possible to schedule a game to play automatically using the at command.  See
+the at(1) man page for more details on the at command.
+
+The mlblistings.py script uses the $HOME/.mlb/config file wherever relevant,
+and also accepts the startdate=m/d/yy command-line option for looking at 
+listings in the future (or the past.)
+
+Mlblistings.py can also be used as an example for developing your own 
+application using the MLBviewer python library.
+
 ADDITIONAL HELP
 
 mlbviewer was born out of discussion in a forum on LinuxQuestions.org.  Some
