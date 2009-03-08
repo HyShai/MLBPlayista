@@ -87,6 +87,7 @@ TEAMCODES = {
     't790': ('T790', 'WBC China'),
     't843': ('T843', 'WBC Japan'),
     't791': ('T791', 'WBC Taipei'),
+    't798': ('T798', 'WBC Cuba'),
     't1171': ('T1171', 'WBC Korea'),
     't2290': ('T2290', 'University of Michigan'),
     't2330': ('T3330', 'Georgetown University'),
@@ -117,11 +118,11 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
         '2010': (datetime.datetime(2009,3,14),datetime.datetime(2009,11,7)),
                }
     now = datetime.datetime.now()            
-    if (now > DAYLIGHT[str(now.year)][0]) \
+    if (now >= DAYLIGHT[str(now.year)][0]) \
        and (now < DAYLIGHT[str(now.year)][1]):
-        dif = datetime.timedelta(0,18000)
-    else:
         dif = datetime.timedelta(0,14400)
+    else:
+        dif = datetime.timedelta(0,18000)
 
     utc_tuple = datetime_tuple + dif
     # We parse the explicit shift if there is one:
