@@ -89,6 +89,7 @@ TEAMCODES = {
     't791': ('T791', 'WBC Taipei'),
     't798': ('T798', 'WBC Cuba'),
     't1171': ('T1171', 'WBC Korea'),
+    't1193': ('T1193', 'WBC Venezuela'),
     't2290': ('T2290', 'University of Michigan'),
     't2330': ('T3330', 'Georgetown University'),
     't2330': ('T3330', 'Georgetown University'),
