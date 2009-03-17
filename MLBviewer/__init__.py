@@ -3,7 +3,7 @@ __all__ = ["MLBSchedule", "Gamestream", "LircConnection", "MLBConfig"]
 __author__ = "Jesse Rosenthal"
 __email__ = "jesse.k.rosenthal@gmail.com"
 
-VERSION ="0.1alpha8svn"
+VERSION ="0.1alpha9svn"
 URL = "http://sourceforge.net/projects/mlbviewer"
 
 AUTHDIR = '.mlb'
