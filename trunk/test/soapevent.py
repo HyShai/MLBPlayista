@@ -46,9 +46,12 @@ except:
     session = None
 
 if session is None:
-    sk = open(SESSIONKEY,"r")
-    session = sk.read()
-    sk.close()
+    try:
+        sk = open(SESSIONKEY,"r")
+        session = sk.read()
+    	sk.close()
+    except:
+        print "no sessionkey file found."
 
 COOKIEFILE = 'mlbcookie.lwp'
 
@@ -195,7 +198,7 @@ try:
     print "session-key = " + str(cookies['ftmu'])
     session = urllib.unquote(cookies['ftmu'])
     sk = open(SESSIONKEY,"w")
-    sk.write(session_key)
+    sk.write(session)
     sk.close()
 
 except:
