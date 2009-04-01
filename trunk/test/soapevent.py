@@ -13,9 +13,11 @@ logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
 from suds.client import Client
 
-url = 'file:///home/matthew/mlb-2009/sudsy/MediaService.wsdl'
+url = 'file://'
+url += os.path.join(os.environ['HOME'], '.mlb', 'MediaService.wsdl')
 client = Client(url)
 
+SESSIONKEY = os.path.join(os.environ['HOME'], '.mlb', 'sessionkey')
 
 cj = None
 cookielib = None
@@ -34,9 +36,19 @@ except:
     SCENARIO = "MLB_FLASH_800K_STREAM"
 
 try:
-    session = sys.argv[3]
+    play_path = sys.argv[3]
+except:
+    play_path = None
+
+try:
+    session = sys.argv[4]
 except:
     session = 'rsewYdqXc5t3h0RANw5QWG/t37U='
+
+if session is None:
+    sk = open(SESSIONKEY,"r")
+    session = sk.read()
+    sk.close()
 
 COOKIEFILE = 'mlbcookie.lwp'
 
@@ -182,6 +194,10 @@ print "ipid = " + str(cookies['ipid']) + " fingerprint = " + str(cookies['fprt']
 try:
     print "session-key = " + str(cookies['ftmu'])
     session = urllib.unquote(cookies['ftmu'])
+    sk = open(SESSIONKEY,"w")
+    sk.write(session_key)
+    sk.close()
+
 except:
     logout_url = 'https://secure.mlb.com/enterworkflow.do?flowId=registration.logout&c_id=mlb'
     txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
@@ -198,7 +214,13 @@ event_id = EVENT
 pd = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE' }
 reply = client.service.find(**pd)
 print reply
-#print reply[0][0]['user-verified-content'][0]['content-id']
+try:
+    session = reply['session-key']
+    sk = open(SESSIONKEY,"w")
+    sk.write(session_key)
+except:
+    print "no session-key found in reply"
+    
 content_id = reply[0][0]['user-verified-content'][0]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
 
@@ -217,9 +239,10 @@ print reply
 game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
 #sys.exit()
 try:
-    play_path_pat = re.compile(r'ondemand\/(.*)\?')
-    play_path = re.search(play_path_pat,game_url).groups()[0]
-    print "play_path = " + repr(play_path)
+    if play_path is None:
+        play_path_pat = re.compile(r'ondemand\/(.*)\?')
+        play_path = re.search(play_path_pat,game_url).groups()[0]
+        print "play_path = " + repr(play_path)
 except:
     play_path = None
 print "url = " + str(game_url)
