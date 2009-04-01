@@ -9,6 +9,7 @@ from MLBviewer import MLBJsonError
 from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE, LOGFILE
 from MLBviewer import TEAMCODES
 import os
+import signal
 import sys
 import re
 import curses
@@ -27,6 +28,7 @@ DEFAULT_SPEED = '400'
 
 DEFAULT_A_RECORD = 'mplayer -dumpfile %f -dumpstream -playlist %s'
 DEFAULT_V_RECORD = 'mplayer -dumpfile %f -dumpstream %s'
+DEFAULT_F_RECORD = 'rtmpdump -f \"LNX 10,0,22,87\" -o %f -y %y -r %s --resume'
 
 BOOKMARK_FILE = os.path.join(os.environ['HOME'], AUTHDIR, 'bookmarks.pf')
 
@@ -151,6 +153,8 @@ def mainloop(myscr,cfg):
         LIRC = 0
         inputlst = [sys.stdin]
 
+    log.write(s + '\n\n')
+    log.flush()
 
     if hasattr(curses, 'use_default_colors'):
         try:
@@ -191,9 +195,13 @@ def mainloop(myscr,cfg):
     today_year = mysched.year
     today_month = mysched.month
     today_day = mysched.day
+    use_xml = mysched.use_xml
 
     try:
-        available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
+        if use_xml:
+            available = mysched.getXmlListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
+        else:
+            available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
     except (KeyError, MLBJsonError), detail:
         if cfg['debug']:
             raise Exception, detail
@@ -367,6 +375,13 @@ def mainloop(myscr,cfg):
         elif LIRC:
             if irc_socket in inputs:
                 c = irc_conn.next_code()
+
+        if c in ('Record', ord('o')):
+            if cfg['dvr_record_only']:
+                cfg['dvr_record_only'] = False
+            else:
+                cfg['dvr_record_only'] = True
+
 
         if c in ('Highlights', ord('t')):
             if 'topPlays' in CURRENT_SCREEN:
@@ -799,9 +814,16 @@ def mainloop(myscr,cfg):
                             continue
                     else:
                         stream = available[current_cursor][2]
-                    g = GameStream(stream, cfg['user'], cfg['pass'], 
+                    if mysched.use_xml:
+                        g = GameStream(stream, cfg['user'], cfg['pass'], 
+                                   cfg['debug'],use_soap=True)
+                    else:
+                        g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'])
                 
+                if g.use_soap:
+                    recorder = DEFAULT_F_RECORD
+
                 # print a "Trying..." message so we don't look frozen
                 statuswin.clear()
                 statuswin.addstr(0,0,'Fetching URL for game stream...')
@@ -814,7 +836,10 @@ def mainloop(myscr,cfg):
                     statuswin.refresh()
                     myscr.refresh()
                 try:
-                    u = g.url()
+                    if g.use_soap:
+                        u = g.soapurl()
+                    else:
+                        u = g.url()
                 except:
                     # Debugging should make errors fatal in case there is a
                     # logic, coding, or other uncaught error being hidden by
@@ -838,23 +863,24 @@ def mainloop(myscr,cfg):
                     # I'd rather leave an error on the screen but you'll need
                     # to write a lirc handler for getch()
                     #myscr.getch()
-                    filename = available[current_cursor][5].replace('/',\
-                        '-') + '.asf'
+                    filename = available[current_cursor][5].replace('/', '-') 
+                    if g.use_soap:
+                        filename += '.mp4'
+                    else:
+                        filename += '.asf'
                     filename = os.path.join(cfg['dvr_record_dir'], filename)
                     if cfg['debug']:
                         continue
                     try:
-                        if '%s' in recorder:
-                            rec_cmd_str = recorder.replace('%s', '"' + u + '"')
-                            rec_cmd_str = rec_cmd_str.replace('%f', filename)
-                        else:
-                            rec_cmd_str = recorder + ' "' + u + '" '
-                        if '%s' in player:
-                            play_cmd_str = player.replace('%s', filename)
-                        else:
-                            play_cmd_str = player + ' ' + filename
-                        if cfg['dvr_resume']:
-                            play_cmd_str = play_cmd_str + ' ' + cfg['dvr_resume'] + ' 0'
+                        elapsed = 0
+                        resume = 0
+                        if '%s' not in recorder:
+                            recorder += ' ' + '%s'
+                        if '%s' not in player:
+                            player += ' ' + '%s'
+                        rec_cmd_str = g.prepare_rec_str(recorder,filename,u)
+                        play_cmd_str = g.prepare_play_str(player,filename,cfg['dvr_resume'],elapsed)
+
                         #raise Exception,rec_cmd_str
                         if cfg['show_player_command']:
                             myscr.clear()
@@ -870,31 +896,44 @@ def mainloop(myscr,cfg):
                                 time.sleep(.5)
 
                         ls_cmd_str = 'ls -lh ' + filename
-                        elapsed = 0
 
-                        rec_process=subprocess.Popen(rec_cmd_str,shell=True)
+                        # initialize some variables
+                        fsize = 0
+                        lsize = 0
+                        rec_retry = 5
+                        rec_process=subprocess.Popen(rec_cmd_str,shell=True,preexec_fn=os.setsid)
+                        rec_retcode = rec_process.poll()
                         while rec_process.poll() is None:
                             myscr.clear()
                             myscr.addstr(0,0,rec_cmd_str)
-                            myscr.addstr(curses.LINES-10,0,'dvr_delay = ' + str(cfg['dvr_delay']))
-                            myscr.addstr(curses.LINES-9,0,'dvr_resume = ' + str(cfg['dvr_resume']))
-                            myscr.addstr(curses.LINES-8,0,'dvr_record_only = ' + str(cfg['dvr_record_only']))
-                            myscr.addstr(curses.LINES-7,0,'video_recorder = ' + str(cfg['video_recorder']))
-                            myscr.addstr(curses.LINES-6,0,'audio_recorder = ' + str(cfg['audio_recorder']))
+                            cursor = curses.LINES-10
+                            for param in ( 'dvr_delay', 'dvr_resume', 
+                                 'dvr_record_only' ):
+                                myscr.addstr(cursor,0, param + ' = ' +\
+                                    str(cfg[param]))
+                                cursor += 1
                             ls_output = commands.getoutput(ls_cmd_str)
-                            myscr.addstr(curses.LINES-3,0,'Elapsed: ' + str(elapsed) + ' seconds (updates every 5 seconds)')
-                            myscr.addstr(curses.LINES-2,0,ls_output)
+                            myscr.addstr(curses.LINES-4,0,'Elapsed: ' + str(elapsed) + ' seconds (updates every 5 seconds)')
+                            myscr.addstr(curses.LINES-3,0,ls_output)
+                            myscr.addstr(curses.LINES-1,0,"")
                             myscr.refresh()
+                            myscr.timeout(5000)
                             try:
+                                c = myscr.getch()
                                 time.sleep(5)
                             except KeyboardInterrupt:
                                 continue
+                            if c in ( 'RecordOnly', ord('o') ):
+                                if cfg['dvr_record_only']:
+                                    cfg['dvr_record_only'] = False
+                                else:
+                                    cfg['dvr_record_only'] = True
                             elapsed += 5
                             if elapsed >= int(cfg['dvr_delay']) and not cfg['dvr_record_only']:
                                 try:
                                     if cfg['dvr_resume']:
                                         play_cmd_str = play_cmd_str.split()[:-1]
-                                        play_cmd_str = ' '.join(play_cmd_str) + ' ' + str(elapsed - int(cfg['dvr_delay']) - 5)
+                                        play_cmd_str = ' '.join(play_cmd_str) + ' ' + str(resume)
                                     log.write('dvr_play command: '+ play_cmd_str + '\n\n')
                                     log.flush()
                                     play_process=subprocess.Popen(play_cmd_str,shell=True)
@@ -902,9 +941,34 @@ def mainloop(myscr,cfg):
                                         time.sleep(5)
                                         elapsed +=5
                                     play_process.wait()
+                                    resume = elapsed - int(cfg['dvr_delay'])
                                 except:
                                     raise
-                        rec_process.wait()
+                            rec_rc = rec_process.poll()
+                            if rec_rc is not None:
+                                rec_rc = rec_process.wait()
+                                if rec_rc != 0 and rec_retry > 0:
+                                    try:
+                                        u = g.soapurl()
+                                    except:
+                                        rec_rc = -1
+                                        myscr.clear()
+                                        myscr.addstr(0,0,g.error_str)
+                                        myscr.refresh()
+                                        time.sleep(2)
+                                    else:
+                                        rec_cmd_str = g.prepare_rec_str(recorder,filename,u)
+                                        rec_process = subprocess.Popen(rec_cmd_str,shell=True, preexec_fn=os.setsid )
+                                        rec_retry -= 1
+                                else:
+                                    break
+                            else:
+                                if not (elapsed % 25):
+                                    lsize = fsize
+                                    fsize = long(os.path.getsize(filename))
+                                    if fsize == lsize:
+                                        os.killpg( rec_process.pid, signal.SIGINT )
+                        myscr.timeout(-1)
                         complete_str = "Command completed. Hope it worked!"
                         cont_str = "Press a key to continue..."
                         myscr.clear()
