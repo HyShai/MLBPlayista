@@ -43,7 +43,7 @@ except:
 try:
     session = sys.argv[4]
 except:
-    session = 'rsewYdqXc5t3h0RANw5QWG/t37U='
+    session = None
 
 if session is None:
     sk = open(SESSIONKEY,"r")
