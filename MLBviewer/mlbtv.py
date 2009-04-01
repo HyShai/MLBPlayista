@@ -863,7 +863,7 @@ class GameStream:
         rec_cmd_str = rec_cmd_str.replace('%f', filename)
         rec_cmd_str = rec_cmd_str.replace('%s', '"' + streamurl + '"')
         if self.use_soap and self.play_path is not None:
-            rec_cmd_str = rec_cmd_str.replace('%y', self.play_path)
+            rec_cmd_str += ' -y ' + str(self.play_path)
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         self.log.flush()
         return rec_cmd_str

@@ -29,7 +29,7 @@ DEFAULT_SPEED = '400'
 
 DEFAULT_A_RECORD = 'mplayer -dumpfile %f -dumpstream -playlist %s'
 DEFAULT_V_RECORD = 'mplayer -dumpfile %f -dumpstream %s'
-DEFAULT_F_RECORD = 'rtmpdump -f \"LNX 10,0,22,87\" -o %f -y %y -r %s --resume'
+DEFAULT_F_RECORD = 'rtmpdump -f \"LNX 10,0,22,87\" -o %f -r %s --resume'
 
 BOOKMARK_FILE = os.path.join(os.environ['HOME'], AUTHDIR, 'bookmarks.pf')
 
