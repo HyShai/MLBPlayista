@@ -1,0 +1,39 @@
+REQUIREMENTS FOR MLBVIEWER 2009 SEASON
+
+Quite a bit has changed for the 2009 season.  mlbviewer is making a best 
+attempt to support the 2009 season but should be considered a very unstable 
+and incomplete solution for 2009 support.  Additionally, while every attempt is
+being made to preserve support for previous seasons, some of the new code may
+have a destabilizing effect on existing code.  
+
+Expect bugs and don't expect many of last year's features to be working
+with the early SVN revisions.  Subscribe to the Linuxquestions.org thread for
+tips and updates.
+
+To get going for the 2009 season, you will need the following packages:
+
+REQUIRED:
+
+PyXML - http://pyxml.sourceforge.net/topics/download.html
+
+suds - https://fedorahosted.org/suds/
+
+rtmpdump - http://sourceforge.net/projects/rtmpdump/
+
+HIGHLY RECOMMENDED:
+
+ffmpeg - http://ffmpeg.mplayerhq.hu/
+
+x264 - http://www.videolan.org/developers/x264.html
+
+faad - http://www.audiocoding.com/faad2.html
+
+You will likely need to compile the latest version of these from source as 
+many distributions include outdated versions.  To test whether you will need
+to recompile these, you can download a Flash sample clip (12MB) from here:
+
+http://www.eds.org/~straycat/2009-03-17-purint-usaint-1.mp4
+
+You may also need to rebuild mplayer from latest source to be sure of 
+compatibility.
+
