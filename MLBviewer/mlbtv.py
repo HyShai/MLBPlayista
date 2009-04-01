@@ -25,6 +25,15 @@ import os
 import subprocess
 import select
 from copy import deepcopy
+import sys
+
+try:
+    from xml.dom.minidom import parse
+    from suds.client import Client
+except:
+    print "The requirements for the 2009 season have changed."
+    print "Please read the REQUIREMENTS-2009.txt file."
+    sys.exit()
 
 # Set this to True if you want to see all the html pages in the logfile
 #DEBUG = True
@@ -33,8 +42,22 @@ from copy import deepcopy
 
 AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
+SESSIONKEY = os.path.join(os.environ['HOME'], AUTHDIR, 'sessionkey')
 LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
 USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
+TESTXML = os.path.join(os.environ['HOME'], AUTHDIR, 'test_epg.xml')
+
+SOAPCODES = {
+    "1"    : "OK",
+    "-1000": "Requested Media Not Found",
+    "-1500": "Other Undocumented Error",
+    "-2000": "Authentication Error",
+    "-2500": "Blackout Error",
+    "-3000": "Identity Error",
+    "-3500": "Sign-on Restriction Error",
+    "-4000": "System Error",
+}
+
 
 TEAMCODES = {
     'ana': ('LAA', 'Los Angeles', 'Angels', 'of Anaheim'),
@@ -185,23 +208,56 @@ class MLBSchedule:
             + padstr(self.year)\
             + "/month_" + padstr(self.month)\
             + "/day_" + padstr(self.day) + "/gamesbydate.jsp"
+        self.epg = "http://gdx.mlb.com/components/game/mlb/year_"\
+            + padstr(self.year)\
+            + "/month_" + padstr(self.month)\
+            + "/day_" + padstr(self.day) + "/epg.xml"
+        # For BETA testing, use my own xml
+        self.epg = "http://eds.org/~straycat/wbc_epg.xml"
+        betatime = datetime.datetime(2009, 3, 30)
+        listtime = datetime.datetime(self.year, self.month, self.day)
+        if listtime >= betatime:
+            self.use_xml = True
+        else:
+            self.use_xml = False
         self.data = []
 
     def __getSchedule(self):
         txheaders = {'User-agent' : USERAGENT}
         data = None
         p404_pat = re.compile(r'no longer exists')
-        req = urllib2.Request(self.url,data,txheaders)
+        p404_pat_epg = re.compile(r'404 Not Found')
+        # 2009 marks the end of the jsp page, so use epg page instead
+        if self.use_xml:
+            req = urllib2.Request(self.epg,data,txheaders)
+        else:
+            req = urllib2.Request(self.url,data,txheaders)
         try:
             fp = urllib2.urlopen(req)
+            if self.use_xml:
+                return fp
         except urllib2.HTTPError:
             raise MLBUrlError
         out = fp.read()
+        if re.search(p404_pat_epg,out):
+            raise MLBUrlError
         if re.search(p404_pat,out):
             raise MLBUrlError
         fp.close()
         return out
 
+    def __scheduleFromXml(self):
+        out = []
+        gameinfo = dict()
+        fp = parse(self.__getSchedule())
+        for node in fp.getElementsByTagName('game'):
+            id = node.getAttribute('id')
+            gameinfo[id] = dict()
+            for attr in node.attributes.keys():
+                gameinfo[id][attr] = node.getAttribute(attr)
+            out.append(gameinfo[id])
+        return out
+    
     def __scheduleToJson(self):
         # The schedule will be downloaded in JSP format, which is
         # almost the same as JSON, which python can easily import. We
@@ -233,14 +289,70 @@ class MLBSchedule:
 
     def __jsonToPython(self):
         return simplejson.loads(self.__scheduleToJson())
+
+    def __xmlToPython(self):
+        return self.__scheduleFromXml()
         
     def getData(self):
         # This is the public method that puts together the private
         # steps above. Fills it up with data.
         try:
-            self.data = self.__jsonToPython()
+            if self.use_xml:
+                self.data = self.__xmlToPython()
+            else:
+                self.data = self.__jsonToPython()
         except ValueError,detail:
             raise MLBJsonError,detail
+
+    def trimXmlList(self,blackout=()):
+        # This is the XML version of trimList
+        # easier to write a new method than adapt the old one
+        if not self.data:
+            raise MLBJsonError
+        out = []
+        for game in self.data:
+            dct = {}
+            dct['home'] = game['home_file_code']
+            dct['away'] = game['away_file_code']
+            dct['teams'] = {}
+            dct['teams']['home'] = dct['home']
+            dct['teams']['away'] = dct['away']
+            dct['event_id'] = game['calendar_event_id']
+            dct['ind']   = game['ind']
+            dct['status']   = game['status']
+            dct['gameid'] = game['id']
+            # I'm parsing the time by hand because strptime
+            # doesn't work on windows and only works on
+            # python>=2.5. The time format is always going to
+            # be the same, so might as well just take care of
+            # it ourselves.
+            time_string = game['time'].strip()
+            ampm = game['ampm'].lower()
+            hrs, mins = time_string.split(':')
+            hrs = int(hrs) % 12
+            try:
+                mins = int(mins)
+            except:
+                raise Exception,repr(mins)
+            if ampm == 'pm':
+                hrs += 12
+            # So that gives us the raw time, i.e., on the East
+            # Coast. Not knowing about DST or anything else.
+            raw_time = datetime.datetime(self.year, 
+                                         self.month, 
+                                         self.day, 
+                                         hrs,
+                                         mins)
+            # And now we convert that to the user's local, or
+            # chosen time zone.
+            dct['event_time'] = gameTimeConvert(raw_time, self.shift)
+            dct['text'] = game['away_team_city'] + ' ' +\
+                game['away_team_name'] + ' at '
+            dct['text'] += game['home_team_city'] + ' ' +\
+                game['home_team_name']
+            out.append((dct['gameid'], dct))
+        return out
+ 
 
     def trimList(self,blackout=()):
         # This offers only the useful information for watching tv from
@@ -400,6 +512,18 @@ class MLBSchedule:
                             out.append((title,text,elem[1]['top_plays'][text],status,elem[0]))
         return out
 
+    def getXmlListings(self, myspeed, blackout, audiofollow):
+        self.getData()
+        listings = self.trimXmlList(blackout)
+
+        return [(elem[1]['teams'],\
+                     elem[1]['event_time'],
+                     elem[1]['event_id'],
+                     elem[1]['event_id'],
+                     elem[1]['status'],
+                     elem[0])\
+                         for elem in listings]
+
     def getListings(self, myspeed, blackout, audiofollow):
         self.getData()
         listings = self.trimList(blackout)
@@ -417,16 +541,22 @@ class MLBSchedule:
 
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,\
-                     auth=True, streamtype='video'):
+                     auth=True, streamtype='video',use_soap=False):
         self.stream = stream
         self.error_str = "Uncaught error"
+        self.use_soap = use_soap
         try:
-            self.id = self.stream['w_id']
-            self.gameid = stream['gid']
+            if self.use_soap:
+                self.event_id = self.stream
+            else:
+                self.id = self.stream['w_id']
+                self.gameid = stream['gid']
         except:
             self.error_str = "No stream available for selected game."
         else:
-            if self.stream['login'] == 'Y':
+            if use_soap:
+                self.auth = True
+            elif self.stream['login'] == 'Y':
                 self.auth = True
             else:
                 self.auth = False
@@ -436,9 +566,35 @@ class GameStream:
         self.streamtype = streamtype
         self.log = open(LOGFILE,"a")
         self.log.write(str(datetime.datetime.now()) + '\n')
+        try:
+            self.session_key = self.read_session_key()
+        except:
+            self.session_key = None
         # Determine whether we need to login from the jsp itself
         #self.auth = auth
         self.debug = debug
+        self.cookies = {}
+        self.play_path = None
+
+    def read_session_key(self):
+        sk = open(SESSIONKEY,"r")
+        self.session_key = sk.read()
+        sk.close()
+        return session_key
+
+    def write_session_key(self,session_key):
+        sk = open(SESSIONKEY,"w")
+        sk.write(session_key)
+        sk.close()
+        return session_key
+
+    def extract_cookies(self,response):
+        ns_headers = response.headers.getheaders("Set-Cookie")
+        attrs_set = cookielib.parse_ns_headers(ns_headers)
+        cookie_tuples = cookielib.CookieJar()._normalized_cookie_tuples(attrs_set)
+        for tup in cookie_tuples:
+            name, value, standard, rest = tup
+            self.cookies[name] = value
     
     def login(self):
         # BEGIN login()
@@ -463,6 +619,10 @@ class GameStream:
         except:
             self.error_str = 'Error occurred in HTTP request to login page'
             raise Exception, self.error_str
+        try:
+            self.extract_cookies(handle)
+        except Exception,detail:
+            raise Exception,detail
         if self.debug:
             self.log.write('Did we receive a cookie from the wizard?\n')
             for index, cookie in enumerate(self.session_cookies):
@@ -481,6 +641,7 @@ class GameStream:
         req = urllib2.Request(auth_url,auth_data,txheaders)
         try:
             handle = urllib2.urlopen(req)
+            self.extract_cookies(handle)
         except:
             self.error_str = 'Error occurred in HTTP request to auth page'
             raise Exception, self.error_str
@@ -508,7 +669,7 @@ class GameStream:
            self.log.write(auth_page)
         # END login()
  
-    def workflow(self):
+    def workflow(self,use_soap=False):
         # This is the workhorse routine.
         # 1. Login
         # 2. Get the url from the workflow page
@@ -517,19 +678,24 @@ class GameStream:
         # The hope is that this sequence will always be the same and leave
         # it to url() to determine if an error occurs.  This way, hopefully, 
         # error or no, we'll always log out.
-        self.log.write('Querying enterworkflow.do for { \'gameid\' : ' + self.gameid + ', \'streamid\' : ' + self.id + ', \'streamtype\' : ' + self.streamtype + ', login: ' + str(self.auth) + '}\n')
+        if not self.use_soap:
+            self.log.write('Querying enterworkflow.do for { \'gameid\' : ' + self.gameid + ', \'streamid\' : ' + self.id + ', \'streamtype\' : ' + self.streamtype + ', login: ' + str(self.auth) + '}\n')
         if self.session_cookies is None:
             if self.auth:
                 self.login()
+        
         wf_url = "http://www.mlb.com/enterworkflow.do?" +\
-            "flowId=media.media&keepWfParams=true&mediaId=" +\
-            str(self.id)
-        # The workflow urls for audio and video have slightly
-        # different endings.
-        if self.streamtype == 'audio':
-            wf_url += "&catCode=mlb_ga&av=a"
-        else:
-            wf_url += "&catCode=mlb_lg&av=v"
+            "flowId=media.media"
+        if not self.use_soap:
+            wf_url += "&keepWfParams=true&mediaId=" + str(self.id)
+
+            # The workflow urls for audio and video have slightly
+            # different endings.
+            if self.streamtype == 'audio':
+                wf_url += "&catCode=mlb_ga&av=a"
+            else:
+                wf_url += "&catCode=mlb_lg&av=v"
+
         # Open the workflow url...
         # Referer should look something like this but we'll need to pull
         # more info from listings for this:
@@ -539,7 +705,7 @@ class GameStream:
             self.stream['mid'] + '&w_id=' + self.stream['w_id'] + '&w=' + self.stream['w'] +\
             '&pid=' + self.stream['pid'] + '&fid=' + self.stream['fid'] +\
             '&cid=mlb&v=' + self.stream['v']
-        except KeyError:
+        except (KeyError,TypeError):
             referer_str = ''
         txheaders = {'User-agent' : USERAGENT,
                      'Referer'    : referer_str }
@@ -548,6 +714,7 @@ class GameStream:
         req = urllib2.Request(url=wf_url,headers=txheaders,data=None)
         try:
             handle = urllib2.urlopen(req)
+            self.extract_cookies(handle)
         except Exception,detail:
             self.error_str = 'Error occurred in HTTP request to workflow page:' + str(detail)
             raise Exception, self.error_str
@@ -595,6 +762,54 @@ class GameStream:
         self.session_cookies = None
         # END logout
 
+    def soapurl(self):
+        # return of workflow is useless for here, but it still calls all the 
+        # necessary steps to login and get cookies
+        self.workflow()
+        wsdl_file = os.path.join(os.environ['HOME'], AUTHDIR, 'MediaService.wsdl')
+        soap_url = 'file://' + str(wsdl_file)
+        client = Client(soap_url)
+        soapd = {'event-id':str(self.stream), 'subject':'LIVE_EVENT_COVERAGE'}
+        reply = client.service.find(**soapd)
+        self.log.write("DEBUG>> writing soap response\n")
+        self.log.write(repr(reply))
+        content_id = reply[0][0]['user-verified-content'][0]['content-id']
+        self.log.write("DEBUG>> soap event-id:" + str(self.stream))
+        self.log.write("DEBUG>> soap content-id:" + str(content_id))
+        ip = client.factory.create('ns0:IdentityPoint')
+        ip.__setitem__('identity-point-id', self.cookies['ipid'])
+        ip.__setitem__('fingerprint', urllib.unquote(self.cookies['fprt']))
+        try:
+            self.session_key = urllib.unquote(self.cookies['ftmu'])
+            self.write_session_key(self.session_key)
+        except:
+            self.session_key = None
+
+        soapd = {'event-id':self.event_id, 
+                 'subject':'LIVE_EVENT_COVERAGE', 
+                 'playback-scenario':'MLB_FLASH_800K_STREAM', 
+                 'content-id':content_id, 
+                 'fingerprint-identity-point':ip , 
+                 'session-key':self.session_key}
+        reply = client.service.find(**soapd)
+        self.log.write("DEBUG>> writing soap response\n")
+        self.log.write(repr(reply))
+        if reply['status-code'] != "1":
+            self.error_str = SOAPCODES[reply['status-code']]
+            raise Exception,self.error_str
+        try:
+            self.session_key = reply['session-key']
+            self.write_session_key(self.session_key)
+        except:
+            self.session_key = None
+        game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
+        play_path_pat = re.compile(r'ondemand\/(.*)\?')
+        self.play_path = re.search(play_path_pat,game_url).groups()[0]
+        self.log.write("DEBUG>> soap url = \n" + str(game_url))
+        self.log.flush()
+        return game_url
+        
+
     def url(self):
         # url_pattern
         game_info = self.workflow()
@@ -640,3 +855,20 @@ class GameStream:
         self.log.write('\nURL received:\n' + game_url + '\n\n')
         self.log.close()
         return game_url
+
+    def prepare_rec_str(self,rec_cmd_str,filename,streamurl):
+        rec_cmd_str = rec_cmd_str.replace('%f', filename)
+        rec_cmd_str = rec_cmd_str.replace('%s', '"' + streamurl + '"')
+        if self.use_soap:
+            rec_cmd_str = rec_cmd_str.replace('%y', self.play_path)
+        self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str)
+        self.log.flush()
+        return rec_cmd_str
+        
+    def prepare_play_str(self,play_cmd_str,filename,resume=None,elapsed=0):
+        play_cmd_str = play_cmd_str.replace('%s', filename)
+        if resume:
+            play_cmd_str += str(resume) + ' ' + str(elapsed)
+        self.log.write("\nDEBUG>> play_cmd_str" + '\n' + play_cmd_str)
+        self.log.flush()
+        return play_cmd_str
