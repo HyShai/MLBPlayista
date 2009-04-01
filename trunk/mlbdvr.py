@@ -8,6 +8,7 @@ from MLBviewer import MLBUrlError
 from MLBviewer import MLBJsonError
 from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE, LOGFILE
 from MLBviewer import TEAMCODES
+from MLBviewer import MLBprocess
 import os
 import signal
 import sys

@@ -803,8 +803,11 @@ class GameStream:
         except:
             self.session_key = None
         game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
-        play_path_pat = re.compile(r'ondemand\/(.*)\?')
-        self.play_path = re.search(play_path_pat,game_url).groups()[0]
+        try:
+            play_path_pat = re.compile(r'ondemand\/(.*)\?')
+            self.play_path = re.search(play_path_pat,game_url).groups()[0]
+        except:
+            self.play_path = None
         self.log.write("DEBUG>> soap url = \n" + str(game_url))
         self.log.flush()
         return game_url
@@ -859,9 +862,9 @@ class GameStream:
     def prepare_rec_str(self,rec_cmd_str,filename,streamurl):
         rec_cmd_str = rec_cmd_str.replace('%f', filename)
         rec_cmd_str = rec_cmd_str.replace('%s', '"' + streamurl + '"')
-        if self.use_soap:
+        if self.use_soap and self.play_path is not None:
             rec_cmd_str = rec_cmd_str.replace('%y', self.play_path)
-        self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str)
+        self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         self.log.flush()
         return rec_cmd_str
         
