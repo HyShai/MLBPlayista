@@ -12,6 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
 from suds.client import Client
+from suds import WebFault
 
 url = 'file://'
 url += os.path.join(os.environ['HOME'], '.mlb', 'MediaService.wsdl')
@@ -41,7 +42,12 @@ except:
     play_path = None
 
 try:
-    session = sys.argv[4]
+    app = sys.argv[4]
+except:
+    app = None
+
+try:
+    session = sys.argv[5]
 except:
     session = None
 
@@ -235,20 +241,28 @@ ip.__setitem__('identity-point-id', cookies['ipid'])
 ip.__setitem__('fingerprint', urllib.unquote(cookies['fprt']))
 
 pe = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE', 'playback-scenario':SCENARIO, 'content-id':content_id, 'fingerprint-identity-point':ip , 'session-key':session}
-reply = client.service.find(**pe)
+
+try:
+    reply = client.service.find(**pe)
+except WebFault ,e:
+    print "WebFault received from content request:"
+    print e
+    sys.exit(1)
+
 print reply
 
 #print reply[0][0]['user-verified-content'][0]['content-id']
 game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
-#sys.exit()
 try:
     if play_path is None:
         play_path_pat = re.compile(r'ondemand\/(.*)\?')
         play_path = re.search(play_path_pat,game_url).groups()[0]
         print "play_path = " + repr(play_path)
 except:
-    play_path = None
+    #play_path = None
+    raise
 print "url = " + str(game_url)
+print "play_path = " + str(play_path)
 #sys.exit()
 
 #sys.exit()
@@ -337,7 +351,7 @@ print response.read()
 recorder = datadct['video_recorder']
 cmd_str = recorder.replace('%s', '"' + game_url + '"')
 if play_path is not None:
-    cmd_str += '-y ' + play_path
+    cmd_str += ' -y ' + play_path
 cmd_str = cmd_str.replace('%e', event_id)
 print cmd_str + '\n'
 playprocess = subprocess.Popen(cmd_str,shell=True)
