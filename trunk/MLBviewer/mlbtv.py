@@ -30,6 +30,7 @@ import sys
 try:
     from xml.dom.minidom import parse
     from suds.client import Client
+    from suds import WebFault
 except:
     print "The requirements for the 2009 season have changed."
     print "Please read the REQUIREMENTS-2009.txt file."
@@ -96,6 +97,8 @@ TEAMCODES = {
     'uft': ('UFT', 'USA', 'Futures', 'Team' ),
     'unk': ('UNK', 'Unknown', 'Teamcode'),
     'tbd': ('TBD', 'TBD'),
+    't235': ('T235', 'Memphis Redbirds'),
+    't249': ('T249', 'Carolina Mudcats'),
     't784': ('T784', 'WBC Canada'),
     't805': ('T805', 'WBC Dominican Republic'),
     't841': ('T841', 'WBC Italy'),
@@ -213,7 +216,7 @@ class MLBSchedule:
             + "/month_" + padstr(self.month)\
             + "/day_" + padstr(self.day) + "/epg.xml"
         # For BETA testing, use my own xml
-        self.epg = "http://eds.org/~straycat/wbc_epg.xml"
+        #self.epg = "http://eds.org/~straycat/wbc_epg.xml"
         betatime = datetime.datetime(2009, 3, 30)
         listtime = datetime.datetime(self.year, self.month, self.day)
         if listtime >= betatime:
@@ -318,6 +321,8 @@ class MLBSchedule:
             dct['teams']['home'] = dct['home']
             dct['teams']['away'] = dct['away']
             dct['event_id'] = game['calendar_event_id']
+            if dct['event_id'] == "":
+                 dct['event_id'] = None
             dct['ind']   = game['ind']
             dct['status']   = game['status']
             dct['gameid'] = game['id']
@@ -346,10 +351,20 @@ class MLBSchedule:
             # And now we convert that to the user's local, or
             # chosen time zone.
             dct['event_time'] = gameTimeConvert(raw_time, self.shift)
-            dct['text'] = game['away_team_city'] + ' ' +\
-                game['away_team_name'] + ' at '
-            dct['text'] += game['home_team_city'] + ' ' +\
-                game['home_team_name']
+            if TEAMCODES.has_key(dct['away']):
+                text = game['away_team_city'] + ' ' + game['away_team_name']
+            else:
+		t = (dct['away'],)
+                TEAMCODES[dct['away']] = TEAMCODES['unk'] + t
+                text =  ' '.join(TEAMCODES[dct['away']][1:]).strip()
+            text += ' at '
+            if TEAMCODES.has_key(dct['home']):
+                text += game['home_team_city'] + ' ' + game['home_team_name']
+            else:
+		t = (dct['home'],)
+                TEAMCODES[dct['home']] = TEAMCODES['unk'] + t
+                text +=  ' '.join(TEAMCODES[dct['away']][1:]).strip()
+            dct['text'] = text
             out.append((dct['gameid'], dct))
         return out
  
@@ -575,6 +590,7 @@ class GameStream:
         self.debug = debug
         self.cookies = {}
         self.play_path = None
+        self.app = None
 
     def read_session_key(self):
         sk = open(SESSIONKEY,"r")
@@ -765,6 +781,9 @@ class GameStream:
     def soapurl(self):
         # return of workflow is useless for here, but it still calls all the 
         # necessary steps to login and get cookies
+        if self.stream is None:
+             self.error_str = "No event-id to locate media streams."
+             raise
         self.workflow()
         wsdl_file = os.path.join(os.environ['HOME'], AUTHDIR, 'MediaService.wsdl')
         soap_url = 'file://' + str(wsdl_file)
@@ -791,7 +810,11 @@ class GameStream:
                  'content-id':content_id, 
                  'fingerprint-identity-point':ip , 
                  'session-key':self.session_key}
-        reply = client.service.find(**soapd)
+        try:
+            reply = client.service.find(**soapd)
+        except WebFault,e:
+            self.error_str = str(e)
+            raise
         self.log.write("DEBUG>> writing soap response\n")
         self.log.write(repr(reply))
         if reply['status-code'] != "1":
@@ -808,6 +831,13 @@ class GameStream:
             self.play_path = re.search(play_path_pat,game_url).groups()[0]
         except:
             self.play_path = None
+        try:
+            live_path_pat = re.compile(r'live\/mlb_s800(.*)\?')
+            self.play_path = re.search(live_path_pat,game_url).groups()[0]
+            self.play_path = 'mlb_s800' + self.play_path
+            self.app = 'live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6'
+        except:
+            self.app = None
         self.log.write("DEBUG>> soap url = \n" + str(game_url))
         self.log.flush()
         return game_url
@@ -856,6 +886,7 @@ class GameStream:
                    game_url = re.search(mms_pat, game_url).groups()[0]
                    game_url = urllib.unquote(game_url)
         self.log.write('\nURL received:\n' + game_url + '\n\n')
+        self.log.flush()
         self.log.close()
         return game_url
 
@@ -864,14 +895,22 @@ class GameStream:
         rec_cmd_str = rec_cmd_str.replace('%s', '"' + streamurl + '"')
         if self.use_soap and self.play_path is not None:
             rec_cmd_str += ' -y ' + str(self.play_path)
+        if self.use_soap and self.app is not None:
+            rec_cmd_str += ' -a "' + str(self.app) + '"'
+        if self.use_soap:
+            rec_cmd_str += ' -s http://mlb.m.lb.com/flash/mediaplayer/v4/RC9/MediaPlayer4.swf?v=13'
+        self.log = open(LOGFILE,"a")
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         self.log.flush()
+        self.log.close()
         return rec_cmd_str
         
     def prepare_play_str(self,play_cmd_str,filename,resume=None,elapsed=0):
         play_cmd_str = play_cmd_str.replace('%s', filename)
         if resume:
-            play_cmd_str += str(resume) + ' ' + str(elapsed)
-        self.log.write("\nDEBUG>> play_cmd_str" + '\n' + play_cmd_str)
+            play_cmd_str += ' ' + str(resume) + ' ' + str(elapsed)
+        self.log = open(LOGFILE,"a")
+        self.log.write("\nDEBUG>> play_cmd_str" + '\n' + play_cmd_str + '\n\n')
         self.log.flush()
+        self.log.close()
         return play_cmd_str

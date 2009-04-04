@@ -32,21 +32,22 @@ class MLBprocess:
         return self.process
 
     def close(self,signal=signal.SIGTERM):
-        os.pgkill(self.process.pid,signal)
+        os.killpg(self.process.pid,signal)
         retcode = self.process.wait()
+        self.retries -= 1
         self.process = None
         return retcode
 
     def poll(self):
-        retcode = self.process.poll()
+        if self.process is not None:
+            retcode = self.process.poll()
+        else:
+            return -1
         if retcode is not None:
             retcode = self.process.wait()
-            if retcode != 0:
-                if self.retries > 0:
-                    self.process = self.open()
-                    self.retries -= 1
-                    return (retcode,self.process)
-            return (retcode,None)
+            self.retries -= 1
+            self.process = None
+            return retcode
         else:
-            return (None,self.process)
+            return None
             
