@@ -199,10 +199,7 @@ def mainloop(myscr,cfg):
     use_xml = mysched.use_xml
 
     try:
-        if use_xml:
-            available = mysched.getXmlListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
-        else:
-            available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
+        available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
     except (KeyError, MLBJsonError), detail:
         if cfg['debug']:
             raise Exception, detail

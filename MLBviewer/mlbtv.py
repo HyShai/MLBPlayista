@@ -527,6 +527,12 @@ class MLBSchedule:
                             out.append((title,text,elem[1]['top_plays'][text],status,elem[0]))
         return out
 
+    def getListings(self, myspeed, blackout, audiofollow):
+         if self.use_xml:
+             return self.getXmlListings(myspeed, blackout, audiofollow)
+         else:
+             return self.getJsonListings(myspeed, blackout, audiofollow)
+
     def getXmlListings(self, myspeed, blackout, audiofollow):
         self.getData()
         listings = self.trimXmlList(blackout)
@@ -539,7 +545,7 @@ class MLBSchedule:
                      elem[0])\
                          for elem in listings]
 
-    def getListings(self, myspeed, blackout, audiofollow):
+    def getJsonListings(self, myspeed, blackout, audiofollow):
         self.getData()
         listings = self.trimList(blackout)
 
@@ -793,8 +799,8 @@ class GameStream:
         self.log.write("DEBUG>> writing soap response\n")
         self.log.write(repr(reply))
         content_id = reply[0][0]['user-verified-content'][0]['content-id']
-        self.log.write("DEBUG>> soap event-id:" + str(self.stream))
-        self.log.write("DEBUG>> soap content-id:" + str(content_id))
+        self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
+        self.log.write("DEBUG>> soap content-id:" + str(content_id) + '\n')
         ip = client.factory.create('ns0:IdentityPoint')
         ip.__setitem__('identity-point-id', self.cookies['ipid'])
         ip.__setitem__('fingerprint', urllib.unquote(self.cookies['fprt']))
@@ -838,7 +844,7 @@ class GameStream:
             self.app = 'live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6'
         except:
             self.app = None
-        self.log.write("DEBUG>> soap url = \n" + str(game_url))
+        self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
         self.log.flush()
         return game_url
         
