@@ -261,9 +261,12 @@ try:
         play_path_pat = re.compile(r'ondemand\/(.*)$')
         play_path = re.search(play_path_pat,game_url).groups()[0]
         print "play_path = " + repr(play_path)
+        app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
+        app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
+        app += re.search(app_pat,game_url).groups()[1]
 except:
     play_path = None
-    #raise
+    raise
 try:
     if play_path is None:
         live_sub_pat = re.compile(r'live\/mlb_s800(.*)\?')
