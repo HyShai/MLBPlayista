@@ -834,7 +834,8 @@ class GameStream:
             self.session_key = None
         game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
         try:
-            play_path_pat = re.compile(r'ondemand\/(.*)\?')
+            #play_path_pat = re.compile(r'ondemand\/(.*)\?')
+            play_path_pat = re.compile(r'ondemand\/(.*)$')
             self.play_path = re.search(play_path_pat,game_url).groups()[0]
         except:
             self.play_path = None
@@ -901,7 +902,7 @@ class GameStream:
         rec_cmd_str = rec_cmd_str.replace('%f', filename)
         rec_cmd_str = rec_cmd_str.replace('%s', '"' + streamurl + '"')
         if self.use_soap and self.play_path is not None:
-            rec_cmd_str += ' -y ' + str(self.play_path)
+            rec_cmd_str += ' -y "' + str(self.play_path) + '"'
         if self.use_soap and self.app is not None:
             rec_cmd_str += ' -a "' + str(self.app) + '"'
         if self.use_soap:
