@@ -20,6 +20,8 @@ client = Client(url)
 
 SESSIONKEY = os.path.join(os.environ['HOME'], '.mlb', 'sessionkey')
 
+bSubscribe = False
+
 cj = None
 cookielib = None
 
@@ -255,12 +257,28 @@ print reply
 game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
 try:
     if play_path is None:
-        play_path_pat = re.compile(r'ondemand\/(.*)\?')
+        #play_path_pat = re.compile(r'ondemand\/(.*)\?')
+        play_path_pat = re.compile(r'ondemand\/(.*)$')
         play_path = re.search(play_path_pat,game_url).groups()[0]
         print "play_path = " + repr(play_path)
 except:
-    #play_path = None
-    raise
+    play_path = None
+    #raise
+try:
+    if play_path is None:
+        live_sub_pat = re.compile(r'live\/mlb_s800(.*)\?')
+        sub_path = re.search(live_sub_pat,game_url).groups()[0]
+        sub_path = 'mlb_s800' + sub_path
+        live_play_pat = re.compile(r'live\/mlb_s800(.*)$')
+        play_path = re.search(live_play_pat,game_url).groups()[0]
+        play_path = 'mlb_s800' + play_path
+        app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
+        bSubscribe = True
+        
+except:
+    play_path = None
+    sub_path = None
+
 print "url = " + str(game_url)
 print "play_path = " + str(play_path)
 #sys.exit()
@@ -351,8 +369,18 @@ print response.read()
 recorder = datadct['video_recorder']
 cmd_str = recorder.replace('%s', '"' + game_url + '"')
 if play_path is not None:
-    cmd_str += ' -y ' + play_path
+    cmd_str += ' -y "' + play_path + '"'
+if bSubscribe:
+    cmd_str += ' -b ' + sub_path
+if app is not None:
+    cmd_str += ' -a "' + app + '"'
 cmd_str = cmd_str.replace('%e', event_id)
+try:
+    print "\nplay_path = " + play_path
+    print "\nsub_path  = " + sub_path
+    print "\napp       = " + app
+except:
+    pass
 print cmd_str + '\n'
 playprocess = subprocess.Popen(cmd_str,shell=True)
 playprocess.wait()

@@ -95,6 +95,7 @@ TEAMCODES = {
     'was': ('WAS', 'Washington', 'Nationals', ''),
     'wft': ('WFT', 'World', 'Futures', 'Team' ),
     'uft': ('UFT', 'USA', 'Futures', 'Team' ),
+    'cif': ('CIF', 'Cincinnati Futures Team'),
     'unk': ('UNK', 'Unknown', 'Teamcode'),
     'tbd': ('TBD', 'TBD'),
     't235': ('T235', 'Memphis Redbirds'),
