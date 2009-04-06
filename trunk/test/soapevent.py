@@ -266,7 +266,6 @@ try:
         app += re.search(app_pat,game_url).groups()[1]
 except:
     play_path = None
-    raise
 try:
     if play_path is None:
         live_sub_pat = re.compile(r'live\/mlb_s800(.*)\?')
