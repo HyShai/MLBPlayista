@@ -837,6 +837,9 @@ class GameStream:
             #play_path_pat = re.compile(r'ondemand\/(.*)\?')
             play_path_pat = re.compile(r'ondemand\/(.*)$')
             self.play_path = re.search(play_path_pat,game_url).groups()[0]
+            self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
+            app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
+            self.app += re.search(app_pat,game_url).groups()[1]
         except:
             self.play_path = None
         try:
