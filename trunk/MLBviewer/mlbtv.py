@@ -186,6 +186,9 @@ class MLBUrlError(Error):
 class MLBJsonError(Error):
     pass
 
+class MLBAuthError(Error):
+    pass
+
 class MLBLog:
 
     def __init__(self,logfile):
@@ -629,6 +632,7 @@ class GameStream:
         self.cookies = {}
         self.play_path = None
         self.app = None
+        self.sub_path = None
 
     def read_session_key(self):
         sk = open(SESSIONKEY,"r")
@@ -715,7 +719,7 @@ class GameStream:
                self.error_str += "\n\nSite is performing maintenance operations"
            # end patch for maintenance operations
            self.log.write(auth_page)
-           raise Exception, self.error_str
+           raise MLBAuthError, self.error_str
         else:
            self.log.write('Logged in successfully!\n')
         if self.debug:
@@ -803,7 +807,7 @@ class GameStream:
         if not re.search(pattern,logout_info):
            self.error_str = "Logout was unsuccessful. Check " + LOGFILE
            self.log.write(logout_info)
-           raise Exception, self.error_str
+           raise MLBAuthError, self.error_str
         else:
            self.log.write('Logged out successfully!\n')
         if self.debug:
@@ -885,19 +889,24 @@ class GameStream:
             if re.search(live_pat,game_url):
                 if self.streamtype == 'audio':
                     live_sub_pat = re.compile(r'live\/mlb_ga(.*)\?')
-                    sub_path = re.search(live_sub_pat,game_url).groups()[0]
-                    sub_path = 'mlb_ga' + sub_path
+                    self.sub_path = re.search(live_sub_pat,game_url).groups()[0]
+                    self.sub_path = 'mlb_ga' + self.sub_path
                     live_play_pat = re.compile(r'live\/mlb_ga(.*)$')
-                    play_path = re.search(live_play_pat,game_url).groups()[0]
-                    play_path = 'mlb_ga' + play_path
-                    app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
+                    self.play_path = re.search(live_play_pat,game_url).groups()[0]
+                    self.play_path = 'mlb_ga' + self.play_path
+                    self.app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
                     bSubscribe = True
                 else:
                     live_path_pat = re.compile(r'live\/mlb_s800(.*)\?')
                     self.play_path = re.search(live_path_pat,game_url).groups()[0]
                     self.play_path = 'mlb_s800' + self.play_path
                     self.app = 'live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6'
-        except:
+            self.log.write("DEBUG>> sub_path = " + str(self.sub_path) + "\n")
+            self.log.write("DEBUG>> play_path = " + str(self.play_path) + "\n")
+            self.log.write("DEBUG>> app = " + str(self.app) + "\n")
+        except Exception,e:
+            self.error_str = str(e)
+            raise Exception,e
             self.app = None
         self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
         return game_url
@@ -950,12 +959,14 @@ class GameStream:
     def prepare_rec_str(self,rec_cmd_str,filename,streamurl):
         rec_cmd_str = rec_cmd_str.replace('%f', filename)
         rec_cmd_str = rec_cmd_str.replace('%s', '"' + streamurl + '"')
-        if self.use_soap and self.play_path is not None:
+        if self.play_path is not None:
             rec_cmd_str += ' -y "' + str(self.play_path) + '"'
-        if self.use_soap and self.app is not None:
+        if self.app is not None:
             rec_cmd_str += ' -a "' + str(self.app) + '"'
         if self.use_soap:
             rec_cmd_str += ' -s http://mlb.m.lb.com/flash/mediaplayer/v4/RC9/MediaPlayer4.swf?v=13'
+        if self.sub_path is not None:
+            rec_cmd_str += ' -b ' + str(self.sub_path)
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         return rec_cmd_str
         
