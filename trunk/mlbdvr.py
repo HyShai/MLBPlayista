@@ -801,7 +801,11 @@ def mainloop(myscr,cfg):
 
                 if audio:
                     stream = available[current_cursor][3]
-                    g = GameStream(stream, cfg['user'], cfg['pass'], 
+                    if mysched.use_xml:
+                        g = GameStream(stream, cfg['user'], cfg['pass'], 
+                                   cfg['debug'], streamtype='audio',use_soap=True)
+                    else:
+                        g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'], streamtype='audio')
                 else:
                     if c in ('Condensed', ord('c')):
