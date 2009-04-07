@@ -186,6 +186,29 @@ class MLBUrlError(Error):
 class MLBJsonError(Error):
     pass
 
+class MLBLog:
+
+    def __init__(self,logfile):
+        self.logfile = logfile
+        self.log = None
+
+    def open(self):
+        self.log = open(self.logfile,"a")
+    
+    def close(self):
+        if self.log is not None:
+            self.log.close()
+        self.log = None
+
+    def flush(self):
+        pass
+    
+    def write(self,logmsg):
+        if self.log is None:
+            self.open()
+        self.log.write(logmsg)
+        self.close()
+
 class MLBSchedule:
 
     def __init__(self,ymd_tuple=None,time_shift=None):
@@ -224,6 +247,7 @@ class MLBSchedule:
             self.use_xml = True
         else:
             self.use_xml = False
+        self.log = MLBLog(LOGFILE)
         self.data = []
 
     def __getSchedule(self):
@@ -563,8 +587,9 @@ class MLBSchedule:
 
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,\
-                     auth=True, streamtype='video',use_soap=False):
+			     auth=True, streamtype='video',use_soap=False):
         self.stream = stream
+        self.log = MLBLog(LOGFILE)
         self.error_str = "Uncaught error"
         self.use_soap = use_soap
         try:
@@ -586,7 +611,6 @@ class GameStream:
         self.passwd = passwd
         self.session_cookies = None
         self.streamtype = streamtype
-        self.log = open(LOGFILE,"a")
         self.log.write(str(datetime.datetime.now()) + '\n')
         try:
             self.session_key = self.read_session_key()
@@ -837,9 +861,12 @@ class GameStream:
             #play_path_pat = re.compile(r'ondemand\/(.*)\?')
             play_path_pat = re.compile(r'ondemand\/(.*)$')
             self.play_path = re.search(play_path_pat,game_url).groups()[0]
-            self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
-            app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
-            self.app += re.search(app_pat,game_url).groups()[1]
+            try:
+                app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
+                self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
+                self.app += re.search(app_pat,game_url).groups()[1]
+            except:
+                raise Exception,self.app
         except:
             self.play_path = None
         try:
@@ -850,7 +877,6 @@ class GameStream:
         except:
             self.app = None
         self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
-        self.log.flush()
         return game_url
         
 
@@ -885,7 +911,6 @@ class GameStream:
            if self.debug:
                self.log.write(game_info)
            self.log.write('Try the gameid script with streamid = ' + self.id +'\n')
-           self.log.close()
            self.error_str += ':' + str(detail)
            raise Exception, self.error_str 
         else:
@@ -897,8 +922,6 @@ class GameStream:
                    game_url = re.search(mms_pat, game_url).groups()[0]
                    game_url = urllib.unquote(game_url)
         self.log.write('\nURL received:\n' + game_url + '\n\n')
-        self.log.flush()
-        self.log.close()
         return game_url
 
     def prepare_rec_str(self,rec_cmd_str,filename,streamurl):
@@ -910,18 +933,12 @@ class GameStream:
             rec_cmd_str += ' -a "' + str(self.app) + '"'
         if self.use_soap:
             rec_cmd_str += ' -s http://mlb.m.lb.com/flash/mediaplayer/v4/RC9/MediaPlayer4.swf?v=13'
-        self.log = open(LOGFILE,"a")
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
-        self.log.flush()
-        self.log.close()
         return rec_cmd_str
         
     def prepare_play_str(self,play_cmd_str,filename,resume=None,elapsed=0):
         play_cmd_str = play_cmd_str.replace('%s', filename)
         if resume:
             play_cmd_str += ' ' + str(resume) + ' ' + str(elapsed)
-        self.log = open(LOGFILE,"a")
         self.log.write("\nDEBUG>> play_cmd_str" + '\n' + play_cmd_str + '\n\n')
-        self.log.flush()
-        self.log.close()
         return play_cmd_str

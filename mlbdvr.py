@@ -852,6 +852,7 @@ def mainloop(myscr,cfg):
                     titlewin.clear()
                     myscr.addstr(0,0,'An error occurred in locating the game stream:')
                     myscr.addstr(2,0,g.error_str)
+                    raise
                     myscr.refresh()
                     time.sleep(3)
                 else:
@@ -980,6 +981,7 @@ def mainloop(myscr,cfg):
                                     except:
                                         rec_rc = -1
                                         myscr.clear()
+                                        raise
                                         myscr.addstr(0,0,g.error_str)
                                         myscr.refresh()
                                         time.sleep(2)
