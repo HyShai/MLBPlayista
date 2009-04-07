@@ -294,7 +294,7 @@ def mainloop(myscr,cfg):
             # Only draw the screen if there are any games
             if available:
                 if n == current_cursor:
-                    if available[n][4] == 'I':
+                    if available[n][4] == 'I' or available[n][4] == 'In Progress':
                         #myscr.addstr(n+2,0,s, curses.A_REVERSE|curses.A_BOLD)
                         cursesflags = curses.A_REVERSE|curses.A_BOLD
                     else:
@@ -314,12 +314,13 @@ def mainloop(myscr,cfg):
                         elif available[n][3] is None:
                             status_str += ' (No audio available)'
                 else:
-                    if n < len(available) and available[n][4] == 'I':
-                        cursesflags = curses.A_BOLD
-                        #myscr.addstr(n+2, 0, s, curses.A_BOLD)
+                    if n < len(available):
+                        if available[n][4] == 'I' or available[n][4] == 'In Progress':
+                            cursesflags = curses.A_BOLD
+                        else:
+                            cursesflags = 0
                     else:
-                        cursesflags = 0
-                        #myscr.addstr(n+2, 0, s)
+                        pass
                 if home in cfg['favorite'] or away in cfg['favorite']:
                     if cfg['use_color'] and 'listings' in CURRENT_SCREEN:
                         cursesflags = cursesflags|curses.color_pair(1)
