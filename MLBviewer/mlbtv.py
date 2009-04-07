@@ -589,6 +589,7 @@ class GameStream:
     def __init__(self,stream, email, passwd, debug=None,\
 			     auth=True, streamtype='video',use_soap=False):
         self.stream = stream
+        self.streamtype = streamtype
         self.log = MLBLog(LOGFILE)
         self.error_str = "Uncaught error"
         self.use_soap = use_soap
@@ -619,6 +620,12 @@ class GameStream:
         # Determine whether we need to login from the jsp itself
         #self.auth = auth
         self.debug = debug
+        if self.streamtype == 'audio':
+            self.scenario = "MLB_FMS_AUDIO_32K_STREAM"
+            self.subject  = "MLBCOM_GAMEDAY_AUDIO"
+        else:
+            self.scenario = "MLB_FLASH_800K_STREAM"
+            self.subject  = "LIVE_EVENT_COVERAGE"
         self.cookies = {}
         self.play_path = None
         self.app = None
@@ -819,7 +826,7 @@ class GameStream:
         wsdl_file = os.path.join(os.environ['HOME'], AUTHDIR, 'MediaService.wsdl')
         soap_url = 'file://' + str(wsdl_file)
         client = Client(soap_url)
-        soapd = {'event-id':str(self.stream), 'subject':'LIVE_EVENT_COVERAGE'}
+        soapd = {'event-id':str(self.stream), 'subject':self.subject}
         reply = client.service.find(**soapd)
         self.log.write("DEBUG>> writing soap response\n")
         self.log.write(repr(reply))
@@ -836,8 +843,8 @@ class GameStream:
             self.session_key = None
 
         soapd = {'event-id':self.event_id, 
-                 'subject':'LIVE_EVENT_COVERAGE', 
-                 'playback-scenario':'MLB_FLASH_800K_STREAM', 
+                 'subject':self.subject,
+                 'playback-scenario': self.scenario,
                  'content-id':content_id, 
                  'fingerprint-identity-point':ip , 
                  'session-key':self.session_key}
@@ -861,19 +868,35 @@ class GameStream:
             #play_path_pat = re.compile(r'ondemand\/(.*)\?')
             play_path_pat = re.compile(r'ondemand\/(.*)$')
             self.play_path = re.search(play_path_pat,game_url).groups()[0]
-            try:
-                app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
-                self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
-                self.app += re.search(app_pat,game_url).groups()[1]
-            except:
-                raise Exception,self.app
+            if self.streamtype == 'audio':
+                self.error_str = 'Archived Gameday Audio Not Supported Yet.'
+                raise Exception,self.error_str
+            else:
+                try:
+                    app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
+                    self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
+                    self.app += re.search(app_pat,game_url).groups()[1]
+                except:
+                    raise Exception,self.app
         except:
             self.play_path = None
         try:
-            live_path_pat = re.compile(r'live\/mlb_s800(.*)\?')
-            self.play_path = re.search(live_path_pat,game_url).groups()[0]
-            self.play_path = 'mlb_s800' + self.play_path
-            self.app = 'live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6'
+            live_pat = re.compile(r'live\/mlb')
+            if re.search(live_pat,game_url):
+                if self.streamtype == 'audio':
+                    live_sub_pat = re.compile(r'live\/mlb_ga(.*)\?')
+                    sub_path = re.search(live_sub_pat,game_url).groups()[0]
+                    sub_path = 'mlb_ga' + sub_path
+                    live_play_pat = re.compile(r'live\/mlb_ga(.*)$')
+                    play_path = re.search(live_play_pat,game_url).groups()[0]
+                    play_path = 'mlb_ga' + play_path
+                    app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
+                    bSubscribe = True
+                else:
+                    live_path_pat = re.compile(r'live\/mlb_s800(.*)\?')
+                    self.play_path = re.search(live_path_pat,game_url).groups()[0]
+                    self.play_path = 'mlb_s800' + self.play_path
+                    self.app = 'live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6'
         except:
             self.app = None
         self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
