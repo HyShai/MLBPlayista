@@ -1,6 +1,6 @@
 diff -rupN rtmpdump/log.h rtmpdump-mlbviewer/log.h
 --- rtmpdump/log.h	2009-03-12 07:41:15.000000000 -0700
-+++ rtmpdump-mlbviewer/log.h	2009-04-04 11:46:09.000000000 -0700
++++ rtmpdump-mlbviewer/log.h	2009-04-06 21:39:26.000000000 -0700
 @@ -21,7 +21,7 @@
  #ifndef __LOG_H__
  #define __LOG_H__
@@ -12,7 +12,7 @@ diff -rupN rtmpdump/log.h rtmpdump-mlbviewer/log.h
  #undef NODEBUG
 diff -rupN rtmpdump/rtmp.cpp rtmpdump-mlbviewer/rtmp.cpp
 --- rtmpdump/rtmp.cpp	2009-03-11 15:13:23.000000000 -0700
-+++ rtmpdump-mlbviewer/rtmp.cpp	2009-04-04 18:01:00.000000000 -0700
++++ rtmpdump-mlbviewer/rtmp.cpp	2009-04-06 21:40:52.000000000 -0700
 @@ -99,6 +99,18 @@ CRTMP::~CRTMP()
  double CRTMP::GetDuration() { return m_fDuration; }
  bool CRTMP::IsConnected() { return m_socket != 0; }
@@ -65,7 +65,7 @@ diff -rupN rtmpdump/rtmp.cpp rtmpdump-mlbviewer/rtmp.cpp
    packet.m_nInfoField2 = m_stream_id; //0x01000000;
  
 -  packet.AllocPacket(256); // should be enough
-+  packet.AllocPacket(512); // should be enough
++  packet.AllocPacket(1024); // should be enough
    char *enc = packet.m_body;
    enc += EncodeString(enc, "play");
    enc += EncodeNumber(enc, 0.0);
@@ -102,7 +102,7 @@ diff -rupN rtmpdump/rtmp.cpp rtmpdump-mlbviewer/rtmp.cpp
      SendCheckBWResult();
 diff -rupN rtmpdump/rtmpdump.cpp rtmpdump-mlbviewer/rtmpdump.cpp
 --- rtmpdump/rtmpdump.cpp	2009-03-12 10:13:04.000000000 -0700
-+++ rtmpdump-mlbviewer/rtmpdump.cpp	2009-04-05 22:20:05.000000000 -0700
++++ rtmpdump-mlbviewer/rtmpdump.cpp	2009-04-06 21:40:33.000000000 -0700
 @@ -407,6 +407,7 @@ int main(int argc, char **argv)
  	bool bResume = false;    // true in resume mode
  	bool bNoHeader = false;  // in resume mode this will tell not to write an FLV header again
@@ -193,33 +193,9 @@ diff -rupN rtmpdump/rtmpdump.cpp rtmpdump-mlbviewer/rtmpdump.cpp
  	unsigned long size = 0;
          uint32_t timestamp = 0;
  
-@@ -877,9 +888,9 @@ start:
- 	if(duration > 0) {
- 		percent = ((double)timestamp) / (duration*1000.0)*100.0;
-                 percent = round(percent*10.0)/10.0;
--                printf("%.3f KB (%.1f%%)\n", (double)size/1024.0, percent);
-+                //printf("%.3f KB (%.1f%%)\n", (double)size/1024.0, percent);
-         } else {
--                printf("%.3f KB\n", (double)size/1024.0);
-+                //printf("%.3f KB\n", (double)size/1024.0);
-         }
- 
- 	do
-@@ -906,9 +917,9 @@ start:
- 				}
- 				percent = ((double)timestamp) / (duration*1000.0)*100.0;
- 				percent = round(percent*10.0)/10.0;
--				printf("\r%.3f KB (%.1f%%)", (double)size/1024.0, percent);
-+				//printf("\r%.3f KB (%.1f%%)", (double)size/1024.0, percent);
- 			} else {
--				printf("\r%.3f KB", (double)size/1024.0);
-+				//printf("\r%.3f KB", (double)size/1024.0);
- 			}
- 		}
- 		#ifdef _DEBUG
 diff -rupN rtmpdump/rtmp.h rtmpdump-mlbviewer/rtmp.h
 --- rtmpdump/rtmp.h	2009-03-11 14:37:17.000000000 -0700
-+++ rtmpdump-mlbviewer/rtmp.h	2009-04-04 15:08:58.000000000 -0700
++++ rtmpdump-mlbviewer/rtmp.h	2009-04-06 21:39:26.000000000 -0700
 @@ -111,6 +111,11 @@ class CRTMP
        static double ReadNumber(const char *data);
  
