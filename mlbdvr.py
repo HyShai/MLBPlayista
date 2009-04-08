@@ -787,8 +787,11 @@ def mainloop(myscr,cfg):
             browser_cmd_str = cfg['flash_browser'].replace('%s',flash_url)
             browser_process = MLBprocess(browser_cmd_str,retries=0)
             browser_process.open()
-            myscr.clear()
             status_str = 'Started flash player using:\n' + str(browser_cmd_str)
+            myscr.clear()
+            myscr.addstr(0,0,status_str)
+            myscr.refresh()
+            time.sleep(2)
             browser_process.process.wait()
 
         if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c')):
