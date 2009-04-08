@@ -881,6 +881,7 @@ def mainloop(myscr,cfg):
                     # the following exception handling code
                     if cfg['debug']:
                         raise
+                    raise
                     myscr.clear()
                     titlewin.clear()
                     myscr.addstr(0,0,'An error occurred in locating the game stream:')
@@ -1020,6 +1021,7 @@ def mainloop(myscr,cfg):
                                     except:
                                         if cfg['debug']:
                                             raise
+                                        raise
                                         rec_rc = -1
                                         myscr.clear()
                                         myscr.addstr(0,0,g.error_str)
