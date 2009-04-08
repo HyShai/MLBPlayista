@@ -286,6 +286,13 @@ class MLBSchedule:
             gameinfo[id] = dict()
             for attr in node.attributes.keys():
                 gameinfo[id][attr] = node.getAttribute(attr)
+            media = node.getElementsByTagName('game_media')[0]
+            try:
+                media_detail = media.getElementsByTagName('media')[0]
+                gameinfo[id]['media_state'] = media_detail.getAttribute('media_state')
+            except:
+                #raise
+                gameinfo[id]['media_state'] = 'media_dead'
             out.append(gameinfo[id])
         return out
     
@@ -392,6 +399,7 @@ class MLBSchedule:
 		t = (dct['home'],)
                 TEAMCODES[dct['home']] = TEAMCODES['unk'] + t
                 text +=  ' '.join(TEAMCODES[dct['away']][1:]).strip()
+            dct['media_state'] = game['media_state']
             dct['text'] = text
             out.append((dct['gameid'], dct))
         return out
@@ -570,7 +578,8 @@ class MLBSchedule:
                      elem[1]['event_id'],
                      elem[1]['event_id'],
                      elem[1]['status'],
-                     elem[0])\
+                     elem[0],
+                     elem[1]['media_state'])\
                          for elem in listings]
 
     def getJsonListings(self, myspeed, blackout, audiofollow):
@@ -633,6 +642,7 @@ class GameStream:
         self.play_path = None
         self.app = None
         self.sub_path = None
+        self.logged_in = None
 
     def read_session_key(self):
         sk = open(SESSIONKEY,"r")
@@ -722,6 +732,7 @@ class GameStream:
            raise MLBAuthError, self.error_str
         else:
            self.log.write('Logged in successfully!\n')
+           self.logged_in = True
         if self.debug:
            self.log.write("DEBUG>>> writing login page")
            self.log.write(auth_page)
@@ -739,7 +750,7 @@ class GameStream:
         if not self.use_soap:
             self.log.write('Querying enterworkflow.do for { \'gameid\' : ' + self.gameid + ', \'streamid\' : ' + self.id + ', \'streamtype\' : ' + self.streamtype + ', login: ' + str(self.auth) + '}\n')
         if self.session_cookies is None:
-            if self.auth:
+            if self.auth and self.logged_in is None:
                 self.login()
         
         wf_url = "http://www.mlb.com/enterworkflow.do?" +\
@@ -788,8 +799,8 @@ class GameStream:
         if self.debug:
            self.log.write("DEBUG>>> writing workflow page")
            self.log.write(url_data)
-        if self.auth:
-            self.logout()
+        #if self.auth:
+        #    self.logout()
         return url_data
 
     def logout(self): 
@@ -810,6 +821,7 @@ class GameStream:
            raise MLBAuthError, self.error_str
         else:
            self.log.write('Logged out successfully!\n')
+           self.logged_in = None
         if self.debug:
            self.log.write("DEBUG>>> writing logout page")
            self.log.write(logout_info)
@@ -897,10 +909,22 @@ class GameStream:
                     self.app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
                     bSubscribe = True
                 else:
-                    live_path_pat = re.compile(r'live\/mlb_s800(.*)\?')
-                    self.play_path = re.search(live_path_pat,game_url).groups()[0]
-                    self.play_path = 'mlb_s800' + self.play_path
+                    try:
+                        live_sub_pat = re.compile(r'live\/mlb_s800(.*)\?')
+                        self.sub_path = re.search(live_sub_pat,game_url).groups()[0]
+                        self.sub_path = 'mlb_s800' + self.sub_path
+                    except Exception,detail:
+                        self.error_str = 'Could not parse the stream subscribe path: ' + str(detail)
+                        raise Exception,self.error_str
+                    try:
+                        live_path_pat = re.compile(r'live\/mlb_s800(.*)$')
+                        self.play_path = re.search(live_path_pat,game_url).groups()[0]
+                        self.play_path = 'mlb_s800' + self.play_path
+                    except Exception,detail:
+                        self.error_str = 'Could not parse the stream play path: ' + str(detail)
+                        raise Exception,self.error_str
                     self.app = 'live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6'
+                    bSubscribe = True
             self.log.write("DEBUG>> sub_path = " + str(self.sub_path) + "\n")
             self.log.write("DEBUG>> play_path = " + str(self.play_path) + "\n")
             self.log.write("DEBUG>> app = " + str(self.app) + "\n")
@@ -967,6 +991,8 @@ class GameStream:
             rec_cmd_str += ' -s http://mlb.m.lb.com/flash/mediaplayer/v4/RC9/MediaPlayer4.swf?v=13'
         if self.sub_path is not None:
             rec_cmd_str += ' -b ' + str(self.sub_path)
+        else:
+            rec_cmd_str += ' --resume'
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         return rec_cmd_str
         
@@ -976,3 +1002,4 @@ class GameStream:
             play_cmd_str += ' ' + str(resume) + ' ' + str(elapsed)
         self.log.write("\nDEBUG>> play_cmd_str" + '\n' + play_cmd_str + '\n\n')
         return play_cmd_str
+
