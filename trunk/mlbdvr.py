@@ -784,7 +784,10 @@ def mainloop(myscr,cfg):
         if c in ('Flash', ord('f')):
             flash_url = 'http://mlb.mlb.com/flash/mediaplayer/v4/RC91/MP4.jsp?calendar_event_id=' 
             flash_url += available[current_cursor][3]
-            browser_cmd_str = cfg['flash_browser'].replace('%s',flash_url)
+            try:
+                browser_cmd_str = cfg['flash_browser'].replace('%s',flash_url)
+            except:
+                browser_cmd_str = cfg['flash_browser'] + ' "' + flash_url + '"'
             browser_process = MLBprocess(browser_cmd_str,retries=0)
             browser_process.open()
             status_str = 'Started flash player using:\n' + str(browser_cmd_str)
