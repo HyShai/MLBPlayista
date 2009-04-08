@@ -29,7 +29,7 @@ DEFAULT_SPEED = '400'
 
 DEFAULT_A_RECORD = 'mplayer -dumpfile %f -dumpstream -playlist %s'
 DEFAULT_V_RECORD = 'mplayer -dumpfile %f -dumpstream %s'
-DEFAULT_F_RECORD = 'rtmpdump -f \"LNX 10,0,22,87\" -o %f -r %s --resume'
+DEFAULT_F_RECORD = 'rtmpdump -f \"LNX 10,0,22,87\" -o %f -r %s'
 
 BOOKMARK_FILE = os.path.join(os.environ['HOME'], AUTHDIR, 'bookmarks.pf')
 
@@ -285,6 +285,8 @@ def mainloop(myscr,cfg):
                         ' '.join(TEAMCODES[home][1:]).strip()
                     if available[n][4] in ('F', 'CG'):
                         s+= ' (Archived)'
+                    elif use_xml and available[n][6] == 'media_archive':
+                        s+= ' (Archived)'
                 padding = curses.COLS - (len(s) + 1)
                 if n == current_cursor:
                     s += ' '*padding
@@ -304,7 +306,12 @@ def mainloop(myscr,cfg):
                         status_str = 'Press L to return to listings...'
                     else:
                         if use_xml:
-                            status_str = 'Status: ' + str(available[n][4])
+                            status = str(available[n][4])
+                            if available[n][0]['home'] in cfg['blackout'] or \
+                               available[n][0]['away'] in cfg['blackout']:
+                                if status in ('Warmup', 'Preview', 'In Progress', 'Pre-Game'):
+                                    status = "Local Blackout"
+                            status_str = 'Status: ' + status
                         else:
                             status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
 			if available[n][2] is None and available[n][3] is None:
@@ -433,6 +440,8 @@ def mainloop(myscr,cfg):
                         bookmarks = pickle.load(bk)
                         bk.close()
                     except Exception,detail:
+                        if cfg['debug']:
+                            raise
                         statuswin.clear()
                         statuswin.addstr(0,0,detail,curses.A_BOLD)
                         statuswin.refresh()
@@ -469,7 +478,8 @@ def mainloop(myscr,cfg):
                     more_offset = 0
                     available = copy.deepcopy(bookmarks)
             except Exception,detail:
-                #raise Exception,detail
+                if cfg['debug']:
+                    raise Exception,detail
                 statuswin.clear()
                 statuswin.addstr(0,0,'No bookmarks found.',curses.A_BOLD)
                 statuswin.refresh()
@@ -669,6 +679,8 @@ def mainloop(myscr,cfg):
                         mysched = newsched
                         current_cursor = 0
                     except (KeyError,MLBUrlError):
+                        if cfg['debug']:
+                            raise
                         statuswin.clear()
                         error_str = "Could not fetch a schedule for that day."
                         statuswin.addstr(0,0,error_str,curses.A_BOLD)
@@ -847,7 +859,7 @@ def mainloop(myscr,cfg):
                         u = g.soapurl()
                     else:
                         u = g.url()
-                except:
+                except Exception,detail:
                     # Debugging should make errors fatal in case there is a
                     # logic, coding, or other uncaught error being hidden by
                     # the following exception handling code
@@ -857,7 +869,6 @@ def mainloop(myscr,cfg):
                     titlewin.clear()
                     myscr.addstr(0,0,'An error occurred in locating the game stream:')
                     myscr.addstr(2,0,g.error_str)
-                    raise
                     myscr.refresh()
                     time.sleep(3)
                 else:
@@ -967,8 +978,15 @@ def mainloop(myscr,cfg):
                                 if play_process.process is None:
                                     try:
                                         play_process.open()
-                                    except:
-                                        raise
+                                    except Exception,detail:
+                                        if cfg['debug']:
+                                            raise
+                                        myscr.clear()
+                                        myscr.clear()
+                                        myscr.addstr(0,0,'An error occurred while opening the player process')
+                                        myscr.addstr(1,0,detail)
+                                        myscr.refresh()
+                                        time.sleep(2)
 
                             # first poll the recorder process
                             rec_rc = rec_process.poll()
@@ -984,9 +1002,10 @@ def mainloop(myscr,cfg):
                                     try:
                                         u = g.soapurl()
                                     except:
+                                        if cfg['debug']:
+                                            raise
                                         rec_rc = -1
                                         myscr.clear()
-                                        raise
                                         myscr.addstr(0,0,g.error_str)
                                         myscr.refresh()
                                         time.sleep(2)
@@ -1044,7 +1063,8 @@ def mainloop(myscr,cfg):
                                     try:
                                         play_process.open()
                                     except:
-                                        raise
+                                        if cfg['debug']:
+                                            raise
                                 else:
                                     # reset return code and switch to 
                                     # record_only
@@ -1066,7 +1086,8 @@ def mainloop(myscr,cfg):
                         myscr.getch()
 
                     except:
-                        raise
+                        if cfg['debug']:
+                            raise
                         myscr.clear()
                         titlewin.clear()
                         ERROR_STRING = "There was an error in the dvr processes."
