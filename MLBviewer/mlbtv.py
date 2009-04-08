@@ -639,6 +639,7 @@ class GameStream:
             self.scenario = "MLB_FLASH_800K_STREAM"
             self.subject  = "LIVE_EVENT_COVERAGE"
         self.cookies = {}
+        self.content_id = None
         self.play_path = None
         self.app = None
         self.sub_path = None
@@ -723,7 +724,7 @@ class GameStream:
         pattern = re.compile(r'Welcome to your personal (MLB|mlb).com account.')
         if not re.search(pattern,auth_page):
            self.error_str = "Login was unsuccessful."
-          # begin patch for maintenance operations
+           # begin patch for maintenance operations
            maint_pat = re.compile(r'We are currently performing maintenance operations')
            if re.search(maint_pat,auth_page):
                self.error_str += "\n\nSite is performing maintenance operations"
@@ -844,11 +845,14 @@ class GameStream:
         client = Client(soap_url)
         soapd = {'event-id':str(self.stream), 'subject':self.subject}
         reply = client.service.find(**soapd)
-        self.log.write("DEBUG>> writing soap response\n")
-        self.log.write(repr(reply))
+        if self.debug:
+            self.log.write("DEBUG>> writing soap response\n")
+            self.log.write(repr(reply))
         content_id = reply[0][0]['user-verified-content'][0]['content-id']
-        self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
-        self.log.write("DEBUG>> soap content-id:" + str(content_id) + '\n')
+        self.content_id = content_id
+        if self.debug:
+            self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
+            self.log.write("DEBUG>> soap content-id:" + str(content_id) + '\n')
         ip = client.factory.create('ns0:IdentityPoint')
         ip.__setitem__('identity-point-id', self.cookies['ipid'])
         ip.__setitem__('fingerprint', urllib.unquote(self.cookies['fprt']))
@@ -869,8 +873,9 @@ class GameStream:
         except WebFault,e:
             self.error_str = str(e)
             raise
-        self.log.write("DEBUG>> writing soap response\n")
-        self.log.write(repr(reply))
+        if self.debug:
+            self.log.write("DEBUG>> writing soap response\n")
+            self.log.write(repr(reply))
         if reply['status-code'] != "1":
             self.error_str = SOAPCODES[reply['status-code']]
             raise Exception,self.error_str
@@ -925,14 +930,16 @@ class GameStream:
                         raise Exception,self.error_str
                     self.app = 'live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6'
                     bSubscribe = True
-            self.log.write("DEBUG>> sub_path = " + str(self.sub_path) + "\n")
-            self.log.write("DEBUG>> play_path = " + str(self.play_path) + "\n")
-            self.log.write("DEBUG>> app = " + str(self.app) + "\n")
+            if self.debug:
+                self.log.write("DEBUG>> sub_path = " + str(self.sub_path) + "\n")
+                self.log.write("DEBUG>> play_path = " + str(self.play_path) + "\n")
+                self.log.write("DEBUG>> app = " + str(self.app) + "\n")
         except Exception,e:
             self.error_str = str(e)
             raise Exception,e
             self.app = None
-        self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
+        if self.debug:
+            self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
         return game_url
         
 
@@ -981,6 +988,18 @@ class GameStream:
         return game_url
 
     def prepare_rec_str(self,rec_cmd_str,filename,streamurl):
+        # remove short files
+        try:
+            filesize = long(os.path.getsize(filename))
+        except:
+            filesize = 0
+        if filesize <= 5:
+            try:
+                os.remove(filename)
+                self.log.write('\nRemoved short file: ' + str(filename) + '\n')
+            except:
+                raise
+
         rec_cmd_str = rec_cmd_str.replace('%f', filename)
         rec_cmd_str = rec_cmd_str.replace('%s', '"' + streamurl + '"')
         if self.play_path is not None:
