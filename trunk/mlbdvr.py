@@ -1098,12 +1098,12 @@ def mainloop(myscr,cfg):
                         myscr.refresh()
                         myscr.getch()
 
-                    except:
+                    except Exception,detail:
                         if cfg['debug']:
                             raise
                         myscr.clear()
                         titlewin.clear()
-                        ERROR_STRING = "There was an error in the dvr processes."
+                        ERROR_STRING = "There was an error in the dvr processes:" + str(detail)
                         myscr.addstr(0,0,ERROR_STRING)
                         myscr.refresh()
                         time.sleep(3)

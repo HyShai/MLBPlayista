@@ -998,7 +998,7 @@ class GameStream:
                 os.remove(filename)
                 self.log.write('\nRemoved short file: ' + str(filename) + '\n')
             except:
-                raise
+                pass
 
         rec_cmd_str = rec_cmd_str.replace('%f', filename)
         rec_cmd_str = rec_cmd_str.replace('%s', '"' + streamurl + '"')
