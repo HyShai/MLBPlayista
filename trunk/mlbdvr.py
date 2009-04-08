@@ -30,6 +30,7 @@ DEFAULT_SPEED = '400'
 DEFAULT_A_RECORD = 'mplayer -dumpfile %f -dumpstream -playlist %s'
 DEFAULT_V_RECORD = 'mplayer -dumpfile %f -dumpstream %s'
 DEFAULT_F_RECORD = 'rtmpdump -f \"LNX 10,0,22,87\" -o %f -r %s'
+DEFAULT_FLASH_BROWSER = 'firefox %s'
 
 BOOKMARK_FILE = os.path.join(os.environ['HOME'], AUTHDIR, 'bookmarks.pf')
 
@@ -780,6 +781,15 @@ def mainloop(myscr,cfg):
                 statuswin.refresh()
                 time.sleep(1)
 
+        if c in ('Flash', ord('f')):
+            flash_url = 'http://mlb.mlb.com/flash/mediaplayer/v4/RC91/MP4.jsp?calendar_event_id=' 
+            flash_url += available[current_cursor][3]
+            browser_cmd_str = cfg['flash_browser'].replace('%s',flash_url)
+            browser_process = MLBprocess(browser_cmd_str,retries=0)
+            browser_process.open()
+            myscr.clear()
+            status_str = 'Started flash player using:\n' + str(browser_cmd_str)
+            browser_process.process.wait()
 
         if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c')):
             if c in ('Audio', ord('a')):
@@ -1159,7 +1169,8 @@ if __name__ == "__main__":
                   'dvr_resume': '-ss',
                   'dvr_accept_policy': 0,
                   'dvr_record_dir': record_dir,
-                  'dvr_record_only': 0}
+                  'dvr_record_only': 0,
+                  'flash_browser': DEFAULT_FLASH_BROWSER}
 
     # Auto-install of default configuration file
     try:
