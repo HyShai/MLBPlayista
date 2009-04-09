@@ -897,17 +897,11 @@ class GameStream:
             #play_path_pat = re.compile(r'ondemand\/(.*)\?')
             play_path_pat = re.compile(r'ondemand\/(.*)$')
             self.play_path = re.search(play_path_pat,game_url).groups()[0]
-            if self.streamtype == 'audio':
-                self.error_str = 'Archived Gameday Audio Not Supported Yet.'
-                raise Exception,self.error_str
-            else:
-                try:
-                    app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
-                    self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
-                    self.app += re.search(app_pat,game_url).groups()[1]
-                except:
-                    raise Exception,self.app
+            app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
+            self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
+            self.app += re.search(app_pat,game_url).groups()[1]
         except:
+            raise
             self.play_path = None
         try:
             live_pat = re.compile(r'live\/mlb')
