@@ -845,10 +845,16 @@ class GameStream:
         client = Client(soap_url)
         soapd = {'event-id':str(self.stream), 'subject':self.subject}
         reply = client.service.find(**soapd)
+        if reply['status-code'] != "1":
+            self.log.write("DEBUG (SOAPCODES!=1)>> writing soap response\n")
+            self.log.write(repr(reply))
+            self.error_str = SOAPCODES[reply['status-code']]
+            raise Exception,self.error_str
         if self.debug:
             self.log.write("DEBUG>> writing soap response\n")
             self.log.write(repr(reply))
         content_id = reply[0][0]['user-verified-content'][0]['content-id']
+        
         self.content_id = content_id
         if self.debug:
             self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
@@ -877,6 +883,8 @@ class GameStream:
             self.log.write("DEBUG>> writing soap response\n")
             self.log.write(repr(reply))
         if reply['status-code'] != "1":
+            self.log.write("DEBUG (SOAPCODES!=1)>> writing soap response\n")
+            self.log.write(repr(reply))
             self.error_str = SOAPCODES[reply['status-code']]
             raise Exception,self.error_str
         try:

@@ -20,6 +20,18 @@ client = Client(url)
 
 SESSIONKEY = os.path.join(os.environ['HOME'], '.mlb', 'sessionkey')
 
+SOAPCODES = {
+    "1"    : "OK",
+    "-1000": "Requested Media Not Found",
+    "-1500": "Other Undocumented Error",
+    "-2000": "Authentication Error",
+    "-2500": "Blackout Error",
+    "-3000": "Identity Error",
+    "-3500": "Sign-on Restriction Error",
+    "-4000": "System Error",
+}
+
+
 bSubscribe = False
 
 cj = None
@@ -231,6 +243,9 @@ try:
     sk.write(session_key)
 except:
     print "no session-key found in reply"
+if reply['status-code'] != "1":
+    error_str = SOAPCODES[reply['status-code']]
+    raise Exception,error_str
     
 content_id = reply[0][0]['user-verified-content'][0]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
@@ -252,6 +267,10 @@ except WebFault ,e:
     sys.exit(1)
 
 print reply
+if reply['status-code'] != "1":
+    error_str = SOAPCODES[reply['status-code']]
+    raise Exception,error_str
+    
 
 #print reply[0][0]['user-verified-content'][0]['content-id']
 game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
