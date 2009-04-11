@@ -874,7 +874,7 @@ class GameStream:
                         if self.content_id == None:
                             self.content_id = stream['content-id']
                             self.log.write('DEBUG>> state = ' + str(state) + ' content-id = ' + str(self.content_id) + '\n')
-                            self.log.write('DEBUG>> Selecting media-item:\n' + repr(media['media-item']) + '\n')
+                            self.log.write('DEBUG>> Selecting media-item:\n' + repr(media) + '\n')
         if self.debug:
             self.log.write("DEBUG>> writing soap response\n")
             self.log.write(repr(reply) + '\n')
