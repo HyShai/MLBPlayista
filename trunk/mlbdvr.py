@@ -882,6 +882,7 @@ def mainloop(myscr,cfg):
                     # the following exception handling code
                     if cfg['debug']:
                         raise
+                    raise
                     myscr.clear()
                     titlewin.clear()
                     myscr.addstr(0,0,'An error occurred in locating the game stream:')
@@ -959,7 +960,7 @@ def mainloop(myscr,cfg):
                     rec_process.open()
 
                     # done criterion is both processes out of retries
-                    while (rec_process.retries > 0) and \
+                    while (rec_process.retries > 0) or \
                              (play_process.retries > 0):
                         # first order of business, redraw the status
                         #dbg.write('Top of loop: iterations = ' +\
@@ -1042,6 +1043,7 @@ def mainloop(myscr,cfg):
                                 except:
                                     if cfg['debug']:
                                         raise
+                                    raise
                                     rec_rc = -1
                                     myscr.clear()
                                     myscr.addstr(0,0,g.error_str)
@@ -1056,6 +1058,8 @@ def mainloop(myscr,cfg):
                                 
                                 rec_process.open()
                             elif rec_rc == 0:
+                                    # as long as the player process is running and rec_rc is 0
+                                    # continue this loop to keep the player process monitored.
                                     rec_process.retries = 0
                             else:
                                 if rec_process.retries <= 0:

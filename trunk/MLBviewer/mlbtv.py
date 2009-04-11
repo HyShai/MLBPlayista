@@ -859,11 +859,13 @@ class GameStream:
             self.error_str = SOAPCODES[reply['status-code']]
             raise Exception,self.error_str
         for stream in reply[0][0]['user-verified-content']:
-            content = stream['type']
-            content_id = stream['content-id']
-            self.log.write('DEBUG>> content = ' + str(content) + ' content-id = ' + str(content_id) + '\n')
-            if self.streamtype == content:
-                self.content_id = content_id
+            if stream['type'] == self.streamtype:
+                for media in stream['user-verified-media-item']:
+                    #raise Exception,repr(media['media-item']['state'])
+                    state = media['media-item']['state']
+                    if state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON' ):
+                        self.content_id = stream['content-id']
+                        self.log.write('DEBUG>> state = ' + str(state) + ' content-id = ' + str(self.content_id) + '\n')
         if self.debug:
             self.log.write("DEBUG>> writing soap response\n")
             self.log.write(repr(reply) + '\n')
@@ -927,7 +929,6 @@ class GameStream:
             except:
                 self.tc_url = None
         except:
-            raise
             self.play_path = None
         try:
             live_pat = re.compile(r'live\/mlb')
