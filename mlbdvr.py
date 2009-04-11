@@ -9,6 +9,7 @@ from MLBviewer import MLBJsonError
 from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE, LOGFILE
 from MLBviewer import TEAMCODES
 from MLBviewer import MLBprocess
+from MLBviewer import MLBLog
 import os
 import signal
 import sys
@@ -888,230 +889,261 @@ def mainloop(myscr,cfg):
                     myscr.addstr(2,0,g.error_str)
                     myscr.refresh()
                     time.sleep(3)
-                else:
-                    if cfg['debug']:
-                        myscr.clear()
-                        titlewin.clear()
-                        myscr.addstr(0,0,'Url received:')
-                        myscr.addstr(1,0,u)
-                        myscr.refresh()
-                        time.sleep(3)
-                    # I'd rather leave an error on the screen but you'll need
-                    # to write a lirc handler for getch()
-                    #myscr.getch()
-                    filename = available[current_cursor][5].replace('/', '-') 
-                    if g.use_soap:
-                        filename += '.mp4'
+
+                # removing over 200 lines of else to the except above (892-1136)
+                if cfg['debug']:
+                    myscr.clear()
+                    titlewin.clear()
+                    myscr.addstr(0,0,'Url received:')
+                    myscr.addstr(1,0,u)
+                    myscr.refresh()
+                    time.sleep(3)
+                # I'd rather leave an error on the screen but you'll need
+                # to write a lirc handler for getch()
+                #myscr.getch()
+                filename = available[current_cursor][5].replace('/', '-') 
+                if g.use_soap:
+                    if audio:
+                        filename += '.mp3'
                     else:
-                        filename += '.asf'
-                    filename = os.path.join(cfg['dvr_record_dir'], filename)
-                    if cfg['debug']:
-                        continue
-                    try:
-                        elapsed = 0
-                        resume = 0
-                        if '%s' not in recorder:
-                            recorder += ' ' + '%s'
-                        if '%s' not in player:
-                            player += ' ' + '%s'
-                        rec_cmd_str = g.prepare_rec_str(recorder,filename,u)
-                        play_cmd_str = g.prepare_play_str(player,filename,cfg['dvr_resume'],elapsed)
+                        filename += '.mp4'
+                else:
+                    filename += '.asf'
+                filename = os.path.join(cfg['dvr_record_dir'], filename)
+                if cfg['debug']:
+                    continue
+                try:
+                    elapsed = 0
+                    resume = 0
+                    if '%s' not in recorder:
+                        recorder += ' ' + '%s'
+                    if '%s' not in player:
+                        player += ' ' + '%s'
+                    rec_cmd_str = g.prepare_rec_str(recorder,filename,u)
+                    play_cmd_str = g.prepare_play_str(player,filename,cfg['dvr_resume'],elapsed)
 
-                        #raise Exception,rec_cmd_str
-                        if cfg['show_player_command']:
-                            myscr.clear()
-                            titlewin.clear()
-                            myscr.addstr(0,0,rec_cmd_str)
-                            myscr.refresh()
-                            time.sleep(3)
-		        else:
-                            if not audio:
-                                statuswin.clear()
-                                statuswin.addstr(0,0,"Buffering stream")
-                                statuswin.refresh()
-                                time.sleep(.5)
-
-                        ls_cmd_str = 'ls -lh ' + filename
-
-                        # initialize some variables
-                        fsize = 0
-                        lsize = 0
-
-                        rec_process=MLBprocess(rec_cmd_str,retries=5)
-                        play_process=MLBprocess(play_cmd_str,retries=5)
-
-                        # initialize the return codes
-                        rec_rc = None
-                        play_rc = None
-                        
-                        # first start the recorder
-                        rec_process.open()
-
-                        # done criterion is both processes out of retries
-                        
-                        while (rec_process.retries > 0) and \
-                                 (play_process.retries > 0):
-                            # first order of business, redraw the status
-                            myscr.clear()
-                            myscr.addstr(0,0,rec_cmd_str)
-                            cursor = curses.LINES-12
-                            for param in ( 'dvr_delay', 'dvr_resume', 
-                                 'dvr_record_only' ):
-                                myscr.addstr(cursor,0, param + ' = ' +\
-                                    str(cfg[param]))
-                                cursor += 1
-                            myscr.addstr(cursor,0,'recorder retries remaining: ' + str(rec_process.retries))
-                            cursor += 1
-                            myscr.addstr(cursor,0,'player retries remaining: ' + str(play_process.retries))
-                            cursor += 1
-                            myscr.addstr(cursor,0,'rec_process.poll(): ' + str(rec_rc))
-                            cursor += 1
-                            myscr.addstr(cursor,0,'play_process.poll(): ' + str(play_rc))
-                            ls_output = commands.getoutput(ls_cmd_str)
-                            myscr.addstr(curses.LINES-4,0,'Elapsed: ' + str(elapsed) + ' seconds (updates every 5 seconds)')
-                            myscr.addstr(curses.LINES-3,0,ls_output)
-                            myscr.addstr(curses.LINES-1,0,"")
-                            myscr.refresh()
-                            myscr.timeout(5000)
-                            
-                            # next poll for some input
-                            try:
-                                c = myscr.getch()
-                                time.sleep(5)
-                            except KeyboardInterrupt:
-                                # interrupt interrupt as retry = 0
-                                rec_process.close(signal=signal.SIGINT)
-                                rec_process.retries = 0
-                            if c in ( 'RecordOnly', ord('o') ):
-                                if cfg['dvr_record_only']:
-                                    cfg['dvr_record_only'] = False
-                                else:
-                                    cfg['dvr_record_only'] = True
-                            
-                            elapsed += 5
-                            
-                            # start the player process if it's time
-                            if elapsed >= int(cfg['dvr_delay']) and not cfg['dvr_record_only']:
-                                if play_process.process is None:
-                                    try:
-                                        play_process.open()
-                                    except Exception,detail:
-                                        if cfg['debug']:
-                                            raise
-                                        myscr.clear()
-                                        myscr.clear()
-                                        myscr.addstr(0,0,'An error occurred while opening the player process')
-                                        myscr.addstr(1,0,detail)
-                                        myscr.refresh()
-                                        time.sleep(2)
-
-                            # first poll the recorder process
-                            rec_rc = rec_process.poll()
-
-                            if rec_rc is not None:
-                                try:
-                                    rec_rc = rec_process.process.wait()
-                                except:
-                                    pass
-                                # if process completed, not successful, and 
-                                # still have retries...
-                                if rec_rc != 0 and rec_process.retries > 0:
-                                    try:
-                                        u = g.soapurl()
-                                    except:
-                                        if cfg['debug']:
-                                            raise
-                                        raise
-                                        rec_rc = -1
-                                        myscr.clear()
-                                        myscr.addstr(0,0,g.error_str)
-                                        myscr.refresh()
-                                        time.sleep(2)
-                                    else:
-                                        rec_cmd_str = g.prepare_rec_str(recorder,filename,u)
-                                        
-                                        rec_process.open()
-                                elif rec_rc == 0:
-                                        rec_process.retries = 0
-                                else:
-                                    if rec_process.retries <= 0:
-                                        myscr.clear()
-                                        myscr.addstr(0,0,'Recorder out of retries but return code not successful: '+ str(rec_rc))
-                                        myscr.addstr(curses.LINES-2,0,"Press a key to continue...")
-                                        # restore blocking-mode getch()
-                                        myscr.timeout(-1)
-                                        myscr.refresh()
-                                        myscr.getch()
-                                        break
-                            else:
-                                # every 25 seconds poll for filesizes and
-                                # restart the recorder if stuck
-                                if not (elapsed % 25):
-                                    lsize = fsize
-                                    fsize = long(os.path.getsize(filename))
-                                    if fsize == lsize:
-                                        #os.killpg( rec_process.pid, signal.SIGINT )
-                                        # close the process here
-                                        # since rc is still not None, it will
-                                        # restart next time through loop
-                                        rec_process.close(signal=signal.SIGINT)
-
-                            # next poll the player process
-                            play_rc = play_process.poll()
-                            if elapsed < int(cfg['dvr_delay']):
-                                continue
-                            if cfg['dvr_record_only']:
-                                continue
-                            if play_rc is not None:
-                                try:
-                                    play_rc = play_process.process.wait()
-                                except:
-                                    pass
-                                resume = elapsed - int(cfg['dvr_delay'])
-                                # if play_process still have retries
-                                # restart, regardless of return code
-                                if play_process.retries > 0:
-                                    play_rc = None
-                                    play_cmd_str = play_cmd_str.split()[:-1]
-                                    play_cmd_str = ' '.join(play_cmd_str) +\
-                                                   ' ' + str(resume)
-                                    log.write('dvr_play command: '+ play_cmd_str + '\n\n')
-                                    log.flush()
-                                    play_process.cmd_str = play_cmd_str
-                                    try:
-                                        play_process.open()
-                                    except:
-                                        if cfg['debug']:
-                                            raise
-                                else:
-                                    # reset return code and switch to 
-                                    # record_only
-                                    play_rc = None
-                                    cfg['dvr_record_only'] = True
-                                
-                        # bottom of while loop, exit if out of retries
-                        # retries are decremented whenever poll() indicated
-                        # process returned
-
-                        # restore blocking-mode getch()
-                        myscr.timeout(-1)
-                        complete_str = "Command completed. Hope it worked!"
-                        cont_str = "Press a key to continue..."
-                        myscr.clear()
-                        myscr.addstr(0,0,complete_str)
-                        myscr.addstr(curses.LINES-2,0,cont_str)
-                        myscr.refresh()
-                        myscr.getch()
-
-                    except Exception,detail:
-                        if cfg['debug']:
-                            raise
+                    #raise Exception,rec_cmd_str
+                    if cfg['show_player_command']:
                         myscr.clear()
                         titlewin.clear()
-                        ERROR_STRING = "There was an error in the dvr processes:" + str(detail)
-                        myscr.addstr(0,0,ERROR_STRING)
+                        myscr.addstr(0,0,rec_cmd_str)
                         myscr.refresh()
                         time.sleep(3)
+		    else:
+                        if not audio:
+                            statuswin.clear()
+                            statuswin.addstr(0,0,"Buffering stream")
+                            statuswin.refresh()
+                            time.sleep(.5)
+
+                    ls_cmd_str = 'ls -lh ' + filename
+
+                    # initialize some variables
+                    fsize = 0
+                    lsize = 0
+                    
+                    # debug variables
+                    iteration = 0
+                    #dbg = MLBLog(LOGFILE)
+                    errlog = open(LOGFILE,"a")
+                    tmp = os.path.join('/tmp','rtmpdump.log')
+                    tmplog = open(tmp,'w')
+
+                    rec_process=MLBprocess(rec_cmd_str,retries=5,errlog=errlog,stdout=tmplog)
+                    play_process=MLBprocess(play_cmd_str,retries=5)
+
+                    # initialize the return codes
+                    rec_rc = None
+                    play_rc = None
+                    
+                    # first start the recorder
+                    rec_process.open()
+
+                    # done criterion is both processes out of retries
+                    while (rec_process.retries > 0) and \
+                             (play_process.retries > 0):
+                        # first order of business, redraw the status
+                        #dbg.write('Top of loop: iterations = ' +\
+                                               str(iteration) + '\n')
+                        myscr.clear()
+                        myscr.addstr(0,0,rec_cmd_str)
+                        cursor = curses.LINES-12
+                        for param in ( 'dvr_delay', 'dvr_resume', 
+                             'dvr_record_only' ):
+                            myscr.addstr(cursor,0, param + ' = ' +\
+                                str(cfg[param]))
+                            cursor += 1
+                        myscr.addstr(cursor,0,'recorder retries remaining: ' + str(rec_process.retries))
+                        cursor += 1
+                        myscr.addstr(cursor,0,'player retries remaining: ' + str(play_process.retries))
+                        cursor += 1
+                        myscr.addstr(cursor,0,'rec_process.poll(): ' + str(rec_rc))
+                        cursor += 1
+                        myscr.addstr(cursor,0,'play_process.poll(): ' + str(play_rc))
+                        ls_output = commands.getoutput(ls_cmd_str)
+                        myscr.addstr(curses.LINES-4,0,'Elapsed: ' + str(elapsed) + ' seconds (updates every 5 seconds)')
+                        myscr.addstr(curses.LINES-3,0,ls_output)
+                        myscr.addstr(curses.LINES-1,0,"")
+                        myscr.refresh()
+                        myscr.timeout(5000)
+                        
+                        # next poll for some input
+                        try:
+                            c = myscr.getch()
+                            time.sleep(5)
+                        except KeyboardInterrupt:
+                            # interrupt interrupt as retry = 0
+                            rec_process.close(signal=signal.SIGINT)
+                            rec_process.retries = 0
+                        if c in ( 'RecordOnly', ord('o') ):
+                            if cfg['dvr_record_only']:
+                                cfg['dvr_record_only'] = False
+                            else:
+                                cfg['dvr_record_only'] = True
+                        
+                        elapsed += 5
+                        
+                        # start the player process if it's time
+                        if elapsed >= int(cfg['dvr_delay']) and not cfg['dvr_record_only']:
+                            if play_process.process is None:
+                                try:
+                                    play_process.open()
+                                except Exception,detail:
+                                    if cfg['debug']:
+                                        raise
+                                    myscr.clear()
+                                    myscr.clear()
+                                    myscr.addstr(0,0,'An error occurred while opening the player process')
+                                    myscr.addstr(1,0,detail)
+                                    myscr.refresh()
+                                    time.sleep(2)
+
+                        # first poll the recorder process
+                        rec_rc = rec_process.poll()
+                        #dbg.write('i=' + str(iteration) + '> rec_rc=' +\
+                                          str(rec_rc) + '\n')
+
+                        if rec_rc is not None:
+                            try:
+                                rec_rc = rec_process.process.wait()
+                                #dbg.write('i=' + str(iteration) +\
+                                #          'not None> rec_rc=' +\
+                                #          str(rec_rc) + '\n')
+                            except Exception,detail:
+                                #dbg.write(str(detail) + '\n')
+                                pass
+                            # if process completed, not successful, and 
+                            # still have retries...
+                            if rec_rc != 0 and rec_process.retries > 0:
+                                #dbg.write('rec_rc='+str(rec_rc) +\
+                                #          ' rec_process.retries=' +\
+                                #          str(rec_process.retries))
+                                try:
+                                    u = g.soapurl()
+                                except:
+                                    if cfg['debug']:
+                                        raise
+                                    raise
+                                    rec_rc = -1
+                                    myscr.clear()
+                                    myscr.addstr(0,0,g.error_str)
+                                    myscr.refresh()
+                                    time.sleep(2)
+                                rec_cmd_str = g.prepare_rec_str(recorder,filename,u)
+                                tmplog.close()
+                                errlog.close()
+                                errlog = open(LOGFILE,"a")
+                                tmplog = open(tmp,'w')
+                                rec_process.replace(rec_cmd_str,retries=rec_process.retries,errlog=errlog,stdout=tmplog)
+                                
+                                rec_process.open()
+                            elif rec_rc == 0:
+                                    rec_process.retries = 0
+                            else:
+                                if rec_process.retries <= 0:
+                                    myscr.clear()
+                                    myscr.addstr(0,0,'Recorder out of retries but return code not successful: '+ str(rec_rc))
+                                    myscr.addstr(curses.LINES-2,0,"Press a key to continue...")
+                                    # restore blocking-mode getch()
+                                    myscr.timeout(-1)
+                                    myscr.refresh()
+                                    myscr.getch()
+                                    break
+                        else:
+                            # every 25 seconds poll for filesizes and
+                            # restart the recorder if stuck
+                            if not (elapsed % 25):
+                                lsize = fsize
+                                fsize = long(os.path.getsize(filename))
+                                if fsize == lsize:
+                                    #os.killpg( rec_process.pid, signal.SIGINT )
+                                    # close the process here
+                                    # since rc is still not None, it will
+                                    # restart next time through loop
+                                    rec_rc = 42
+                                    rec_process.close(signal=signal.SIGINT)
+                                    #dbg.write('i=' + str(iteration) +\
+                                    #       '> restarted rec_process\n')
+                        iteration += 1    
+                        #dbg.write('Bottom of loop: iterations = ' +\
+                                               str(iteration) + '\n')
+
+                        # next poll the player process
+                        play_rc = play_process.poll()
+                        if elapsed < int(cfg['dvr_delay']):
+                            continue
+                        if cfg['dvr_record_only']:
+                            continue
+                        if play_rc is not None:
+                            try:
+                                play_rc = play_process.process.wait()
+                            except:
+                                pass
+                            resume = elapsed - int(cfg['dvr_delay'])
+                            # if play_process still have retries
+                            # restart, regardless of return code
+                            if play_process.retries > 0:
+                                play_rc = None
+                                play_cmd_str = play_cmd_str.split()[:-1]
+                                play_cmd_str = ' '.join(play_cmd_str) +\
+                                               ' ' + str(resume)
+                                log.write('dvr_play command: '+ play_cmd_str + '\n\n')
+                                log.flush()
+                                play_process.cmd_str = play_cmd_str
+                                try:
+                                    play_process.open()
+                                except:
+                                    if cfg['debug']:
+                                        raise
+                            else:
+                                # reset return code and switch to 
+                                # record_only
+                                play_rc = None
+                                cfg['dvr_record_only'] = True
+
+                    # bottom of while loop, exit if out of retries
+                    # retries are decremented whenever poll() indicated
+                    # process returned
+
+                    # restore blocking-mode getch()
+                    myscr.timeout(-1)
+                    complete_str = "Command completed. Hope it worked!"
+                    cont_str = "Press a key to continue..."
+                    myscr.clear()
+                    myscr.addstr(0,0,complete_str)
+                    myscr.addstr(curses.LINES-2,0,cont_str)
+                    myscr.refresh()
+                    myscr.getch()
+
+                except Exception,detail:
+                    if cfg['debug']:
+                        raise
+                    myscr.clear()
+                    titlewin.clear()
+                    ERROR_STRING = "There was an error in the dvr processes:" + str(detail)
+                    myscr.addstr(0,0,ERROR_STRING)
+                    myscr.refresh()
+                    time.sleep(3)
 
                 # Turn the ir_program back on                
                 if LIRC:

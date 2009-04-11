@@ -66,7 +66,7 @@ COOKIEFILE = 'mlbcookie.lwp'
 AUTHFILE = os.path.join(os.environ['HOME'],'.mlb/config')
  
 DEFAULT_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
-DEFAULT_RECORDER = 'rtmpdump -f \"LNX 10,0,22,87\" -o %e.mp4 -r %s --resume'
+DEFAULT_RECORDER = 'rtmpdump -f \"LNX 10,0,22,87\" -o %e.mp3 -r %s --resume'
 
 try:
    import cookielib
@@ -232,7 +232,12 @@ try:
 except:
     print "no session-key found in reply"
     
-content_id = reply[0][0]['user-verified-content'][0]['content-id']
+for stream in reply[0][0]['user-verified-content']:
+    type = stream['type']
+    if type == 'audio':
+        content_id = stream['content-id']
+
+#content_id = reply[0][0]['user-verified-content'][0]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
 
 #cmd_str = 'rm -rf /tmp/suds'

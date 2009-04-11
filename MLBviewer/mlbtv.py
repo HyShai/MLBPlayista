@@ -839,7 +839,15 @@ class GameStream:
         if self.stream is None:
              self.error_str = "No event-id to locate media streams."
              raise
+        # (re-)initialize some variables to make retries possible
+        self.play_path = None
+        self.sub_path  = None
+        self.app       = None
+ 
+        # call the workhorse
         self.workflow()
+
+        # now some soapy fun
         wsdl_file = os.path.join(os.environ['HOME'], AUTHDIR, 'MediaService.wsdl')
         soap_url = 'file://' + str(wsdl_file)
         client = Client(soap_url)
@@ -847,18 +855,27 @@ class GameStream:
         reply = client.service.find(**soapd)
         if reply['status-code'] != "1":
             self.log.write("DEBUG (SOAPCODES!=1)>> writing soap response\n")
-            self.log.write(repr(reply))
+            self.log.write(repr(reply) + '\n')
             self.error_str = SOAPCODES[reply['status-code']]
             raise Exception,self.error_str
+        for stream in reply[0][0]['user-verified-content']:
+            content = stream['type']
+            content_id = stream['content-id']
+            self.log.write('DEBUG>> content = ' + str(content) + ' content-id = ' + str(content_id) + '\n')
+            if self.streamtype == content:
+                self.content_id = content_id
         if self.debug:
             self.log.write("DEBUG>> writing soap response\n")
-            self.log.write(repr(reply))
-        content_id = reply[0][0]['user-verified-content'][0]['content-id']
+            self.log.write(repr(reply) + '\n')
+        """if self.streamtype == 'audio':
+            content_id = reply[0][0]['user-verified-content'][0]['content-id']
+        else:
+            content_id = reply[0][0]['user-verified-content'][1]['content-id']
         
-        self.content_id = content_id
+        self.content_id = content_id"""
         if self.debug:
             self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
-            self.log.write("DEBUG>> soap content-id:" + str(content_id) + '\n')
+            self.log.write("DEBUG>> soap content-id:" + str(self.content_id) + '\n')
         ip = client.factory.create('ns0:IdentityPoint')
         ip.__setitem__('identity-point-id', self.cookies['ipid'])
         ip.__setitem__('fingerprint', urllib.unquote(self.cookies['fprt']))
@@ -871,7 +888,7 @@ class GameStream:
         soapd = {'event-id':self.event_id, 
                  'subject':self.subject,
                  'playback-scenario': self.scenario,
-                 'content-id':content_id, 
+                 'content-id':self.content_id, 
                  'fingerprint-identity-point':ip , 
                  'session-key':self.session_key}
         try:
@@ -898,8 +915,17 @@ class GameStream:
             play_path_pat = re.compile(r'ondemand\/(.*)$')
             self.play_path = re.search(play_path_pat,game_url).groups()[0]
             app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
-            self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
-            self.app += re.search(app_pat,game_url).groups()[1]
+            querystring = re.search(app_pat,game_url).groups()[1]
+            self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6" + querystring
+            # not sure if we need this
+            try:
+                req = urllib2.Request('http://cp65670.edgefcs.net/fcs/ident')
+                page = urllib2.urlopen(req)
+                fp = parse(page)
+                ip = fp.getElementsByTagName('ip')[0].childNodes[0].data
+                self.tc_url = 'http://' + str(ip) + ':1935/' + self.app
+            except:
+                self.tc_url = None
         except:
             raise
             self.play_path = None
@@ -940,6 +966,7 @@ class GameStream:
             self.app = None
         if self.debug:
             self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
+        self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
         return game_url
         
 
@@ -1007,7 +1034,9 @@ class GameStream:
         if self.app is not None:
             rec_cmd_str += ' -a "' + str(self.app) + '"'
         if self.use_soap:
-            rec_cmd_str += ' -s http://mlb.m.lb.com/flash/mediaplayer/v4/RC9/MediaPlayer4.swf?v=13'
+            rec_cmd_str += ' -s http://mlb.m.lb.com/flash/mediaplayer/v4/RC91/MediaPlayer4.swf?v=4'
+        if self.tc_url is not None:
+            rec_cmd_str += ' -t "' + self.tc_url + '"'
         if self.sub_path is not None:
             rec_cmd_str += ' -b ' + str(self.sub_path)
         else:
