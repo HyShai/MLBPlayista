@@ -51,17 +51,22 @@ except:
     SCENARIO = "MLB_FLASH_800K_STREAM"
 
 try:
-    play_path = sys.argv[3]
+    content_id = sys.argv[3]
+except:
+    content_id = None
+
+try:
+    play_path = sys.argv[4]
 except:
     play_path = None
 
 try:
-    app = sys.argv[4]
+    app = sys.argv[5]
 except:
     app = None
 
 try:
-    session = sys.argv[5]
+    session = sys.argv[6]
 except:
     session = None
 
@@ -247,10 +252,13 @@ if reply['status-code'] != "1":
     error_str = SOAPCODES[reply['status-code']]
     raise Exception,error_str
     
-for stream in reply[0][0]['user-verified-content']:
-    type = stream['type']
-    if type == 'video':
-        content_id = stream['content-id']
+if content_id is None:
+    for stream in reply[0][0]['user-verified-content']:
+        type = stream['type']
+        if type == 'video':
+            content_id = stream['content-id']
+else:
+    print "Using content_id from arguments: " + content_id
 #content_id = reply[0][0]['user-verified-content'][1]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
 
