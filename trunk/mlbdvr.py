@@ -882,7 +882,6 @@ def mainloop(myscr,cfg):
                     # the following exception handling code
                     if cfg['debug']:
                         raise
-                    raise
                     myscr.clear()
                     titlewin.clear()
                     myscr.addstr(0,0,'An error occurred in locating the game stream:')
@@ -964,7 +963,7 @@ def mainloop(myscr,cfg):
                              (play_process.retries > 0):
                         # first order of business, redraw the status
                         #dbg.write('Top of loop: iterations = ' +\
-                                               str(iteration) + '\n')
+                        #                       str(iteration) + '\n')
                         myscr.clear()
                         myscr.addstr(0,0,rec_cmd_str)
                         cursor = curses.LINES-12
@@ -1021,7 +1020,7 @@ def mainloop(myscr,cfg):
                         # first poll the recorder process
                         rec_rc = rec_process.poll()
                         #dbg.write('i=' + str(iteration) + '> rec_rc=' +\
-                                          str(rec_rc) + '\n')
+                        #                  str(rec_rc) + '\n')
 
                         if rec_rc is not None:
                             try:
@@ -1043,7 +1042,6 @@ def mainloop(myscr,cfg):
                                 except:
                                     if cfg['debug']:
                                         raise
-                                    raise
                                     rec_rc = -1
                                     myscr.clear()
                                     myscr.addstr(0,0,g.error_str)
@@ -1086,7 +1084,7 @@ def mainloop(myscr,cfg):
                                     #       '> restarted rec_process\n')
                         iteration += 1    
                         #dbg.write('Bottom of loop: iterations = ' +\
-                                               str(iteration) + '\n')
+                        #                       str(iteration) + '\n')
 
                         # next poll the player process
                         play_rc = play_process.poll()
