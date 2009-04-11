@@ -244,12 +244,7 @@ class MLBSchedule:
             + "/day_" + padstr(self.day) + "/epg.xml"
         # For BETA testing, use my own xml
         #self.epg = "http://eds.org/~straycat/wbc_epg.xml"
-        betatime = datetime.datetime(2009, 3, 30)
-        listtime = datetime.datetime(self.year, self.month, self.day)
-        if listtime >= betatime:
-            self.use_xml = True
-        else:
-            self.use_xml = False
+        self.xmltime = datetime.datetime(2009, 3, 30)
         self.log = MLBLog(LOGFILE)
         self.data = []
 
@@ -564,10 +559,16 @@ class MLBSchedule:
         return out
 
     def getListings(self, myspeed, blackout, audiofollow):
-         if self.use_xml:
-             return self.getXmlListings(myspeed, blackout, audiofollow)
-         else:
-             return self.getJsonListings(myspeed, blackout, audiofollow)
+        listtime = datetime.datetime(self.year, self.month, self.day)
+        if listtime >= self.xmltime:
+            self.use_xml = True
+        else:
+            self.use_xml = False
+
+        if self.use_xml:
+            return self.getXmlListings(myspeed, blackout, audiofollow)
+        else:
+            return self.getJsonListings(myspeed, blackout, audiofollow)
 
     def getXmlListings(self, myspeed, blackout, audiofollow):
         self.getData()
@@ -599,9 +600,10 @@ class MLBSchedule:
 
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,\
-			     auth=True, streamtype='video',use_soap=False):
+			     auth=True, streamtype='video',use_soap=False,speed=800):
         self.stream = stream
         self.streamtype = streamtype
+        self.speed = speed
         self.log = MLBLog(LOGFILE)
         self.error_str = "Uncaught error"
         self.use_soap = use_soap
@@ -636,11 +638,15 @@ class GameStream:
             self.scenario = "MLB_FMS_AUDIO_32K_STREAM"
             self.subject  = "MLBCOM_GAMEDAY_AUDIO"
         else:
-            self.scenario = "MLB_FLASH_800K_STREAM"
+            if str(self.speed) == '400':
+                self.scenario = "MLB_FLASH_600K_STREAM"
+            else:
+                self.scenario = "MLB_FLASH_800K_STREAM"
             self.subject  = "LIVE_EVENT_COVERAGE"
         self.cookies = {}
         self.content_id = None
         self.play_path = None
+        self.tc_url = None
         self.app = None
         self.sub_path = None
         self.logged_in = None
@@ -840,9 +846,10 @@ class GameStream:
              self.error_str = "No event-id to locate media streams."
              raise
         # (re-)initialize some variables to make retries possible
-        self.play_path = None
-        self.sub_path  = None
-        self.app       = None
+        self.content_id = None
+        self.play_path  = None
+        self.sub_path   = None
+        self.app        = None
  
         # call the workhorse
         self.workflow()
@@ -864,8 +871,10 @@ class GameStream:
                     #raise Exception,repr(media['media-item']['state'])
                     state = media['media-item']['state']
                     if state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON' ):
-                        self.content_id = stream['content-id']
-                        self.log.write('DEBUG>> state = ' + str(state) + ' content-id = ' + str(self.content_id) + '\n')
+                        if self.content_id == None:
+                            self.content_id = stream['content-id']
+                            self.log.write('DEBUG>> state = ' + str(state) + ' content-id = ' + str(self.content_id) + '\n')
+                            self.log.write('DEBUG>> Selecting media-item:\n' + repr(media['media-item']) + '\n')
         if self.debug:
             self.log.write("DEBUG>> writing soap response\n")
             self.log.write(repr(reply) + '\n')

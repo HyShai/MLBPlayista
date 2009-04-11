@@ -198,7 +198,6 @@ def mainloop(myscr,cfg):
     today_year = mysched.year
     today_month = mysched.month
     today_day = mysched.day
-    use_xml = mysched.use_xml
 
     try:
         available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
@@ -210,6 +209,8 @@ def mainloop(myscr,cfg):
         statuswin.addstr(0,0,status_str)
         statuswin.refresh()
         time.sleep(2)
+
+    use_xml = mysched.use_xml
 
     statusline = {
         "I" : "Status: In Progress",
@@ -359,6 +360,8 @@ def mainloop(myscr,cfg):
             debug_str = ''
         if str(mysched.year) == '2007' and cfg['speed'] == '800':
             speedstr = '[700K]'
+        elif str(mysched.year) == '2009' and cfg['speed'] == '400':
+            speedstr = '[600K]'
         else:
             speedstr = speedtoggle.get(cfg['speed'])
         status_str += ' '*padding + debug_str + speedstr
@@ -852,7 +855,7 @@ def mainloop(myscr,cfg):
                         stream = available[current_cursor][2]
                     if mysched.use_xml:
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
-                                   cfg['debug'],use_soap=True)
+                                   cfg['debug'],use_soap=True,speed=cfg['speed'])
                     else:
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'])
@@ -882,7 +885,7 @@ def mainloop(myscr,cfg):
                     # the following exception handling code
                     if cfg['debug']:
                         raise
-                    raise
+                    #raise
                     myscr.clear()
                     titlewin.clear()
                     myscr.addstr(0,0,'An error occurred in locating the game stream:')
@@ -1043,7 +1046,7 @@ def mainloop(myscr,cfg):
                                 except:
                                     if cfg['debug']:
                                         raise
-                                    raise
+                                    #raise
                                     rec_rc = -1
                                     myscr.clear()
                                     myscr.addstr(0,0,g.error_str)
@@ -1061,6 +1064,10 @@ def mainloop(myscr,cfg):
                                     # as long as the player process is running and rec_rc is 0
                                     # continue this loop to keep the player process monitored.
                                     rec_process.retries = 0
+
+                                    # don't wait for player if there is no player
+                                    if cfg['dvr_record_only']:
+                                        break
                             else:
                                 if rec_process.retries <= 0:
                                     myscr.clear()
