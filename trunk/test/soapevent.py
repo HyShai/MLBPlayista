@@ -247,7 +247,11 @@ if reply['status-code'] != "1":
     error_str = SOAPCODES[reply['status-code']]
     raise Exception,error_str
     
-content_id = reply[0][0]['user-verified-content'][0]['content-id']
+for stream in reply[0][0]['user-verified-content']:
+    type = stream['type']
+    if type == 'video':
+        content_id = stream['content-id']
+#content_id = reply[0][0]['user-verified-content'][1]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
 
 #cmd_str = 'rm -rf /tmp/suds'

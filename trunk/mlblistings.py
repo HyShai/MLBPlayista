@@ -133,8 +133,8 @@ for n in range(len(available)):
         available[n][1].strftime('%l:%M %p') + ': ' +\
         available[n][5] 
     try:
-        c += ' E:' + padstr(str(available[n][3]),7)
+        c += ' E:' + padstr(str(available[n][3]),21)
     except TypeError:
-        c += ' E:' + padstr('None',7)
+        c += ' E:' + padstr('None',21)
     print str(c)
 

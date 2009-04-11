@@ -19,15 +19,22 @@ import os
 
 class MLBprocess:
 
-    def __init__(self,cmd_str,retries=None):
+    def __init__(self,cmd_str,retries=None,errlog=None,stdout=None):
         self.cmd_str = cmd_str
         self.retries = retries
         self.retcode = None
         self.process = None
+        self.errlog  = errlog
+        self.stdout  = stdout
+
+    def replace(self,cmd_str,retries=None,errlog=None,stdout=None):
+        self.__init__(cmd_str,retries,errlog,stdout)
 
     def open(self):
         self.process = subprocess.Popen(self.cmd_str,shell=True,
-                                                     preexec_fn=os.setsid)
+                                                     preexec_fn=os.setsid,
+                                                     stdout=self.stdout,
+                                                     stderr=self.errlog)
         self.retcode = None
         return self.process
 
