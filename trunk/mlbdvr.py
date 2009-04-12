@@ -892,6 +892,7 @@ def mainloop(myscr,cfg):
                     myscr.addstr(2,0,g.error_str)
                     myscr.refresh()
                     time.sleep(3)
+                    continue
 
                 # removing over 200 lines of else to the except above (892-1136)
                 if cfg['debug']:
@@ -1052,6 +1053,7 @@ def mainloop(myscr,cfg):
                                     myscr.addstr(0,0,g.error_str)
                                     myscr.refresh()
                                     time.sleep(2)
+                                    continue
                                 rec_cmd_str = g.prepare_rec_str(recorder,filename,u)
                                 tmplog.close()
                                 errlog.close()
