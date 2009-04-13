@@ -5,6 +5,9 @@
 
 import socket
 import re
+import logging
+import time
+from mlbtv import LOGFILE
 
 class LircConnection:
     """A connection to LIRC"""
@@ -16,7 +19,9 @@ class LircConnection:
         self.config = []
         self.conn = None
         self.connected = False
-        self.connect()
+        self.retries = 3
+        logging.basicConfig(filename=LOGFILE)
+        #self.connect()
     
     def connect(self):
         """Connect to LIRC"""
@@ -31,7 +36,11 @@ class LircConnection:
         except socket.error, e:
             logging.warning("Could not connect to LIRC, retrying: %s" % e)
             time.sleep(0.5)
-            return self.connect()
+            if self.retries > 0:
+                self.retries -= 1
+                return self.connect()
+            else:
+                return None
 
     def getconfig(self):
         fp = open(self.conffile)

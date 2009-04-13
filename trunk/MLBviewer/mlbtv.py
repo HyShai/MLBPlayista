@@ -60,44 +60,47 @@ SOAPCODES = {
 }
 
 
+# We've never used the first field, so I'm going to expand its use for 
+# audio and video follow functionality.  The first field will contain a tuple
+# of call letters for the various media outlets that cover that team.
 TEAMCODES = {
-    'ana': ('LAA', 'Los Angeles', 'Angels', 'of Anaheim'),
-    'al' : ('AL', 'American', 'League', ''),
-    'ari': ('ARZ', 'Arizona', 'Diamondbacks', ''),
-    'atl': ('ATL', 'Atlanta', 'Braves', ''),
-    'bal': ('BAL', 'Baltimore', 'Orioles',''),
-    'bos': ('BOS', 'Boston', 'Red Sox', ''),
-    'chc': ('CHC', 'Chicago', 'Cubs', ''),
-    'cin': ('CIN', 'Cincinnati', 'Reds', ''),
-    'cle': ('CLE', 'Cleveland', 'Indians', ''),
-    'col': ('COL', 'Colorado', 'Rockies', ''),
-    'cws': ('CWS', 'Chicago', 'White Sox', ''),
-    'det': ('DET', 'Detroit', 'Tigers', ''),
-    'fla': ('FLA', 'Florida', 'Marlins', ''),
-    'hou': ('HOU', 'Houston', 'Astros', ''),
-    'kc':  ('KC', 'Kansas City', 'Royals', ''),
-    'la':  ('LA', 'Los Angeles', 'Dodgers', ''),
-    'mil': ('MIL', 'Milwaukee', 'Brewers', ''),
-    'min': ('MIN', 'Minnesota', 'Twins', ''),
-    'nl' : ('NL', 'National', 'League', ''),
-    'nym': ('NYM', 'New York', 'Mets', ''),
-    'nyy': ('NYY', 'New York', 'Yankees', ''),
-    'oak': ('OAK', 'Oakland', 'Athletics', ''),
-    'phi': ('PHI', 'Philadelphia', 'Phillies', ''),
-    'pit': ('PIT', 'Pittsburgh', 'Pirates', ''),
-    'sd':  ('SD', 'San Diego', 'Padres', ''),
-    'sea': ('SEA', 'Seattle', 'Mariners', ''),
-    'sf':  ('SF', 'San Francisco', 'Giants', ''),
-    'stl': ('STL', 'St. Louis', 'Cardinals', ''),
-    'tb':  ('TB', 'Tampa Bay', 'Rays', ''),
-    'tex': ('TEX', 'Texas', 'Rangers', ''),
-    'tor': ('TOR', 'Toronto', 'Blue Jays', ''),
-    'was': ('WAS', 'Washington', 'Nationals', ''),
+    'ana': (('KLAX','KLAA'), 'Los Angeles Angels of Anaheim'),
+    'al' : ( None, 'American League', ''),
+    'ari': (('FSA-HD','FSAZ','KTAR'), 'Arizona Diamondbacks', ''),
+    'atl': (('PTV-HD','FSSO','WGST'), 'Atlanta Braves', ''),
+    'bal': (('MASN','MSN2','WJZ'), 'Baltimore Orioles',''),
+    'bos': (('NESN-HD','NESN','WRKO'), 'Boston Red Sox', ''),
+    'chc': (('WGN','WGN'), 'Chicago Cubs', ''),
+    'cin': (('FSOH','WLW'), 'Cincinnati Reds', ''),
+    'cle': (('STO','WTAM'), 'Cleveland Indians', ''),
+    'col': (('FSRM-HD','FSRM','KOA'), 'Colorado Rockies', ''),
+    'cws': (('CSC-HD','CSC','WSCR'), 'Chicago White Sox', ''),
+    'det': (('FSD-HD','FSD','KFLC'), 'Detroit Tigers', ''),
+    'fla': (('FSFL','WAXY'), 'Florida Marlins', ''),
+    'hou': (('FSH','KTRH'), 'Houston Astros', ''),
+    'kc':  (('FSKC-HD','FSKC','KCSP'), 'Kansas City Royals', ''),
+    'la':  (('PRIM','KABC'), 'Los Angeles Dodgers', ''),
+    'mil': (('WMLW','FSWI','WTMJ'), 'Milwaukee Brewers', ''),
+    'min': (('FSNO','TRN'), 'Minnesota Twins', ''),
+    'nl' : ( None, 'National League', ''),
+    'nym': (('SNY-HD','SNY','WFAN'), 'New York Mets', ''),
+    'nyy': (('YES-HD','YES','WCBS'), 'New York Yankees', ''),
+    'oak': (('CSCA-HD','CSCA','KTRB'), 'Oakland Athletics', ''),
+    'phi': (('CSP','WPHT'), 'Philadelphia Phillies', ''),
+    'pit': (('FSP'), 'Pittsburgh Pirates', ''),
+    'sd':  (('Cox4','XPRS'), 'San Diego Padres', ''),
+    'sea': (('FSNW','KIRO'), 'Seattle Mariners', ''),
+    'sf':  (('CSBA-HD','CSBA','KNBR'), 'San Francisco Giants', ''),
+    'stl': (('FSMW','KTRS'), 'St. Louis Cardinals', ''),
+    'tb':  (('FSFL','WDAE'), 'Tampa Bay Rays', ''),
+    'tex': (('FSSW','KRLD'), 'Texas Rangers', ''),
+    'tor': (('RSN','FAN'), 'Toronto Blue Jays', ''),
+    'was': (('MASN','WFED'), 'Washington Nationals', ''),
     'wft': ('WFT', 'World', 'Futures', 'Team' ),
     'uft': ('UFT', 'USA', 'Futures', 'Team' ),
     'cif': ('CIF', 'Cincinnati Futures Team'),
-    'unk': ('UNK', 'Unknown', 'Teamcode'),
-    'tbd': ('TBD', 'TBD'),
+    'unk': ( None, 'Unknown', 'Teamcode'),
+    'tbd': ( None, 'TBD'),
     't235': ('T235', 'Memphis Redbirds'),
     't249': ('T249', 'Carolina Mudcats'),
     't784': ('T784', 'WBC Canada'),
@@ -870,7 +873,17 @@ class GameStream:
                 for media in stream['user-verified-media-item']:
                     #raise Exception,repr(media['media-item']['state'])
                     state = media['media-item']['state']
-                    if state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON' ):
+                    scenario = media['media-item']['playback-scenario']
+                    try:
+                        blackout = media['media-item']['blackout-keywords']['blackout-keyword']
+                    except:
+                        blackout = []
+                    #raise Exception,repr(blackout)
+                    if 'MLB_NATIONAL_BLACKOUT' in blackout:
+                        self.error_str = "This game is subject to national blackout restrictions."
+                        raise
+                    if scenario == self.scenario and\
+                                state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON' ):
                         if self.content_id == None:
                             self.content_id = stream['content-id']
                             self.log.write('DEBUG>> state = ' + str(state) + ' content-id = ' + str(self.content_id) + '\n')
@@ -878,12 +891,9 @@ class GameStream:
         if self.debug:
             self.log.write("DEBUG>> writing soap response\n")
             self.log.write(repr(reply) + '\n')
-        """if self.streamtype == 'audio':
-            content_id = reply[0][0]['user-verified-content'][0]['content-id']
-        else:
-            content_id = reply[0][0]['user-verified-content'][1]['content-id']
-        
-        self.content_id = content_id"""
+        if self.content_id is None:
+            self.error_str = "This game is not yet available in the archives."
+            raise
         if self.debug:
             self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
             self.log.write("DEBUG>> soap content-id:" + str(self.content_id) + '\n')
