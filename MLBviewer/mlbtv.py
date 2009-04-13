@@ -892,7 +892,7 @@ class GameStream:
             self.log.write("DEBUG>> writing soap response\n")
             self.log.write(repr(reply) + '\n')
         if self.content_id is None:
-            self.error_str = "This game is not yet available in the archives."
+            self.error_str = "Requested stream is not yet available."
             raise
         if self.debug:
             self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
