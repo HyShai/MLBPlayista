@@ -25,7 +25,7 @@ class MLBConfig:
                 key = key.strip()
                 val = val.strip()
                 # These are the ones that take multiple values
-                if key in ('blackout', 'audio_follow', 'favorite'):
+                if key in ('blackout', 'audio_follow', 'video_follow', 'favorite'):
                     self.data[key].append(val)
                 # These are the booleans:
                 elif key in ('show_player_command', 'debug', 'use_color', 'dvr_record_only'):

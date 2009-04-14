@@ -64,38 +64,38 @@ SOAPCODES = {
 # audio and video follow functionality.  The first field will contain a tuple
 # of call letters for the various media outlets that cover that team.
 TEAMCODES = {
-    'ana': (('KLAX','KLAA'), 'Los Angeles Angels of Anaheim'),
+    'ana': ('108', 'Los Angeles Angels of Anaheim'),
     'al' : ( None, 'American League', ''),
-    'ari': (('FSA-HD','FSAZ','KTAR'), 'Arizona Diamondbacks', ''),
-    'atl': (('PTV-HD','FSSO','WGST'), 'Atlanta Braves', ''),
-    'bal': (('MASN','MSN2','WJZ'), 'Baltimore Orioles',''),
-    'bos': (('NESN-HD','NESN','WRKO'), 'Boston Red Sox', ''),
-    'chc': (('WGN','WGN'), 'Chicago Cubs', ''),
-    'cin': (('FSOH','WLW'), 'Cincinnati Reds', ''),
-    'cle': (('STO','WTAM'), 'Cleveland Indians', ''),
-    'col': (('FSRM-HD','FSRM','KOA'), 'Colorado Rockies', ''),
-    'cws': (('CSC-HD','CSC','WSCR'), 'Chicago White Sox', ''),
-    'det': (('FSD-HD','FSD','KFLC'), 'Detroit Tigers', ''),
-    'fla': (('FSFL','WAXY'), 'Florida Marlins', ''),
-    'hou': (('FSH','KTRH'), 'Houston Astros', ''),
-    'kc':  (('FSKC-HD','FSKC','KCSP'), 'Kansas City Royals', ''),
-    'la':  (('PRIM','KABC'), 'Los Angeles Dodgers', ''),
-    'mil': (('WMLW','FSWI','WTMJ'), 'Milwaukee Brewers', ''),
-    'min': (('FSNO','TRN'), 'Minnesota Twins', ''),
+    'ari': ('109', 'Arizona Diamondbacks', ''),
+    'atl': ('144', 'Atlanta Braves', ''),
+    'bal': ('110', 'Baltimore Orioles',''),
+    'bos': ('111', 'Boston Red Sox', ''),
+    'chc': ('112', 'Chicago Cubs', ''),
+    'cin': ('113', 'Cincinnati Reds', ''),
+    'cle': ('114', 'Cleveland Indians', ''),
+    'col': ('115', 'Colorado Rockies', ''),
+    'cws': ('145', 'Chicago White Sox', ''),
+    'det': ('116', 'Detroit Tigers', ''),
+    'fla': ('146', 'Florida Marlins', ''),
+    'hou': ('117', 'Houston Astros', ''),
+    'kc':  ('118', 'Kansas City Royals', ''),
+    'la':  ('119', 'Los Angeles Dodgers', ''),
+    'mil': ('158', 'Milwaukee Brewers', ''),
+    'min': ('142', 'Minnesota Twins', ''),
     'nl' : ( None, 'National League', ''),
-    'nym': (('SNY-HD','SNY','WFAN'), 'New York Mets', ''),
-    'nyy': (('YES-HD','YES','WCBS'), 'New York Yankees', ''),
-    'oak': (('CSCA-HD','CSCA','KTRB'), 'Oakland Athletics', ''),
-    'phi': (('CSP','WPHT'), 'Philadelphia Phillies', ''),
-    'pit': (('FSP'), 'Pittsburgh Pirates', ''),
-    'sd':  (('Cox4','XPRS'), 'San Diego Padres', ''),
-    'sea': (('FSNW','KIRO'), 'Seattle Mariners', ''),
-    'sf':  (('CSBA-HD','CSBA','KNBR'), 'San Francisco Giants', ''),
-    'stl': (('FSMW','KTRS'), 'St. Louis Cardinals', ''),
-    'tb':  (('FSFL','WDAE'), 'Tampa Bay Rays', ''),
-    'tex': (('FSSW','KRLD'), 'Texas Rangers', ''),
-    'tor': (('RSN','FAN'), 'Toronto Blue Jays', ''),
-    'was': (('MASN','WFED'), 'Washington Nationals', ''),
+    'nym': ('121', 'New York Mets', ''),
+    'nyy': ('147', 'New York Yankees', ''),
+    'oak': ('133', 'Oakland Athletics', ''),
+    'phi': ('143', 'Philadelphia Phillies', ''),
+    'pit': ('134', 'Pittsburgh Pirates', ''),
+    'sd':  ('135', 'San Diego Padres', ''),
+    'sea': ('136', 'Seattle Mariners', ''),
+    'sf':  ('137', 'San Francisco Giants', ''),
+    'stl': ('138', 'St. Louis Cardinals', ''),
+    'tb':  ('139', 'Tampa Bay Rays', ''),
+    'tex': ('140', 'Texas Rangers', ''),
+    'tor': ('141', 'Toronto Blue Jays', ''),
+    'was': ('120', 'Washington Nationals', ''),
     'wft': ('WFT', 'World', 'Futures', 'Team' ),
     'uft': ('UFT', 'USA', 'Futures', 'Team' ),
     'cif': ('CIF', 'Cincinnati Futures Team'),
@@ -602,8 +602,9 @@ class MLBSchedule:
 
 
 class GameStream:
-    def __init__(self,stream, email, passwd, debug=None,\
-			     auth=True, streamtype='video',use_soap=False,speed=800):
+    def __init__(self,stream, email, passwd, debug=None,
+			     auth=True, streamtype='video',use_soap=False,speed=800,
+                             coverage=None):
         self.stream = stream
         self.streamtype = streamtype
         self.speed = speed
@@ -629,6 +630,7 @@ class GameStream:
         self.passwd = passwd
         self.session_cookies = None
         self.streamtype = streamtype
+        self.coverage = coverage
         self.log.write(str(datetime.datetime.now()) + '\n')
         try:
             self.session_key = self.read_session_key()
@@ -869,31 +871,48 @@ class GameStream:
             self.error_str = SOAPCODES[reply['status-code']]
             raise Exception,self.error_str
         for stream in reply[0][0]['user-verified-content']:
+            dict = {}
             if stream['type'] == self.streamtype:
+                for i in range(len(stream['domain-specific-attributes']['domain-attribute'])):
+                    domain_attr = stream['domain-specific-attributes']['domain-attribute'][i]
+                    dict[domain_attr._name] = domain_attr
+                try:
+                    cov_pat = re.compile(r'([1-9][0-9]*)')
+                    coverage = re.search(cov_pat, str(dict['coverage_association'])).groups()[0]
+                except:
+                    coverage = None
                 for media in stream['user-verified-media-item']:
                     #raise Exception,repr(media['media-item']['state'])
                     state = media['media-item']['state']
                     scenario = media['media-item']['playback-scenario']
+                    blackout = []
                     try:
-                        blackout = media['media-item']['blackout-keywords']['blackout-keyword']
+                        blackout_keywords = media['media-item']['blackout-keywords']
+                        if blackout_keywords != "":
+                            blackout = blackout_keywords['blackout-keyword']
                     except:
-                        blackout = []
+                        pass
                     #raise Exception,repr(blackout)
                     if 'MLB_NATIONAL_BLACKOUT' in blackout:
                         self.error_str = "This game is subject to national blackout restrictions."
-                        raise
+                        raise Exception,self.error_str
                     if scenario == self.scenario and\
                                 state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON' ):
                         if self.content_id == None:
-                            self.content_id = stream['content-id']
-                            self.log.write('DEBUG>> state = ' + str(state) + ' content-id = ' + str(self.content_id) + '\n')
-                            self.log.write('DEBUG>> Selecting media-item:\n' + repr(media) + '\n')
+                            self.log.write('Does coverage = ' + coverage + ' match ' + self.coverage + '?\n')
+                            if self.coverage is not None and self.coverage == coverage:
+                                self.content_id = stream['content-id']
+                                self.log.write('DEBUG>> state = ' + str(state) + ' content-id = ' + str(self.content_id) + '\n')
+                                self.log.write('DEBUG>> Selecting media-item:\n' + repr(media) + '\n')
+                            elif self.coverage is None:
+                                self.error_str = "Coverage should have been set but instead got NoneType"
+                                raise Exception,self.error_str
         if self.debug:
             self.log.write("DEBUG>> writing soap response\n")
             self.log.write(repr(reply) + '\n')
         if self.content_id is None:
             self.error_str = "Requested stream is not yet available."
-            raise
+            raise Exception,self.error_str
         if self.debug:
             self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
             self.log.write("DEBUG>> soap content-id:" + str(self.content_id) + '\n')
@@ -1054,7 +1073,7 @@ class GameStream:
         if self.app is not None:
             rec_cmd_str += ' -a "' + str(self.app) + '"'
         if self.use_soap:
-            rec_cmd_str += ' -s http://mlb.m.lb.com/flash/mediaplayer/v4/RC91/MediaPlayer4.swf?v=4'
+            rec_cmd_str += ' -s http://mlb.mlb.com/flash/mediaplayer/v4/RC91/MediaPlayer4.swf?v=4'
         if self.tc_url is not None:
             rec_cmd_str += ' -t "' + self.tc_url + '"'
         if self.sub_path is not None:
