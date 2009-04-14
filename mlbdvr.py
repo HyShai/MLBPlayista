@@ -230,6 +230,12 @@ def mainloop(myscr,cfg):
         "400" : "[400K]",
         "800" : "[800K]"}
 
+    coveragetoggle = {
+        "away" : "[AWAY]",
+        "home" : "[HOME]"}
+
+    cfg['coverage'] = "home"
+
     while True:
         myscr.clear()
         statuswin.clear()
@@ -350,7 +356,8 @@ def mainloop(myscr,cfg):
                     status_str = "No listings available for this day."
 
         # Add the speed toggle plus padding
-        status_str_len = len(status_str) + len(speedtoggle.get(cfg['speed'])) + 2
+        status_str_len = len(status_str) + len(speedtoggle.get(cfg['speed'])) +\
+                            + len(coveragetoggle.get(cfg['coverage'])) + 2
         if cfg['debug']:
             status_str_len += len('[DEBUG]')
         padding = curses.COLS - status_str_len
@@ -364,7 +371,8 @@ def mainloop(myscr,cfg):
             speedstr = '[600K]'
         else:
             speedstr = speedtoggle.get(cfg['speed'])
-        status_str += ' '*padding + debug_str + speedstr
+        coveragestr = coveragetoggle.get(cfg['coverage'])
+        status_str += ' '*padding + debug_str +  coveragestr + speedstr
 
         # Print an indicator if more bookmarks than lines
         if 'bookmarks' in CURRENT_SCREEN:
@@ -527,6 +535,17 @@ def mainloop(myscr,cfg):
             statuswin.refresh()
             time.sleep(1)
             continue
+
+        # coveragetoggle ('c' is taken by condensed games, 's' was 
+        # reserved for scores but I don't think I'll implement that.
+        if c in ('Coverage', ord('s')):
+            # there's got to be an easier way to do this
+            temp = coveragetoggle.copy()
+            del temp[cfg['coverage']]
+            for coverage in temp:
+                cfg['coverage'] = coverage
+            del temp
+            statuswin.clear()
 
         # speedtoggle
         if c in ('Speed', ord('p')):
@@ -830,12 +849,30 @@ def mainloop(myscr,cfg):
                 if LIRC:
                     irc_socket.close()
                     irc_conn.connected = False
+                
+                dbg = MLBLog(LOGFILE)
+                home = available[current_cursor][0]['home']
+                away = available[current_cursor][0]['away']
+                default = available[current_cursor][0][cfg['coverage']]
+                dbg.write('DEBUG>> home coverage = ' + home + ' away coverage = ' + away + '\n')
+                dbg.write('DEBUG>> checking for audio_follow = ' + repr(cfg['audio_follow']) + '\n')
+                dbg.write('DEBUG>> checking for video_follow = ' + repr(cfg['video_follow']) + '\n')
+                dbg.flush()
 
                 if audio:
                     stream = available[current_cursor][3]
+                    
                     if mysched.use_xml:
+                        if away in cfg['audio_follow']:
+                            coverage = TEAMCODES[away][0]
+                        elif home in cfg['video_follow']:
+                            coverage = TEAMCODES[home][0]
+                        else:
+                            coverage = TEAMCODES[default][0]
+
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
-                                   cfg['debug'], streamtype='audio',use_soap=True)
+                                   cfg['debug'], streamtype='audio',use_soap=True,
+                                   coverage=coverage)
                     else:
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'], streamtype='audio')
@@ -854,8 +891,16 @@ def mainloop(myscr,cfg):
                     else:
                         stream = available[current_cursor][2]
                     if mysched.use_xml:
+                        if away in cfg['video_follow']:
+                            coverage = TEAMCODES[away][0]
+                        elif home in cfg['video_follow']:
+                            coverage = TEAMCODES[home][0]
+                        else:
+                            coverage = TEAMCODES[default][0]
+
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
-                                   cfg['debug'],use_soap=True,speed=cfg['speed'])
+                                   cfg['debug'],use_soap=True,speed=cfg['speed'],
+                                   coverage=coverage)
                     else:
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'])
@@ -1206,6 +1251,7 @@ if __name__ == "__main__":
                   'video_recorder': DEFAULT_V_RECORD,
                   'audio_recorder': DEFAULT_A_RECORD,
                   'audio_follow': [],
+                  'video_follow': [],
                   'blackout': [],
                   'favorite': [],
                   'use_color': 0,

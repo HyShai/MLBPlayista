@@ -259,9 +259,12 @@ if content_id is None:
             content_id = stream['content-id']
 else:
     print "Using content_id from arguments: " + content_id
+for i in range(len(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'])): 
+    print str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i]._name) + " = " + str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i])
+
 #content_id = reply[0][0]['user-verified-content'][1]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
-
+#sys.exit()
 #cmd_str = 'rm -rf /tmp/suds'
 #subprocess.Popen(cmd_str,shell=True).wait()
 
