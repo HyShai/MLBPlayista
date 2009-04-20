@@ -248,6 +248,11 @@ class MLBSchedule:
         # For BETA testing, use my own xml
         #self.epg = "http://eds.org/~straycat/wbc_epg.xml"
         self.xmltime = datetime.datetime(2009, 3, 30)
+        mytime = datetime.datetime(self.year, self.month, self.day)
+        if mytime >= self.xmltime:
+            self.use_xml = True
+        else:
+            self.use_xml = False
         self.log = MLBLog(LOGFILE)
         self.data = []
 
@@ -603,8 +608,11 @@ class MLBSchedule:
 
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,
-			     auth=True, streamtype='video',use_soap=False,speed=800,
-                             coverage=None):
+                 auth=True, streamtype='video',use_soap=False,speed=800,
+                 coverage=None,use_nexdef=False,max_bps=800000,start_time=0):
+        self.use_nexdef = use_nexdef
+        self.start_time = start_time
+        self.max_bps = max_bps
         self.stream = stream
         self.streamtype = streamtype
         self.speed = speed
@@ -643,7 +651,9 @@ class GameStream:
             self.scenario = "MLB_FMS_AUDIO_32K_STREAM"
             self.subject  = "MLBCOM_GAMEDAY_AUDIO"
         else:
-            if str(self.speed) == '400':
+            if self.use_nexdef:
+                self.scenario = 'MLB_FLASH_SWARMCLOUD'
+            elif str(self.speed) == '400':
                 self.scenario = "MLB_FLASH_600K_STREAM"
             else:
                 self.scenario = "MLB_FLASH_800K_STREAM"
@@ -844,6 +854,70 @@ class GameStream:
         self.session_cookies = None
         # END logout
 
+    def parse_innings_xml(self):
+        gameid = self.event_id.split('-')[1]
+        url = 'http://mlb.mlb.com/mlb/mmls2009/' + gameid + '.xml'
+        req = urllib2.Request(url)
+        rsp = urllib2.urlopen(req)
+        try:
+            iptr = parse(rsp)
+        except:
+            self.error_str = "Could not parse the innings xml."
+            raise Exception,self.error_str
+        out = []
+        for inning in iptr.getElementsByTagName('inningTimes'):
+            number = inning.getAttribute('inning_number')
+            is_top = inning.getAttribute('top')
+            for inning_time in inning.getElementsByTagName('inningTime'):
+                type = inning_time.getAttribute('type')
+                if type == 'SCAST':
+                    time = inning_time.getAttribute('start')
+                    out.append((number, is_top, time))
+        return out
+
+    def parse_soap_content(self,reply):
+        # iterate over all the media items
+        content_list = []
+        for stream in reply[0][0]['user-verified-content']:
+            # for each media item, if it matches the streamtype, build a dictionary of domain-attributes
+            # for selection of coverage
+            dict = {}
+            if stream['type'] == self.streamtype:
+                for i in range(len(stream['domain-specific-attributes']['domain-attribute'])):
+                    domain_attr = stream['domain-specific-attributes']['domain-attribute'][i]
+                    dict[domain_attr._name] = domain_attr
+                try:
+                    cov_pat = re.compile(r'([0-9][0-9]*)')
+                    coverage = re.search(cov_pat, str(dict['coverage_association'])).groups()[0]
+                except:
+                    coverage = None
+                call_letters = str(dict['call_letters'])
+                try:
+                    letters_pat = re.compile(r'"(.*)"')
+                    call_letters = re.search(letters_pat, call_letters).groups()[0]
+                except:
+                    raise Exception,repr(call_letters)
+                for media in stream['user-verified-media-item']:
+                    #raise Exception,repr(media['media-item']['state'])
+                    state = media['media-item']['state']
+                    scenario = media['media-item']['playback-scenario']
+                    blackout = []
+                    try:
+                        blackout_keywords = media['media-item']['blackout-keywords']
+                        if blackout_keywords != "":
+                            blackout = blackout_keywords['blackout-keyword']
+                    except:
+                        pass
+                    #raise Exception,repr(blackout)
+                    if 'MLB_NATIONAL_BLACKOUT' in blackout:
+                        self.error_str = "This game is subject to national blackout restrictions."
+                        raise Exception,self.error_str
+                    if scenario == self.scenario and\
+                                state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON' ):
+                        content_list.append( ( call_letters, coverage, stream['content-id'] ) )
+        return content_list
+
+
     def soapurl(self):
         # return of workflow is useless for here, but it still calls all the 
         # necessary steps to login and get cookies
@@ -865,48 +939,30 @@ class GameStream:
         client = Client(soap_url)
         soapd = {'event-id':str(self.stream), 'subject':self.subject}
         reply = client.service.find(**soapd)
+        # if the reply is unsuccessful, log it and raise an exception
         if reply['status-code'] != "1":
-            self.log.write("DEBUG (SOAPCODES!=1)>> writing soap response\n")
+            self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response\n")
             self.log.write(repr(reply) + '\n')
             self.error_str = SOAPCODES[reply['status-code']]
             raise Exception,self.error_str
-        for stream in reply[0][0]['user-verified-content']:
-            dict = {}
-            if stream['type'] == self.streamtype:
-                for i in range(len(stream['domain-specific-attributes']['domain-attribute'])):
-                    domain_attr = stream['domain-specific-attributes']['domain-attribute'][i]
-                    dict[domain_attr._name] = domain_attr
-                try:
-                    cov_pat = re.compile(r'([1-9][0-9]*)')
-                    coverage = re.search(cov_pat, str(dict['coverage_association'])).groups()[0]
-                except:
-                    coverage = None
-                for media in stream['user-verified-media-item']:
-                    #raise Exception,repr(media['media-item']['state'])
-                    state = media['media-item']['state']
-                    scenario = media['media-item']['playback-scenario']
-                    blackout = []
-                    try:
-                        blackout_keywords = media['media-item']['blackout-keywords']
-                        if blackout_keywords != "":
-                            blackout = blackout_keywords['blackout-keyword']
-                    except:
-                        pass
-                    #raise Exception,repr(blackout)
-                    if 'MLB_NATIONAL_BLACKOUT' in blackout:
-                        self.error_str = "This game is subject to national blackout restrictions."
-                        raise Exception,self.error_str
-                    if scenario == self.scenario and\
-                                state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON' ):
-                        if self.content_id == None:
-                            self.log.write('Does coverage = ' + coverage + ' match ' + self.coverage + '?\n')
-                            if self.coverage is not None and self.coverage == coverage:
-                                self.content_id = stream['content-id']
-                                self.log.write('DEBUG>> state = ' + str(state) + ' content-id = ' + str(self.content_id) + '\n')
-                                self.log.write('DEBUG>> Selecting media-item:\n' + repr(media) + '\n')
-                            elif self.coverage is None:
-                                self.error_str = "Coverage should have been set but instead got NoneType"
-                                raise Exception,self.error_str
+        # moving all the soap reply parsing to a routine that returns a list of valid streams
+        # based on streamtype
+        content_list = self.parse_soap_content(reply)
+        # now iterate over the content_list with the following rules:
+        # 1. if coverage association is zero, use it (likely a national broadcast)
+        # 2. if preferred coverage is available use it
+        # 3. if coverage association is non-zero and preferred not available, then what?
+        for content in content_list:
+            ( call_letters, coverage, content_id ) = content
+            if coverage == '0':
+                self.content_id = content_id
+            elif coverage == self.coverage:
+                self.content_id = content_id
+        if self.content_id is None:
+            self.error_str = "Requested stream is not available."
+            self.error_str += "\n\nRequested coverage association: " + str(self.coverage)
+            self.error_str += "\n\nAvailable content list = \n" + repr(content_list)
+            raise Exception,self.error_str
         if self.debug:
             self.log.write("DEBUG>> writing soap response\n")
             self.log.write(repr(reply) + '\n')
@@ -950,6 +1006,42 @@ class GameStream:
         except:
             self.session_key = None
         game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
+        if self.use_nexdef:
+            #raise Exception,self.nexdef_url(game_url)
+            return self.nexdef_url(game_url)
+        else:
+            return self.flash_url(game_url)
+
+    def nexdef_url(self,game_url):
+        nexdef_base = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/'
+        nexdef_use  = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:'
+        # build the first url for stream descriptions
+
+        """ BEGIN PAIN IN THE ASS CODE """
+        url = nexdef_base + 'describe' + '/base64:' + game_url + '&refetch=true'
+        req = urllib2.Request(url)
+        rsp = urllib2.urlopen(req)
+        # parse the stream descriptions for time of head of stream
+        try:
+            xp = parse(rsp)
+        except:
+            self.error_str = "Could not parse NexDef stream list.  Try alternate coverage."
+            raise Exception,self.error_str
+        for time in xp.getElementsByTagName('streamHead'):
+            timestamp = time.getAttribute('timeStamp')
+        (hrs, min, sec) = timestamp.split(':')
+        milliseconds = 1000 * ( int(hrs) * 3600 + int(min) * 60 + int(sec) )
+        # nexdef plugin appears to be off by an hour
+        milliseconds += 3600*1000
+        # return the media url with the correct timestamp
+        nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps) + '&start_time=' + str(milliseconds) + '&v=0'
+        """ END PAIN IN THE ASS CODE """
+        
+        #nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps) + '&start_time=0&v=0'
+        return nexdef_media_url
+
+
+    def flash_url(self,game_url):
         try:
             #play_path_pat = re.compile(r'ondemand\/(.*)\?')
             play_path_pat = re.compile(r'ondemand\/(.*)$')
@@ -1007,7 +1099,7 @@ class GameStream:
             self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
         self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
         return game_url
-        
+
 
     def url(self):
         # url_pattern

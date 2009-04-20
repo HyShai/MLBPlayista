@@ -805,7 +805,7 @@ def mainloop(myscr,cfg):
                 time.sleep(1)
 
         if c in ('Flash', ord('f')):
-            flash_url = 'http://mlb.mlb.com/flash/mediaplayer/v4/RC91/MP4.jsp?calendar_event_id=' 
+            flash_url = 'http://mlb.mlb.com/flash/mediaplayer/v4/RC11/MP4.jsp?calendar_event_id=' 
             flash_url += available[current_cursor][3]
             try:
                 browser_cmd_str = cfg['flash_browser'].replace('%s',flash_url)
@@ -900,7 +900,7 @@ def mainloop(myscr,cfg):
 
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'],use_soap=True,speed=cfg['speed'],
-                                   coverage=coverage)
+                                   coverage=coverage,use_nexdef=True)
                     else:
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'])
