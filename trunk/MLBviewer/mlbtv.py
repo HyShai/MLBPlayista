@@ -1025,7 +1025,16 @@ class GameStream:
         try:
             xp = parse(rsp)
         except:
+            try:
+                req = urllib2.Request(url)
+                rsp = urllib2.urlopen(req)
+                text = rsp.read()
+            except:
+                self.error_str = "Could not retry request to NexDef for stream list."
+                self.error_str += str(text)
+                raise Exception,self.error_str
             self.error_str = "Could not parse NexDef stream list.  Try alternate coverage."
+            self.error_str += "\n\n" + str(text)
             raise Exception,self.error_str
         for time in xp.getElementsByTagName('streamHead'):
             timestamp = time.getAttribute('timeStamp')

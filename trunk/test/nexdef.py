@@ -14,7 +14,9 @@ logging.getLogger('suds.client').setLevel(logging.DEBUG)
 from suds.client import Client
 from suds import WebFault
 
-DEFAULT_PLAYER = 'mplayer -dumpstream %s -dumpfile %f'
+#DEFAULT_PLAYER = 'mplayer -dumpstream %s -dumpfile %f'
+#DEFAULT_PLAYER = 'mplayer -really-quiet -cache 2048 -autosync 30 -fs %s'
+DEFAULT_PLAYER = 'mplayer -cache 2048 -autosync 30 -fs %s'
 
 url = 'file://'
 url += os.path.join(os.environ['HOME'], '.mlb', 'MediaService.wsdl')
@@ -408,7 +410,7 @@ recorder = datadct['video_recorder']
 #player   = datadct['video_player']
 player = DEFAULT_PLAYER
 #cmd_str = recorder.replace('%s', '"' + game_url + '"')
-cmd_str = player.replace('%s', '"http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:' + game_url + '&max_bps=2500000&v=0"')
+cmd_str = player.replace('%s', '"http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:' + game_url + '&max_bps=800000&v=0"')
 cmd_str = cmd_str.replace('%f', str(event_id) + '.mp4')
 
 """ RTMPDUMP CODE NOT NEEDED
