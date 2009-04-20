@@ -8,15 +8,16 @@ import re
 import subprocess
 
 import logging
+from xml.dom.minidom import parse
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
 from suds.client import Client
 from suds import WebFault
 
-#DEFAULT_PLAYER = 'mplayer -dumpstream %s -dumpfile %f'
-#DEFAULT_PLAYER = 'mplayer -really-quiet -cache 2048 -autosync 30 -fs %s'
-DEFAULT_PLAYER = 'mplayer -cache 2048 -autosync 30 -fs %s'
+DEFAULT_PLAYER = 'mplayer -dumpstream %s -dumpfile %f'
+#DEFAULT_PLAYER = 'mplayer -fs -really-quiet -autosync 30 %s'
+#DEFAULT_PLAYER = 'mplayer -autosync 30 %s'
 
 url = 'file://'
 url += os.path.join(os.environ['HOME'], '.mlb', 'MediaService.wsdl')
@@ -198,29 +199,6 @@ cookies = {}
 for tup in cookie_tuples:
     name, value, standard, rest = tup
     cookies[name] = value
-print repr(cookies)
-print "ipid = " + str(cookies['ipid']) + " fingerprint = " + str(cookies['fprt'])
-#print "session-key = " + str(cookies['ftmu'])
-#sys.exit()
-# End MORSEL extraction
-
-
-# pick up the session key morsel
-theurl = 'http://mlb.mlb.com/enterworkflow.do?flowId=media.media'
-txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
-data = None
-req = urllib2.Request(theurl,data,txheaders)
-response = urllib2.urlopen(req)
-
-# Begin MORSEL extraction
-ns_headers = response.headers.getheaders("Set-Cookie")
-attrs_set = cookielib.parse_ns_headers(ns_headers)
-cookie_tuples = cookielib.CookieJar()._normalized_cookie_tuples(attrs_set)
-print repr(cookie_tuples)
-#cookies = {}
-for tup in cookie_tuples:
-    name, value, standard, rest = tup
-    cookies[name] = value
 #print repr(cookies)
 print "ipid = " + str(cookies['ipid']) + " fingerprint = " + str(cookies['fprt'])
 try:
@@ -387,7 +365,8 @@ print logout_info
 
 END COMMENT OLD CODE"""
 print 'The game url parsed is: '
-print str(urllib.unquote(game_url))
+print str(game_url)
+#print str(urllib.unquote(game_url))
 #sys.exit()
 
 theurl = 'http://cp65670.edgefcs.net/fcs/ident'
@@ -405,12 +384,53 @@ print response.read()
 #response = urllib2.urlopen(req)
 #print response.read()
 
+# get the swarmcast media listings
+theurl = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/describe/base64:' + game_url + '&refetch=true'
+print 'The game url parsed is: '
+print str(theurl)
+req = urllib2.Request(theurl)
+response = urllib2.urlopen(req)
+print response.read()
+
+req = urllib2.Request(theurl)
+response = urllib2.urlopen(req)
+xp = parse(response)
+
+for time in xp.getElementsByTagName('streamHead'):
+    timestamp = time.getAttribute('timeStamp')
+( hrs, min, sec ) = timestamp.split(':')
+milliseconds = 1000 * ( int(hrs) * 3600 + int(min) * 60 + int(sec) )
+# nexdef seems to be off by an hour
+milliseconds += 3600 * 1000
+
+
+""" HACKISH AND UNRELIABLE
+# get the content
+theurl = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:' + game_url + '&start_time=0&max_bps=1200000&v=0'
+req = urllib2.Request(theurl)
+response = urllib2.urlopen(req)
+
+# get the start time
+theurl = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/control/base64:' + game_url
+req = urllib2.Request(theurl)
+response = urllib2.urlopen(req)
+#print response.read()
+mxml = parse(response)
+for time in mxml.getElementsByTagName('currentPosition'):
+    ms = time.getAttribute('millis')
+print "Fetched milliseconds = " + str(ms)
+#sys.exit()
+HACKISH AND UNRELIABLE """
+
+
+
 #cmd_str = player + ' "' + game_url + '"'
 recorder = datadct['video_recorder']
 #player   = datadct['video_player']
 player = DEFAULT_PLAYER
 #cmd_str = recorder.replace('%s', '"' + game_url + '"')
-cmd_str = player.replace('%s', '"http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:' + game_url + '&max_bps=800000&v=0"')
+#cmd_str = player.replace('%s', '"http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:' + game_url + '&start_time=' + 54600000 + '&max_bps=1200000&v=0"')
+cmd_str = player.replace('%s', '"http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:' + game_url + '&start_time=' + str(milliseconds) + '&max_bps=800000&v=0"')
 cmd_str = cmd_str.replace('%f', str(event_id) + '.mp4')
 
 """ RTMPDUMP CODE NOT NEEDED
