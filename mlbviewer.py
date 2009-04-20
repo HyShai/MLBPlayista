@@ -6,9 +6,12 @@ from MLBviewer import LircConnection
 from MLBviewer import MLBConfig
 from MLBviewer import MLBUrlError
 from MLBviewer import MLBJsonError
-from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE
+from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE, LOGFILE
 from MLBviewer import TEAMCODES
+from MLBviewer import MLBLog
+from MLBviewer import MLBprocess
 import os
+import signal
 import sys
 import re
 import curses
@@ -16,13 +19,16 @@ import curses.textpad
 import select
 import datetime
 import subprocess
+import commands
 import time
 import pickle
 import copy
 
 DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
 DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
-DEFAULT_SPEED = '400'
+DEFAULT_SPEED = '800'
+
+DEFAULT_FLASH_BROWSER='firefox %s'
 
 BOOKMARK_FILE = os.path.join(os.environ['HOME'], AUTHDIR, 'bookmarks.pf')
 
@@ -119,6 +125,7 @@ def prompter(win,prompt):
 
 def mainloop(myscr,cfg):
 
+    log = open(LOGFILE,"a")
     DISABLED_FEATURES = []
     CURRENT_SCREEN = 'listings'
     # Toggle the speed to 400k for top plays.  
@@ -146,6 +153,8 @@ def mainloop(myscr,cfg):
         LIRC = 0
         inputlst = [sys.stdin]
 
+    log.write(s + '\n\n')
+    log.flush()
 
     if hasattr(curses, 'use_default_colors'):
         try:
@@ -198,6 +207,8 @@ def mainloop(myscr,cfg):
         statuswin.refresh()
         time.sleep(2)
 
+    use_xml = mysched.use_xml
+
     statusline = {
         "I" : "Status: In Progress",
         "W" : "Status: Not Yet Available",
@@ -215,6 +226,12 @@ def mainloop(myscr,cfg):
     speedtoggle = {
         "400" : "[400K]",
         "800" : "[800K]"}
+
+    coveragetoggle = {
+        "away" : "[AWAY]",
+        "home" : "[HOME]"}
+
+    cfg['coverage'] = "home"
 
     while True:
         myscr.clear()
@@ -273,6 +290,9 @@ def mainloop(myscr,cfg):
                         ' '.join(TEAMCODES[home][1:]).strip()
                     if available[n][4] in ('F', 'CG'):
                         s+= ' (Archived)'
+                    elif use_xml and available[n][6] == 'media_archive':
+                        s+= ' (Archived)'
+
                 padding = curses.COLS - (len(s) + 1)
                 if n == current_cursor:
                     s += ' '*padding
@@ -282,7 +302,7 @@ def mainloop(myscr,cfg):
             # Only draw the screen if there are any games
             if available:
                 if n == current_cursor:
-                    if available[n][4] == 'I':
+                    if available[n][4] == 'I' or available[n][4] == 'In Progress':
                         #myscr.addstr(n+2,0,s, curses.A_REVERSE|curses.A_BOLD)
                         cursesflags = curses.A_REVERSE|curses.A_BOLD
                     else:
@@ -291,7 +311,15 @@ def mainloop(myscr,cfg):
                     if 'topPlays' in CURRENT_SCREEN:
                         status_str = 'Press L to return to listings...'
                     else:
-                        status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
+                        if use_xml:
+                            status = str(available[n][4])
+                            if available[n][0]['home'] in cfg['blackout'] or \
+                               available[n][0]['away'] in cfg['blackout']:
+                                if status in ('Warmup', 'Preview', 'In Progress', 'Pre-Game'):
+                                    status = "Local Blackout"
+                            status_str = 'Status: ' + status
+                        else:
+                            status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
 			if available[n][2] is None and available[n][3] is None:
                             status_str += ' (No media available)'
                         elif available[n][2] is None:
@@ -299,12 +327,13 @@ def mainloop(myscr,cfg):
                         elif available[n][3] is None:
                             status_str += ' (No audio available)'
                 else:
-                    if n < len(available) and available[n][4] == 'I':
-                        cursesflags = curses.A_BOLD
-                        #myscr.addstr(n+2, 0, s, curses.A_BOLD)
+                    if n < len(available):
+                        if available[n][4] == 'I' or available[n][4] == 'In Progres':
+                            cursesflags = curses.A_BOLD
+                        else:
+                            cursesflags = 0
                     else:
-                        cursesflags = 0
-                        #myscr.addstr(n+2, 0, s)
+                        pass
                 if home in cfg['favorite'] or away in cfg['favorite']:
                     if cfg['use_color'] and 'listings' in CURRENT_SCREEN:
                         cursesflags = cursesflags|curses.color_pair(1)
@@ -324,7 +353,8 @@ def mainloop(myscr,cfg):
                     status_str = "No listings available for this day."
 
         # Add the speed toggle plus padding
-        status_str_len = len(status_str) + len(speedtoggle.get(cfg['speed'])) + 2
+        status_str_len = len(status_str) + len(speedtoggle.get(cfg['speed'])) +\
+                            + len(coveragetoggle.get(cfg['coverage'])) + 2
         if cfg['debug']:
             status_str_len += len('[DEBUG]')
         padding = curses.COLS - status_str_len
@@ -334,9 +364,12 @@ def mainloop(myscr,cfg):
             debug_str = ''
         if str(mysched.year) == '2007' and cfg['speed'] == '800':
             speedstr = '[700K]'
+        elif str(mysched.year) == '2009' and cfg['speed'] == '400':
+            speedstr = '[600K]'
         else:
             speedstr = speedtoggle.get(cfg['speed'])
-        status_str += ' '*padding + debug_str + speedstr
+        coveragestr = coveragetoggle.get(cfg['coverage'])
+        status_str += ' '*padding + debug_str +  coveragestr + speedstr
 
         # Print an indicator if more bookmarks than lines
         if 'bookmarks' in CURRENT_SCREEN:
@@ -410,6 +443,8 @@ def mainloop(myscr,cfg):
                         bookmarks = pickle.load(bk)
                         bk.close()
                     except Exception,detail:
+                        if cfg['debug']:
+                            raise
                         statuswin.clear()
                         statuswin.addstr(0,0,detail,curses.A_BOLD)
                         statuswin.refresh()
@@ -446,7 +481,8 @@ def mainloop(myscr,cfg):
                     more_offset = 0
                     available = copy.deepcopy(bookmarks)
             except Exception,detail:
-                #raise Exception,detail
+                if cfg['debug']:
+                   raise Exception,detail
                 statuswin.clear()
                 statuswin.addstr(0,0,'No bookmarks found.',curses.A_BOLD)
                 statuswin.refresh()
@@ -489,6 +525,17 @@ def mainloop(myscr,cfg):
             statuswin.refresh()
             time.sleep(1)
             continue
+
+        # coveragetoggle ('c' is taken by condensed games, 's' was
+        # reserved for scores but I don't think I'll implement that.
+        if c in ('Coverage', ord('s')):
+            # there's got to be an easier way to do this
+            temp = coveragetoggle.copy()
+            del temp[cfg['coverage']]
+            for coverage in temp:
+                cfg['coverage'] = coverage
+            del temp
+            statuswin.clear()
 
         # speedtoggle
         if c in ('Speed', ord('p')):
@@ -542,6 +589,7 @@ def mainloop(myscr,cfg):
             dif = datetime.timedelta(1)
             t -= dif
             mysched = MLBSchedule((t.year, t.month, t.day))
+            use_xml = mysched.use_xml
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
@@ -568,6 +616,7 @@ def mainloop(myscr,cfg):
             dif = datetime.timedelta(1)
             t += dif
             mysched = MLBSchedule((t.year, t.month, t.day))
+            use_xml = mysched.use_xml
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
@@ -602,6 +651,7 @@ def mainloop(myscr,cfg):
                 time.sleep(1)
 
                 mysched = MLBSchedule((today_year, today_month, today_day))
+                use_xml = mysched.use_xml
                 statuswin.clear()
                 statuswin.addstr(0,0,'Refreshing listings...')
                 statuswin.refresh()
@@ -639,6 +689,7 @@ def mainloop(myscr,cfg):
                                 
 
                     newsched = MLBSchedule((myyear, mymonth, myday))
+                    use_xml = newsched.use_xml
                     try:
                         available = newsched.getListings(cfg['speed'],
                                                          cfg['blackout'],
@@ -646,6 +697,8 @@ def mainloop(myscr,cfg):
                         mysched = newsched
                         current_cursor = 0
                     except (KeyError,MLBUrlError):
+                        if cfg['debug']:
+                            raise
                         statuswin.clear()
                         error_str = "Could not fetch a schedule for that day."
                         statuswin.addstr(0,0,error_str,curses.A_BOLD)
@@ -745,6 +798,21 @@ def mainloop(myscr,cfg):
                 statuswin.refresh()
                 time.sleep(1)
 
+        if c in ('Flash', ord('f')):
+            flash_url = 'http://mlb.mlb.com/flash/mediaplayer/v4/RC11/MP4.jsp?calendar_event_id='
+            flash_url += available[current_cursor][3]
+            try:
+                browser_cmd_str = cfg['flash_browser'].replace('%s',flash_url)
+            except:
+                browser_cmd_str = cfg['flash_browser'] + ' "' + flash_url + '"'
+            browser_process = MLBprocess(browser_cmd_str,retries=0)
+            browser_process.open()
+            status_str = 'Started flash player using:\n' + str(browser_cmd_str)
+            myscr.clear()
+            myscr.addstr(0,0,status_str)
+            myscr.refresh()
+            time.sleep(2)
+            browser_process.process.wait()
 
         if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c')):
             if c in ('Audio', ord('a')):
@@ -769,10 +837,33 @@ def mainloop(myscr,cfg):
                     irc_socket.close()
                     irc_conn.connected = False
 
+                dbg = MLBLog(LOGFILE)
+                home = available[current_cursor][0]['home']
+                away = available[current_cursor][0]['away']
+                defaultcoverage = available[current_cursor][0][cfg['coverage']]
+                dbg.write('DEBUG>> home coverage = ' + home + ' away coverage = ' + away + '\n')
+                dbg.write('DEBUG>> checking for audio_follow = ' + repr(cfg['audio_follow']) + '\n')
+                dbg.write('DEBUG>> checking for video_follow = ' + repr(cfg['video_follow']) + '\n')
+                dbg.flush()
+
                 if audio:
                     stream = available[current_cursor][3]
-                    g = GameStream(stream, cfg['user'], cfg['pass'], 
+
+                    if use_xml:
+                        if away in cfg['audio_follow']:
+                            coverage = TEAMCODES[away][0]
+                        elif home in cfg['video_follow']:
+                            coverage = TEAMCODES[home][0]
+                        else:
+                            coverage = TEAMCODES[defaultcoverage][0]
+
+                        g = GameStream(stream, cfg['user'], cfg['pass'],
+                                   cfg['debug'], streamtype='audio',use_soap=True,
+                                   coverage=coverage)
+                    else:
+                        g = GameStream(stream, cfg['user'], cfg['pass'],
                                    cfg['debug'], streamtype='audio')
+
                 else:
                     if c in ('Condensed', ord('c')):
                         if available[current_cursor][4] in ('CG'):
@@ -787,7 +878,20 @@ def mainloop(myscr,cfg):
                             continue
                     else:
                         stream = available[current_cursor][2]
-                    g = GameStream(stream, cfg['user'], cfg['pass'], 
+                    if mysched.use_xml:
+                        if away in cfg['video_follow']:
+                            coverage = TEAMCODES[away][0]
+                        elif home in cfg['video_follow']:
+                            coverage = TEAMCODES[home][0]
+                        else:
+                            coverage = TEAMCODES[defaultcoverage][0]
+
+                        g = GameStream(stream, cfg['user'], cfg['pass'],
+                                   cfg['debug'],use_soap=True,speed=cfg['speed'],
+                                   coverage=coverage,use_nexdef=True,
+                                   max_bps=cfg['max_bps'])
+                    else:
+                        g = GameStream(stream, cfg['user'], cfg['pass'],
                                    cfg['debug'])
                 
                 # print a "Trying..." message so we don't look frozen
@@ -802,7 +906,10 @@ def mainloop(myscr,cfg):
                     statuswin.refresh()
                     myscr.refresh()
                 try:
-                    u = g.url()
+                    if g.use_soap:
+                        u = g.soapurl()
+                    else:
+                        u = g.url()
                 except:
                     # Debugging should make errors fatal in case there is a
                     # logic, coding, or other uncaught error being hidden by
@@ -815,56 +922,58 @@ def mainloop(myscr,cfg):
                     myscr.addstr(2,0,g.error_str)
                     myscr.refresh()
                     time.sleep(3)
-                else:
-                    if cfg['debug']:
-                        myscr.clear()
-                        titlewin.clear()
-                        myscr.addstr(0,0,'Url received:')
-                        myscr.addstr(1,0,u)
-                        myscr.refresh()
-                        time.sleep(3)
-                    # I'd rather leave an error on the screen but you'll need
-                    # to write a lirc handler for getch()
-                    #myscr.getch()
-                    if cfg['debug']:
-                        continue
-                    try:
-                        if '%s' in player:
-                            cmd_str = player.replace('%s', '"' + u + '"')
-                        else:
-                            cmd_str = player + ' "' + u + '" '
-                        if cfg['show_player_command']:
-                            myscr.clear()
-                            titlewin.clear()
-                            myscr.addstr(0,0,cmd_str)
-                            myscr.refresh()
-                            time.sleep(3)
-		        else:
-                            if not audio:
-                                statuswin.clear()
-                                statuswin.addstr(0,0,"Buffering stream")
-                                statuswin.refresh()
-                                time.sleep(.5)
+                    continue
 
-                        play_process=subprocess.Popen(cmd_str,shell=True)
-                        play_process.wait()
-                        # I want to see mplayer errors before returning to 
-                        # listings screen
-                        if ['show_player_command']:
-                            time.sleep(3)
-                    except:
+                # removing over 200 lines of else to the except above (892-1136)
+                if cfg['debug']:
+                    myscr.clear()
+                    titlewin.clear()
+                    myscr.addstr(0,0,'Url received:')
+                    myscr.addstr(1,0,u)
+                    myscr.refresh()
+                    time.sleep(3)
+                # I'd rather leave an error on the screen but you'll need
+                # to write a lirc handler for getch()
+                #myscr.getch()
+                if cfg['debug']:
+                    continue
+                try:
+                    if '%s' in player:
+                        cmd_str = player.replace('%s', '"' + u + '"')
+                    else:
+                        cmd_str = player + ' "' + u + '" '
+                    if cfg['show_player_command']:
                         myscr.clear()
                         titlewin.clear()
-                        ERROR_STRING = "There was an error in the player process."
-                        myscr.addstr(0,0,ERROR_STRING)
+                        myscr.addstr(0,0,cmd_str)
                         myscr.refresh()
                         time.sleep(3)
+		    else:
+                        if not audio:
+                            statuswin.clear()
+                            statuswin.addstr(0,0,"Buffering stream")
+                            statuswin.refresh()
+                            time.sleep(.5)
+
+                    play_process=subprocess.Popen(cmd_str,shell=True)
+                    play_process.wait()
+                    # I want to see mplayer errors before returning to 
+                    # listings screen
+                    if ['show_player_command']:
+                        time.sleep(3)
+                except:
+                    myscr.clear()
+                    titlewin.clear()
+                    ERROR_STRING = "There was an error in the player process."
+                    myscr.addstr(0,0,ERROR_STRING)
+                    myscr.refresh()
+                    time.sleep(3)
 
                 # Turn the ir_program back on                
                 if LIRC:
                     irc_conn = LircConnection()
                     irc_conn.connect()
-        	    irc_conn.getconfig()
+    	            irc_conn.getconfig()
                     irc_socket=irc_conn.conn
                     inputlst = [sys.stdin, irc_socket]
             except IndexError:
@@ -907,6 +1016,7 @@ if __name__ == "__main__":
                   'video_player': DEFAULT_V_PLAYER,
                   'audio_player': DEFAULT_A_PLAYER,
                   'audio_follow': [],
+                  'video_follow': [],
                   'blackout': [],
                   'favorite': [],
                   'use_color': 0,
@@ -916,7 +1026,9 @@ if __name__ == "__main__":
                   'debug': 0,
                   'x_display': '',
                   'top_plays_player': '',
-                  'time_offset': ''}
+                  'time_offset': '',
+                  'max_bps': 800000,
+                  'flash_browser': DEFAULT_FLASH_BROWSER}
 
     # Auto-install of default configuration file
     try:
