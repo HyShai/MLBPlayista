@@ -611,7 +611,7 @@ class MLBSchedule:
             for urls in highlight.getElementsByTagName('url'):
                 scenario = urls.getAttribute('playback_scenario')
                 state    = urls.getAttribute('state')
-                if scenario == 'MLB_FLASH_800K_PROGDNLD':
+                if scenario in ('MLB_FLASH_800K_PROGDNLD','MLB_FLASH_400K_PROGDNLD'):
                     url = urls.childNodes[0].data
             out.append(( title, headline, url, state, gameid)) 
         #raise Exception,out
