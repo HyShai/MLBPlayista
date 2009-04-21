@@ -956,8 +956,20 @@ class GameStream:
             ( call_letters, coverage, content_id ) = content
             if coverage == '0':
                 self.content_id = content_id
+                self.call_letters = call_letters
             elif coverage == self.coverage:
                 self.content_id = content_id
+                self.call_letters = call_letters
+        # if we preferred coverage and national coverage not available,
+        # select any coverage available
+        if self.content_id is None:
+            try:
+                ( call_letters, coverage, content_id ) = content_list[0]
+                self.content_id = content_id
+                self.call_letters = call_letters
+            except:
+                self.content_id = None
+                self.call_letters = None
         if self.content_id is None:
             self.error_str = "Requested stream is not available."
             self.error_str += "\n\nRequested coverage association: " + str(self.coverage)
