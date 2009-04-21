@@ -71,28 +71,39 @@ TEAMCODES = {
     'bal': ('110', 'Baltimore Orioles',''),
     'bos': ('111', 'Boston Red Sox', ''),
     'chc': ('112', 'Chicago Cubs', ''),
+    'chn': ('112', 'Chicago Cubs', ''),
     'cin': ('113', 'Cincinnati Reds', ''),
     'cle': ('114', 'Cleveland Indians', ''),
     'col': ('115', 'Colorado Rockies', ''),
     'cws': ('145', 'Chicago White Sox', ''),
+    'cha': ('145', 'Chicago White Sox', ''),
     'det': ('116', 'Detroit Tigers', ''),
     'fla': ('146', 'Florida Marlins', ''),
+    'flo': ('146', 'Florida Marlins', ''),
     'hou': ('117', 'Houston Astros', ''),
     'kc':  ('118', 'Kansas City Royals', ''),
+    'kca': ('118', 'Kansas City Royals', ''),
     'la':  ('119', 'Los Angeles Dodgers', ''),
+    'lan': ('119', 'Los Angeles Dodgers', ''),
     'mil': ('158', 'Milwaukee Brewers', ''),
     'min': ('142', 'Minnesota Twins', ''),
     'nl' : ( None, 'National League', ''),
     'nym': ('121', 'New York Mets', ''),
+    'nyn': ('121', 'New York Mets', ''),
     'nyy': ('147', 'New York Yankees', ''),
+    'nya': ('147', 'New York Yankees', ''),
     'oak': ('133', 'Oakland Athletics', ''),
     'phi': ('143', 'Philadelphia Phillies', ''),
     'pit': ('134', 'Pittsburgh Pirates', ''),
     'sd':  ('135', 'San Diego Padres', ''),
+    'sdn': ('135', 'San Diego Padres', ''),
     'sea': ('136', 'Seattle Mariners', ''),
     'sf':  ('137', 'San Francisco Giants', ''),
+    'sfn': ('137', 'San Francisco Giants', ''),
     'stl': ('138', 'St. Louis Cardinals', ''),
+    'sln': ('138', 'St. Louis Cardinals', ''),
     'tb':  ('139', 'Tampa Bay Rays', ''),
+    'tba': ('139', 'Tampa Bay Rays', ''),
     'tex': ('140', 'Texas Rangers', ''),
     'tor': ('141', 'Toronto Blue Jays', ''),
     'was': ('120', 'Washington Nationals', ''),
@@ -547,7 +558,7 @@ class MLBSchedule:
                 out = elem[1]['condensed']
         return out
 
-    def getTopPlays(self,gameid):
+    def getJsonTopPlays(self,gameid):
         out = []
         plays = self.trimList()
 
@@ -564,7 +575,60 @@ class MLBSchedule:
                             out.insert(0,(title,text,elem[1]['top_plays'][text],status,elem[0]))   
                         else:
                             out.append((title,text,elem[1]['top_plays'][text],status,elem[0]))
+        #raise Exception,out
         return out
+
+    def getXmlTopPlays(self,gameid):
+        gid = gameid
+        gid = gid.replace('/','_')
+        gid = gid.replace('-','_')
+        url = self.epg.replace('epg.xml','gid_' + gid + '/media/highlights.xml')
+        #raise Exception,url
+        out = []
+        try:
+            req = urllib2.Request(url)
+            rsp = urllib2.urlopen(req)
+        except:
+            return out
+            self.error_str = "Could not find highlights.xml for " + gameid
+            raise Exception,self.error_str
+        try:
+            xp  = parse(rsp)
+        except:
+            return out
+            self.error_str = "Could not parse highlights.xml for " + gameid
+
+        away = gid.split('_')[3].replace('mlb','')
+        home = gid.split('_')[4].replace('mlb','')
+        title  = ' '.join(TEAMCODES[away][1:]).strip() + ' at '
+        title += ' '.join(TEAMCODES[home][1:]).strip()
+
+        for highlight in xp.getElementsByTagName('media'):
+            type = highlight.getAttribute('type')
+            id   = highlight.getAttribute('id')
+            v    = highlight.getAttribute('v')
+            headline = highlight.getElementsByTagName('headline')[0].childNodes[0].data
+            for urls in highlight.getElementsByTagName('url'):
+                scenario = urls.getAttribute('playback_scenario')
+                state    = urls.getAttribute('state')
+                if scenario == 'MLB_FLASH_800K_PROGDNLD':
+                    url = urls.childNodes[0].data
+            out.append(( title, headline, url, state, gameid)) 
+        #raise Exception,out
+        return out
+
+    def getTopPlays(self,gameid):
+        listtime = datetime.datetime(self.year, self.month, self.day)
+        if listtime >= self.xmltime:
+            self.use_xml = True
+        else:
+            self.use_xml = False
+
+        if self.use_xml:
+            return self.getXmlTopPlays(gameid)
+        else:
+            return self.getJsonTopPlays(gameid)
+        
 
     def getListings(self, myspeed, blackout, audiofollow):
         listtime = datetime.datetime(self.year, self.month, self.day)

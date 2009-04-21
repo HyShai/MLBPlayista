@@ -109,6 +109,7 @@
 			<element maxOccurs="unbounded" minOccurs="0" name="innings-index" nillable="true" type="xsd:string"/>
         <element minOccurs="0" name="cdn" type="xsd:string"/> <!-- HACKED HERE, added -->
         <element minOccurs="0" name="sequence" type="xsd:long"/> <!-- HACKED HERE, added -->
+        <element minOccurs="0" name="duration" nillable="true" type="xsd:string"/> <!-- HACKED HERE, added -->
 		</sequence>
 	</complexType>
 	<complexType name="MediaAttributes">

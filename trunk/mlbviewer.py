@@ -831,6 +831,40 @@ def mainloop(myscr,cfg):
                 if 'topPlays' in CURRENT_SCREEN:
                     if cfg['top_plays_player']:
                         player = cfg['top_plays_player']
+                    # hate doing this here, but for new highlights, 
+                    # it doesn't need coverage or GameStream object
+                    if use_xml:
+                        u = str(available[current_cursor][2])
+                        if '%s' in player:
+                            cmd_str = player.replace('%s', u)
+                        else:
+                            cmd_str = player + " '" + u + "'"
+                        myscr.clear()
+                        if cfg['debug']:
+                            myscr.addstr(0,0,'Url received:')
+                            myscr.addstr(1,0,u)
+                        else:
+                            myscr.addstr(0,0,cmd_str)
+                        myscr.refresh()
+                        if cfg['debug']:
+                            time.sleep(2)
+                            continue
+                        try:
+                            play_process=subprocess.Popen(cmd_str,shell=True)
+                            play_process.wait()
+                            # I want to see mplayer errors before returning to 
+                            # listings screen
+                            if ['show_player_command']:
+                                time.sleep(3)
+                        except Exception,detail:
+                            myscr.clear()
+                            myscr.addstr(0,0,'Error occurred in player process:')
+                            myscr.addstr(1,0,detail)
+                            myscr.refresh()
+                            time.sleep(2)
+                        # end the xml handling of top plays
+                        continue
+                         
             try:
                 # Turn off socket
                 if LIRC:
