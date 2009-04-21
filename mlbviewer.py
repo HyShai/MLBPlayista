@@ -923,6 +923,7 @@ def mainloop(myscr,cfg):
                     myscr.refresh()
                     time.sleep(3)
                     continue
+                call_letters = g.call_letters
 
                 # removing over 200 lines of else to the except above (892-1136)
                 if cfg['debug']:
@@ -942,6 +943,9 @@ def mainloop(myscr,cfg):
                         cmd_str = player.replace('%s', '"' + u + '"')
                     else:
                         cmd_str = player + ' "' + u + '" '
+                    if '%f' in player:
+                        gameid = available[current_cursor][5].replace('/','-')
+                        cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + ".mp4'")
                     if cfg['show_player_command']:
                         myscr.clear()
                         titlewin.clear()
