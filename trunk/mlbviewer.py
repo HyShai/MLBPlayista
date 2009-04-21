@@ -302,7 +302,7 @@ def mainloop(myscr,cfg):
             # Only draw the screen if there are any games
             if available:
                 if n == current_cursor:
-                    if available[n][4] == 'I' or available[n][4] == 'In Progress':
+                    if available[n][4] == 'I' or str(available[n][4]) == 'In Progress':
                         #myscr.addstr(n+2,0,s, curses.A_REVERSE|curses.A_BOLD)
                         cursesflags = curses.A_REVERSE|curses.A_BOLD
                     else:
@@ -328,7 +328,7 @@ def mainloop(myscr,cfg):
                             status_str += ' (No audio available)'
                 else:
                     if n < len(available):
-                        if available[n][4] == 'I' or available[n][4] == 'In Progres':
+                        if available[n][4] == 'I' or str(available[n][4]) == 'In Progress':
                             cursesflags = curses.A_BOLD
                         else:
                             cursesflags = 0
