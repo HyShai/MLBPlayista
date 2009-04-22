@@ -28,7 +28,7 @@ class MLBConfig:
                 if key in ('blackout', 'audio_follow', 'video_follow', 'favorite'):
                     self.data[key].append(val)
                 # These are the booleans:
-                elif key in ('show_player_command', 'debug', 'use_color', 'dvr_record_only'):
+                elif key in ('show_player_command', 'debug', 'use_color', 'dvr_record_only', 'live_from_start'):
                     if val.isdigit():
                         self.data[key] = bool(int(val))
                     else:

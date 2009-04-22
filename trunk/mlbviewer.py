@@ -923,10 +923,18 @@ def mainloop(myscr,cfg):
                         else:
                             coverage = TEAMCODES[defaultcoverage][0]
 
+                        if str(available[current_cursor][4]) == 'In Progress':
+                            if cfg['live_from_start']:
+                                start_time=0
+                            else:
+                                start_time=None
+                        else:
+                            start_time=0
+
                         g = GameStream(stream, cfg['user'], cfg['pass'],
                                    cfg['debug'],use_soap=True,speed=cfg['speed'],
                                    coverage=coverage,use_nexdef=True,
-                                   max_bps=cfg['max_bps'])
+                                   max_bps=cfg['max_bps'],start_time=start_time)
                     else:
                         g = GameStream(stream, cfg['user'], cfg['pass'],
                                    cfg['debug'])
@@ -1069,6 +1077,7 @@ if __name__ == "__main__":
                   'top_plays_player': '',
                   'time_offset': '',
                   'max_bps': 800000,
+                  'live_from_start': 0,
                   'flash_browser': DEFAULT_FLASH_BROWSER}
 
     # Auto-install of default configuration file

@@ -1093,6 +1093,7 @@ class GameStream:
             return self.flash_url(game_url)
 
     def nexdef_url(self,game_url):
+        self.nexdef_media_url = None
         nexdef_base = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/'
         nexdef_use  = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:'
         # build the first url for stream descriptions
@@ -1123,12 +1124,49 @@ class GameStream:
         # nexdef plugin appears to be off by an hour
         milliseconds += 3600*1000
         # return the media url with the correct timestamp
-        nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps) + '&start_time=' + str(milliseconds) + '&v=0'
+        self.nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps) 
+        if self.start_time is not None:
+            self.nexdef_media_url += '&start_time=' + str(milliseconds) + '&v=0'
+        else:
+            self.nexdef_media_url += '&v=0'
         """ END PAIN IN THE ASS CODE """
         
-        #nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps) + '&start_time=0&v=0'
-        return nexdef_media_url
+        return self.nexdef_media_url
 
+    def nexdef_select(self,xp):
+        selected = (None, 0, 0, 0)
+        encodings = []
+        for enc in xp.getElementsByTagName('encoding'):
+            id  = str(enc.getAttribute('id'))
+            bps = int(enc.getAttribute('bps'))
+            width = int(enc.getAttribute('width'))
+            height = int(enc.getAttribute('height'))
+            if bps <= int(self.max_bps) and bps > selected[1]:
+                selected = ( id , bps , width, height )
+        if self.nexdef_media_url is not None:
+            url = self.nexdef_media_url.split('&')[0]
+            url = url.replace('base64:','control/base64:')
+            rand = str(datetime.datetime.now().microsecond)
+            url += '&rand=' + rand 
+            url += '&encoding_group=' + selected[0]
+            url += '&width=' + selected[2] + '&height=' + selected[3] + '&v=0'
+        else:
+            self.error_str = 'NexDef media url not found.'
+            raise Exception,self.error_str
+        try:
+            req = urllib2.Request(url)
+            rsp = urllib2.urlopen(req)
+        except IOError,e:
+            self.error_str = 'NexDef media selection returned an error:'
+            self.error_str += e.msg
+            raise Exception,self.error_str
+        try:
+            read = rsp.read()
+        except:
+             raise
+        return selected
+            
+        
 
     def flash_url(self,game_url):
         try:
