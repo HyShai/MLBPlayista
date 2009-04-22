@@ -604,6 +604,7 @@ class MLBSchedule:
         title += ' '.join(TEAMCODES[home][1:]).strip()
 
         for highlight in xp.getElementsByTagName('media'):
+            selected = 0
             type = highlight.getAttribute('type')
             id   = highlight.getAttribute('id')
             v    = highlight.getAttribute('v')
@@ -611,7 +612,10 @@ class MLBSchedule:
             for urls in highlight.getElementsByTagName('url'):
                 scenario = urls.getAttribute('playback_scenario')
                 state    = urls.getAttribute('state')
-                if scenario in ('MLB_FLASH_800K_PROGDNLD','MLB_FLASH_400K_PROGDNLD'):
+                speed_pat = re.compile(r'MLB_FLASH_([1-9][0-9]*)K')
+                speed = int(re.search(speed_pat,scenario).groups()[0])
+                if speed > selected:
+                    selected = speed
                     url = urls.childNodes[0].data
             out.append(( title, headline, url, state, gameid)) 
         #raise Exception,out
