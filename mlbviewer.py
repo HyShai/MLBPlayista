@@ -715,7 +715,10 @@ def mainloop(myscr,cfg):
 
 
         if c in ('Zdebug', ord('z')):
-            gameid = available[current_cursor][5]
+            if 'topPlays' in CURRENT_SCREEN:
+                gameid = available[current_cursor][4]
+            else:
+                gameid = available[current_cursor][5]
             titlewin.clear()
             titlewin.addstr(0,0,'LISTINGS DEBUG FOR ' + gameid)
             titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
