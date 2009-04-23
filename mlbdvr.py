@@ -900,7 +900,7 @@ def mainloop(myscr,cfg):
 
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'],use_soap=True,speed=cfg['speed'],
-                                   coverage=coverage,use_nexdef=True)
+                                   coverage=coverage,use_nexdef=False)
                     else:
                         g = GameStream(stream, cfg['user'], cfg['pass'], 
                                    cfg['debug'])
