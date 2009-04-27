@@ -981,7 +981,7 @@ class GameStream:
                         self.error_str = "This game is subject to national blackout restrictions."
                         raise Exception,self.error_str
                     if scenario == self.scenario and\
-                                state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON' ):
+                                state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON', 'MEDIA_DONE' ):
                         content_list.append( ( call_letters, coverage, stream['content-id'] ) )
         return content_list
 
