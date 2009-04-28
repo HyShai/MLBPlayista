@@ -199,6 +199,7 @@ def mainloop(myscr,cfg):
     try:
         available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
     except (KeyError, MLBJsonError), detail:
+        #raise Exception,detail
         if cfg['debug']:
             raise Exception, detail
         available = []
@@ -882,6 +883,8 @@ def mainloop(myscr,cfg):
                 dbg.write('DEBUG>> checking for audio_follow = ' + repr(cfg['audio_follow']) + '\n')
                 dbg.write('DEBUG>> checking for video_follow = ' + repr(cfg['video_follow']) + '\n')
                 dbg.flush()
+                
+                use_nexdef = cfg['use_nexdef']
 
                 if audio:
                     stream = available[current_cursor][3]
@@ -895,7 +898,8 @@ def mainloop(myscr,cfg):
                             coverage = TEAMCODES[defaultcoverage][0]
 
                         g = GameStream(stream, cfg['user'], cfg['pass'],
-                                   cfg['debug'], streamtype='audio',use_soap=True,
+                                   cfg['debug'], streamtype='audio',
+                                   use_soap=True, use_nexdef=False,
                                    coverage=coverage)
                     else:
                         g = GameStream(stream, cfg['user'], cfg['pass'],
@@ -931,9 +935,10 @@ def mainloop(myscr,cfg):
                         else:
                             start_time=0
 
+
                         g = GameStream(stream, cfg['user'], cfg['pass'],
                                    cfg['debug'],use_soap=True,speed=cfg['speed'],
-                                   coverage=coverage,use_nexdef=True,
+                                   coverage=coverage,use_nexdef=use_nexdef,
                                    max_bps=cfg['max_bps'],start_time=start_time)
                     else:
                         g = GameStream(stream, cfg['user'], cfg['pass'],
@@ -995,6 +1000,11 @@ def mainloop(myscr,cfg):
                         myscr.clear()
                         titlewin.clear()
                         myscr.addstr(0,0,cmd_str)
+                        if not use_nexdef:
+                            myscr.addstr(curses.LINES-2,0,"Please wait for stream to buffer...")
+                            myscr.refresh()
+                            g.rec_process.open()
+                            time.sleep(30)
                         myscr.refresh()
                         time.sleep(3)
 		    else:
@@ -1002,15 +1012,46 @@ def mainloop(myscr,cfg):
                             statuswin.clear()
                             statuswin.addstr(0,0,"Buffering stream")
                             statuswin.refresh()
-                            time.sleep(.5)
+                            if use_nexdef:
+                                time.sleep(.5)
+                            else:
+                                time.sleep(10)
+                        else:
+                            time.sleep(10)
 
                     play_process=subprocess.Popen(cmd_str,shell=True)
+                    while play_process.poll() is None:
+                        if not use_xml:
+                            continue
+                        try:
+                            g.control(action='ping')
+                            if not use_nexdef:
+                                time.sleep(10)
+                                continue
+                            myscr.clear()
+                            status_str =  'STREAM: ' + g.current_encoding[0]
+                            status_str += '\nBPS   : ' + g.current_encoding[1]
+                            status_str += '\nMS    : ' + g.current_encoding[2]
+                            myscr.addstr(curses.LINES-5,0,status_str)
+                            myscr.refresh()
+                            time.sleep(10)
+                        except:
+                            pass
                     play_process.wait()
+                    try:
+                        g.rec_process.close(signal=signal.SIGINT)
+                    except:
+                        pass
                     # I want to see mplayer errors before returning to 
                     # listings screen
                     if ['show_player_command']:
                         time.sleep(3)
                 except:
+                    try:
+                        g.rec_process.close(signal=signal.SIGINT)
+                    except:
+                        pass
+                    raise
                     myscr.clear()
                     titlewin.clear()
                     ERROR_STRING = "There was an error in the player process."
@@ -1078,6 +1119,7 @@ if __name__ == "__main__":
                   'time_offset': '',
                   'max_bps': 800000,
                   'live_from_start': 0,
+                  'use_nexdef': 1,
                   'flash_browser': DEFAULT_FLASH_BROWSER}
 
     # Auto-install of default configuration file

@@ -27,6 +27,9 @@ import select
 from copy import deepcopy
 import sys
 
+from mlbprocess import MLBprocess
+
+
 try:
     from xml.dom.minidom import parse
     from suds.client import Client
@@ -40,6 +43,8 @@ except:
 #DEBUG = True
 #DEBUG = None
 #from __init__ import AUTHDIR
+
+DEFAULT_F_RECORD = 'rtmpdump -f \"LNX 10,0,22,87\" -o %f -r %s'
 
 AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
@@ -255,7 +260,7 @@ class MLBSchedule:
         self.epg = "http://gdx.mlb.com/components/game/mlb/year_"\
             + padstr(self.year)\
             + "/month_" + padstr(self.month)\
-            + "/day_" + padstr(self.day) + "/epg.xml"
+            + "/day_" + padstr(self.day) + "/grid.xml"
         # For BETA testing, use my own xml
         #self.epg = "http://eds.org/~straycat/wbc_epg.xml"
         self.xmltime = datetime.datetime(2009, 3, 30)
@@ -303,12 +308,70 @@ class MLBSchedule:
             media = node.getElementsByTagName('game_media')[0]
             try:
                 media_detail = media.getElementsByTagName('media')[0]
-                gameinfo[id]['media_state'] = media_detail.getAttribute('media_state')
+                gameinfo[id]['state'] = media_detail.getAttribute('media_state')
             except:
                 #raise
                 gameinfo[id]['media_state'] = 'media_dead'
+            try:
+                gameinfo[id]['time']
+            except:
+                gameinfo[id]['time'] = gameinfo[id]['event_time'].split()[0]
+                gameinfo[id]['ampm'] = gameinfo[id]['event_time'].split()[1]
+            home = node.getAttribute('home_team_id')
+            away = node.getAttribute('away_team_id')
+            gameinfo[id]['content'] = self.parse_media_grid(node,away,home)
             out.append(gameinfo[id])
         return out
+
+    def parse_media_grid(self,xp,away,home):
+        content = {}
+        content['audio'] = []
+        content['video'] = {}
+        content['video']['400'] = []
+        content['video']['800'] = []
+        content['video']['swarm'] = []
+        content['condensed'] = []
+        for media in xp.getElementsByTagName('media'):
+           tmp = {}
+           for attr in media.attributes.keys():
+               tmp[attr] = str(media.getAttribute(attr))
+           out = []
+           if tmp['type'] in ('home_audio','away_audio'):
+               if tmp['playback_scenario'] == 'MLB_FMS_AUDIO_32K_STREAM':
+                   if tmp['type'] == 'away_audio':
+                       coverage = away
+                   elif tmp['type'] == 'home_audio':
+                       coverage = home
+                   out = (tmp['display'], coverage, tmp['id'])
+                   #print 'Found audio: ' + repr(out)
+                   content['audio'].append(out)
+           elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
+               if tmp['playback_scenario'] in \
+                     ('MLB_FLASH_600K_STREAM', 'MLB_FLASH_800K_STREAM',
+                      'MLB_FLASH_SWARMCLOUD'):
+                   if tmp['blackout'] == 'MLB_NATIONAL_BLACKOUT':
+                       content['blackout'] = tmp['blackout']
+                   else:
+                       content['blackout'] = None
+                   if tmp['type'] == 'mlbtv_national':
+                       coverage = 0
+                   elif tmp['type'] == 'mlbtv_away':
+                       coverage = away
+                   else:
+                       coverage = home
+                   out = (tmp['display'], coverage, tmp['id'])
+                   #print 'Found video: ' + repr(out)
+                   if tmp['playback_scenario'] == 'MLB_FLASH_SWARMCLOUD':
+                       content['video']['swarm'].append(out)
+                   elif tmp['playback_scenario'] == 'MLB_FLASH_800K_STREAM':
+                       content['video']['800'].append(out)
+                   else:
+                       content['video']['400'].append(out)
+           elif tmp['type'] == 'condensed_game':
+               out = ('CG',0,tmp['id'])
+               #print 'Found condensed: ' + repr(out)
+               content['condensed'].append(out)
+        return content
     
     def __scheduleToJson(self):
         # The schedule will be downloaded in JSP format, which is
@@ -374,6 +437,9 @@ class MLBSchedule:
                  dct['event_id'] = None
             dct['ind']   = game['ind']
             dct['status']   = game['status']
+            if game['status'] in ('In Progress','Preview','Delayed','Warm-up'):
+                if game['content']['blackout'] == 'MLB_NATIONAL_BLACKOUT':
+                    dct['status'] = 'National Blackout'
             dct['gameid'] = game['id']
             # I'm parsing the time by hand because strptime
             # doesn't work on windows and only works on
@@ -400,6 +466,7 @@ class MLBSchedule:
             # And now we convert that to the user's local, or
             # chosen time zone.
             dct['event_time'] = gameTimeConvert(raw_time, self.shift)
+            """ NOT SURE WE NEED THIS CODE
             if TEAMCODES.has_key(dct['away']):
                 text = game['away_team_city'] + ' ' + game['away_team_name']
             else:
@@ -413,8 +480,33 @@ class MLBSchedule:
 		t = (dct['home'],)
                 TEAMCODES[dct['home']] = TEAMCODES['unk'] + t
                 text +=  ' '.join(TEAMCODES[dct['away']][1:]).strip()
+            NOT SURE WE NEED THIS CODE """
+            if not TEAMCODES.has_key(dct['away']):
+                TEAMCODES[dct['away']] = TEAMCODES['unk'] + t
+            if not TEAMCODES.has_key(dct['home']):
+                TEAMCODES[dct['home']] = TEAMCODES['unk'] + t
+            #raise Exception,repr(game)
+            dct['video'] = {}
+            dct['video']['400'] = []
+            dct['video']['800'] = []
+            dct['video']['swarm'] = []
+            dct['condensed'] = []
+            for key in ('400', '800', 'swarm'):
+                try:
+                    dct['video'][key] = game['content']['video'][key]
+                except KeyError:
+                    dct['video'][key] = None
+            dct['audio'] = []
+            try:
+                dct['audio'] = game['content']['audio']
+            except KeyError:
+                dct['audio'] = None
+            try:
+                dct['condensed'] = game['content']['condensed']
+            except KeyError:
+                dct['condensed'] = None
             dct['media_state'] = game['media_state']
-            dct['text'] = text
+            #dct['text'] = text
             out.append((dct['gameid'], dct))
         return out
  
@@ -582,7 +674,8 @@ class MLBSchedule:
         gid = gameid
         gid = gid.replace('/','_')
         gid = gid.replace('-','_')
-        url = self.epg.replace('epg.xml','gid_' + gid + '/media/highlights.xml')
+        #url = self.epg.replace('epg.xml','gid_' + gid + '/media/highlights.xml')
+        url = self.epg.replace('grid.xml','gid_' + gid + '/media/highlights.xml')
         #raise Exception,url
         out = []
         try:
@@ -679,6 +772,7 @@ class GameStream:
                  auth=True, streamtype='video',use_soap=False,speed=800,
                  coverage=None,use_nexdef=False,max_bps=800000,start_time=0):
         self.use_nexdef = use_nexdef
+        self.rec_process = None
         self.start_time = start_time
         self.max_bps = max_bps
         self.stream = stream
@@ -733,6 +827,7 @@ class GameStream:
         self.app = None
         self.sub_path = None
         self.logged_in = None
+        self.current_encoding = None
 
     def read_session_key(self):
         sk = open(SESSIONKEY,"r")
@@ -1092,6 +1187,7 @@ class GameStream:
         else:
             return self.flash_url(game_url)
 
+
     def nexdef_url(self,game_url):
         self.nexdef_media_url = None
         nexdef_base = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/'
@@ -1133,9 +1229,50 @@ class GameStream:
         
         return self.nexdef_media_url
 
-    def nexdef_select(self,xp):
+    def control(self,action='ping',encoding=None):
+        if self.use_nexdef:
+            #self.log.write('DEBUG>> calling nexdef_control \n')
+            self.nexdef_control(action,encoding)
+        else:
+            self.log.write('DEBUG>> calling rtmpdump_control \n')
+            self.rtmpdump_control(action)
+
+    def rtmpdump_control(self,action='ping'):
+        # todo: move the recording process monitor code to here
+        return
+
+    def nexdef_control(self,action='ping',encoding=None):
+        url = self.nexdef_media_url.split('&')[0]
+        url = url.replace('base64:','control/base64:')
+        if action == 'select' and encoding is not None:
+            url += '&encoding_group=' + encoding[0]
+            url += '&height=' + encoding[3]
+            url += '&width=' + encoding[2]
+            url += '&strict=true'
+        # not sure what their random algorithm is but we'll just cat the
+        # seconds with the microseconds of the current time.
+        rand  = str(datetime.datetime.now().second)
+        rand += str(datetime.datetime.now().microsecond)
+        url += '&rand=' + rand + '&v=0'
+        try:
+            req = urllib2.Request(url)
+            rsp = urllib2.urlopen(req)
+        except IOError,e:
+            self.error_str = 'Error in making nexdef control request:\n'
+            self.error_str += ' Url = ' + str(url) + '\n'
+            self.error_str += e.msg
+            raise Exception,self.error_str
+        self.parse_nexdef_control_response(rsp)
+        
+    
+    def parse_nexdef_describe_response(self,rsp):
+        try:
+            xp = parse(rsp)
+        except:
+            self.error_str = 'Could not parse nexdef describe response.'
+            raise Exception,self.error_str
         selected = (None, 0, 0, 0)
-        encodings = []
+        self.encodings = []
         for enc in xp.getElementsByTagName('encoding'):
             id  = str(enc.getAttribute('id'))
             bps = int(enc.getAttribute('bps'))
@@ -1143,29 +1280,30 @@ class GameStream:
             height = int(enc.getAttribute('height'))
             if bps <= int(self.max_bps) and bps > selected[1]:
                 selected = ( id , bps , width, height )
-        if self.nexdef_media_url is not None:
-            url = self.nexdef_media_url.split('&')[0]
-            url = url.replace('base64:','control/base64:')
-            rand = str(datetime.datetime.now().microsecond)
-            url += '&rand=' + rand 
-            url += '&encoding_group=' + selected[0]
-            url += '&width=' + selected[2] + '&height=' + selected[3] + '&v=0'
-        else:
-            self.error_str = 'NexDef media url not found.'
-            raise Exception,self.error_str
+                self.encodings.append( selected )
+
+ 
+    def parse_nexdef_control_response(self,rsp):
         try:
-            req = urllib2.Request(url)
-            rsp = urllib2.urlopen(req)
-        except IOError,e:
-            self.error_str = 'NexDef media selection returned an error:'
-            self.error_str += e.msg
-            raise Exception,self.error_str
-        try:
-            read = rsp.read()
+            xp = parse(rsp)
         except:
-             raise
-        return selected
-            
+            self.error_str = 'Could not parse nexdef control response.'
+            raise Exception,self.error_str
+        self.encoding_group = []
+        for enc_group in xp.getElementsByTagName('encodingGroup'):
+            for enc in enc_group.getElementsByTagName('encoding'):
+                id = str(enc.getAttribute('id'))
+                bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K_STREAM')
+                bps = re.search(bps_pat, id).groups()[0]
+                self.encoding_group.append(( bps, id ))
+        for pos in xp.getElementsByTagName('currentPosition'):
+            msec = pos.getAttribute('millis')
+        for current in xp.getElementsByTagName('currentEncoding'):
+            id = str(current.getAttribute('id'))
+            bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K_STREAM')
+            bps = re.search(bps_pat, id).groups()[0]
+            self.current_encoding = ( id, bps, msec )
+         
         
 
     def flash_url(self,game_url):
@@ -1225,7 +1363,20 @@ class GameStream:
         if self.debug:
             self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
         self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
-        return game_url
+
+        self.filename = os.path.join(os.environ['HOME'], 'mlbdvr_games')
+        self.filename += '/' + str(self.event_id)
+        if self.streamtype == 'audio':
+            self.filename += '.mp3'
+        else:
+            self.filename += '.mp4'
+        recorder = DEFAULT_F_RECORD
+        self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,game_url)
+        outlog = open('/tmp/rtmpdump.log','w')
+        errlog = open('/tmp/rtmpdump-error.log','w')
+        self.rec_process = MLBprocess(self.rec_cmd_str,retries=5,
+                                      stdout=outlog,errlog=errlog)
+        return self.filename
 
 
     def url(self):
@@ -1296,7 +1447,7 @@ class GameStream:
         if self.tc_url is not None:
             rec_cmd_str += ' -t "' + self.tc_url + '"'
         if self.sub_path is not None:
-            rec_cmd_str += ' -b ' + str(self.sub_path)
+            rec_cmd_str += ' -d ' + str(self.sub_path)
         else:
             rec_cmd_str += ' --resume'
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
