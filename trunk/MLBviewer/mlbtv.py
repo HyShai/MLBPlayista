@@ -1447,7 +1447,7 @@ class GameStream:
         if self.tc_url is not None:
             rec_cmd_str += ' -t "' + self.tc_url + '"'
         if self.sub_path is not None:
-            rec_cmd_str += ' -d ' + str(self.sub_path)
+            rec_cmd_str += ' -b ' + str(self.sub_path)
         else:
             rec_cmd_str += ' --resume'
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
