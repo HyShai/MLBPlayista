@@ -92,6 +92,7 @@ except (KeyError, MLBJsonError), detail:
     if cfg['debug']:
         raise Exception, detail
     available = []
+    #raise 
     print "There was a parser problem with the listings page"
     sys.exit()
 
