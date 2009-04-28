@@ -1065,7 +1065,7 @@ class GameStream:
                     state = media['media-item']['state']
                     scenario = media['media-item']['playback-scenario']
                     if scenario == self.scenario and\
-                                state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON', 'MEDIA_DONE' ):
+                                state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON', 'MEDIA_DONE', 'MEDIA_OFF' ):
                         content_list.append( ( call_letters, coverage, stream['content-id'] ) )
         return content_list
 
