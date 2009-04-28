@@ -1044,7 +1044,8 @@ def mainloop(myscr,cfg):
                             pass
                     play_process.wait()
                     try:
-                        g.rec_process.close(signal=signal.SIGINT)
+                        if not use_nexdef:
+                            g.rec_process.close(signal=signal.SIGINT)
                     except:
                         pass
                     # I want to see mplayer errors before returning to 
@@ -1054,7 +1055,8 @@ def mainloop(myscr,cfg):
                 except:
                     raise
                     try:
-                        g.rec_process.close(signal=signal.SIGINT)
+                        if not use_nexdef:
+                            g.rec_process.close(signal=signal.SIGINT)
                     except:
                         pass
                     myscr.clear()
