@@ -1064,17 +1064,6 @@ class GameStream:
                     #raise Exception,repr(media['media-item']['state'])
                     state = media['media-item']['state']
                     scenario = media['media-item']['playback-scenario']
-                    blackout = []
-                    try:
-                        blackout_keywords = media['media-item']['blackout-keywords']
-                        if blackout_keywords != "":
-                            blackout = blackout_keywords['blackout-keyword']
-                    except:
-                        pass
-                    #raise Exception,repr(blackout)
-                    if 'MLB_NATIONAL_BLACKOUT' in blackout:
-                        self.error_str = "This game is subject to national blackout restrictions."
-                        raise Exception,self.error_str
                     if scenario == self.scenario and\
                                 state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON', 'MEDIA_DONE' ):
                         content_list.append( ( call_letters, coverage, stream['content-id'] ) )
@@ -1215,10 +1204,13 @@ class GameStream:
             raise Exception,self.error_str
         for time in xp.getElementsByTagName('streamHead'):
             timestamp = time.getAttribute('timeStamp')
-        (hrs, min, sec) = timestamp.split(':')
-        milliseconds = 1000 * ( int(hrs) * 3600 + int(min) * 60 + int(sec) )
-        # nexdef plugin appears to be off by an hour
-        milliseconds += 3600*1000
+        try:
+            (hrs, min, sec) = timestamp.split(':')
+            milliseconds = 1000 * ( int(hrs) * 3600 + int(min) * 60 + int(sec) )
+            # nexdef plugin appears to be off by an hour
+            milliseconds += 3600*1000
+        except:
+            self.start_time = None
         # return the media url with the correct timestamp
         self.nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps) 
         if self.start_time is not None:

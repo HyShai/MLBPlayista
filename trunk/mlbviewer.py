@@ -1000,7 +1000,8 @@ def mainloop(myscr,cfg):
                         else:
                             suf = '.mp4'
                         cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + suf)
-                    g.rec_process.open()
+                    if not use_nexdef:
+                        g.rec_process.open()
                     if cfg['show_player_command']:
                         myscr.clear()
                         titlewin.clear()
@@ -1051,11 +1052,11 @@ def mainloop(myscr,cfg):
                     if ['show_player_command']:
                         time.sleep(3)
                 except:
+                    raise
                     try:
                         g.rec_process.close(signal=signal.SIGINT)
                     except:
                         pass
-                    raise
                     myscr.clear()
                     titlewin.clear()
                     ERROR_STRING = "There was an error in the player process."
