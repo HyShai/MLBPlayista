@@ -995,7 +995,12 @@ def mainloop(myscr,cfg):
                         cmd_str = player + ' "' + u + '" '
                     if '%f' in player:
                         gameid = available[current_cursor][5].replace('/','-')
-                        cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + ".mp4'")
+                        if audio:
+                            suf = '.mp3'
+                        else:
+                            suf = '.mp4'
+                        cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + suf)
+                    g.rec_process.open()
                     if cfg['show_player_command']:
                         myscr.clear()
                         titlewin.clear()
@@ -1003,7 +1008,6 @@ def mainloop(myscr,cfg):
                         if not use_nexdef:
                             myscr.addstr(curses.LINES-2,0,"Please wait for stream to buffer...")
                             myscr.refresh()
-                            g.rec_process.open()
                             time.sleep(30)
                         myscr.refresh()
                         time.sleep(3)
@@ -1015,7 +1019,7 @@ def mainloop(myscr,cfg):
                             if use_nexdef:
                                 time.sleep(.5)
                             else:
-                                time.sleep(10)
+                                time.sleep(30)
                         else:
                             time.sleep(10)
 

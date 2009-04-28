@@ -1234,7 +1234,7 @@ class GameStream:
             #self.log.write('DEBUG>> calling nexdef_control \n')
             self.nexdef_control(action,encoding)
         else:
-            self.log.write('DEBUG>> calling rtmpdump_control \n')
+            #self.log.write('DEBUG>> calling rtmpdump_control \n')
             self.rtmpdump_control(action)
 
     def rtmpdump_control(self,action='ping'):
