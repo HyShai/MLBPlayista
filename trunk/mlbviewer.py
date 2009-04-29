@@ -990,9 +990,16 @@ def mainloop(myscr,cfg):
                     continue
                 try:
                     if '%s' in player:
-                        cmd_str = player.replace('%s', '"' + u + '"')
+                        if use_nexdef:
+                            cmd_str = player.replace('%s', '"' + u + '"')
+                        else:
+                            cmd_str = player.replace('%s', '-')
+                            cmd_str = u + ' | ' + player
                     else:
-                        cmd_str = player + ' "' + u + '" '
+                        if use_nexdef:
+                            cmd_str = player + ' "' + u + '" '
+                        else:
+                            cmd_str = u + ' | ' + player + ' - '
                     if '%f' in player:
                         gameid = available[current_cursor][5].replace('/','-')
                         if audio:
@@ -1000,16 +1007,18 @@ def mainloop(myscr,cfg):
                         else:
                             suf = '.mp4'
                         cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + suf)
-                    if not use_nexdef:
-                        g.rec_process.open()
+                    #if not use_nexdef:
+                    #    g.rec_process.open()
                     if cfg['show_player_command']:
                         myscr.clear()
                         titlewin.clear()
                         myscr.addstr(0,0,cmd_str)
+                        ''' NOT NEEDED
                         if not use_nexdef:
                             myscr.addstr(curses.LINES-2,0,"Please wait for stream to buffer...")
                             myscr.refresh()
                             time.sleep(30)
+                        NOT NEEDED '''
                         myscr.refresh()
                         time.sleep(3)
 		    else:
@@ -1029,9 +1038,9 @@ def mainloop(myscr,cfg):
                         if not use_xml:
                             continue
                         try:
+                            time.sleep(10)
                             g.control(action='ping')
                             if not use_nexdef:
-                                time.sleep(10)
                                 continue
                             myscr.clear()
                             status_str =  'STREAM: ' + g.current_encoding[0]
@@ -1039,26 +1048,25 @@ def mainloop(myscr,cfg):
                             status_str += '\nMS    : ' + g.current_encoding[2]
                             myscr.addstr(curses.LINES-5,0,status_str)
                             myscr.refresh()
-                            time.sleep(10)
                         except:
                             pass
                     play_process.wait()
-                    try:
+                    '''try:
                         if not use_nexdef:
                             g.rec_process.close(signal=signal.SIGINT)
                     except:
-                        pass
+                        pass'''
                     # I want to see mplayer errors before returning to 
                     # listings screen
                     if ['show_player_command']:
                         time.sleep(3)
                 except:
                     raise
-                    try:
+                    '''try:
                         if not use_nexdef:
                             g.rec_process.close(signal=signal.SIGINT)
                     except:
-                        pass
+                        pass'''
                     myscr.clear()
                     titlewin.clear()
                     ERROR_STRING = "There was an error in the player process."
