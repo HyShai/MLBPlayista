@@ -1364,11 +1364,13 @@ class GameStream:
             self.filename += '.mp4'
         recorder = DEFAULT_F_RECORD
         self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,game_url)
+        ''' NOT NEEDED
         outlog = open('/tmp/rtmpdump.log','w')
         errlog = open('/tmp/rtmpdump-error.log','w')
         self.rec_process = MLBprocess(self.rec_cmd_str,retries=5,
                                       stdout=outlog,errlog=errlog)
-        return self.filename
+        NOT NEEDED '''
+        return self.rec_cmd_str
 
 
     def url(self):
@@ -1428,7 +1430,8 @@ class GameStream:
             except:
                 pass
 
-        rec_cmd_str = rec_cmd_str.replace('%f', filename)
+        #rec_cmd_str = rec_cmd_str.replace('%f', filename)
+        rec_cmd_str = rec_cmd_str.replace('%f', '-')
         rec_cmd_str = rec_cmd_str.replace('%s', '"' + streamurl + '"')
         if self.play_path is not None:
             rec_cmd_str += ' -y "' + str(self.play_path) + '"'
