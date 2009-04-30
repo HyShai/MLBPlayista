@@ -1006,7 +1006,7 @@ def mainloop(myscr,cfg):
                             suf = '.mp3'
                         else:
                             suf = '.mp4'
-                        cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + suf)
+                        cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + suf + "'")
                     #if not use_nexdef:
                     #    g.rec_process.open()
                     if cfg['show_player_command']:
