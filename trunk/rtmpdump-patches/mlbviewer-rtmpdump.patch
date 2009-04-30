@@ -1,25 +1,36 @@
-diff -rupN rtmpdump/log.h rtmpdump-mlbviewer/log.h
---- rtmpdump/log.h	2009-03-12 07:41:15.000000000 -0700
-+++ rtmpdump-mlbviewer/log.h	2009-04-06 21:39:26.000000000 -0700
-@@ -21,7 +21,7 @@
- #ifndef __LOG_H__
- #define __LOG_H__
+diff -rupN rtmpdump/Makefile rtmpdump-subscribe/Makefile
+--- rtmpdump/Makefile	2009-04-27 05:13:18.000000000 -0700
++++ rtmpdump-subscribe/Makefile	2009-04-30 06:50:35.000000000 -0700
+@@ -8,14 +8,17 @@ LDFLAGS=-Wall
  
--#define _DEBUG
-+//#define _DEBUG
+ all: rtmpdump
  
- #ifdef _DEBUG
- #undef NODEBUG
-diff -rupN rtmpdump/rtmp.cpp rtmpdump-mlbviewer/rtmp.cpp
---- rtmpdump/rtmp.cpp	2009-03-11 15:13:23.000000000 -0700
-+++ rtmpdump-mlbviewer/rtmp.cpp	2009-04-06 21:40:52.000000000 -0700
-@@ -99,6 +99,18 @@ CRTMP::~CRTMP()
++install:
++	cp rtmpdump /usr/bin/rtmpdump
++
+ clean:
+ 	rm -f *.o
+ 
+ streams: bytes.o log.o rtmp.o AMFObject.o rtmppacket.o streams.o parseurl.o dh.o handshake.o
+-	$(CXX) $(LDFLAGS) $^ -o $@_x86 -lpthread -lssl -lcrypto
++	$(CXX) $(LDFLAGS) $^ -o $@ -lpthread -lssl -lcrypto
+ 
+ rtmpdump: bytes.o log.o rtmp.o AMFObject.o rtmppacket.o rtmpdump.o parseurl.o dh.o handshake.o
+-	$(CXX) $(LDFLAGS) $^ -o $@_x86 -lssl -lcrypto
++	$(CXX) $(LDFLAGS) $^ -o $@ -lssl -lcrypto
+ 
+ bytes.o: bytes.cpp bytes.h Makefile
+ log.o: log.cpp log.h Makefile
+diff -rupN rtmpdump/rtmp.cpp rtmpdump-subscribe/rtmp.cpp
+--- rtmpdump/rtmp.cpp	2009-04-26 13:27:13.000000000 -0700
++++ rtmpdump-subscribe/rtmp.cpp	2009-04-29 13:35:02.000000000 -0700
+@@ -100,6 +100,17 @@ CRTMP::~CRTMP()
+ 
  double CRTMP::GetDuration() { return m_fDuration; }
  bool CRTMP::IsConnected() { return m_socket != 0; }
- 
 +bool CRTMP::GetSubscribe() { return bSubscribe; }
 +
-+void CRTMP::SetSubscribe(bool subscribe) { 
++void CRTMP::SetSubscribe(bool subscribe) {
 +  bSubscribe = subscribe;
 +}
 +
@@ -28,24 +39,24 @@ diff -rupN rtmpdump/rtmp.cpp rtmpdump-mlbviewer/rtmp.cpp
 +void CRTMP::SetSubscribePath(char * path) {
 +  subscribepath = path;
 +}
-+
+ 
  void CRTMP::SetBufferMS(int size)
  {
-   m_nBufferMS = size;
-@@ -465,6 +477,27 @@ bool CRTMP::SendBGHasStream(double dId, 
+@@ -589,8 +600,9 @@ bool CRTMP::SendBGHasStream(double dId, 
    return SendRTMP(packet);
  }
  
+-bool CRTMP::SendCreateStream(double dStreamId)
 +bool CRTMP::SendFCSubscribe(char *subscribepath)
-+{
+ {
 +  Log(LOGDEBUG, "FCSubscribe: %s", subscribepath);
-+  RTMPPacket packet;
-+  packet.m_nChannel = 0x03;   // control channel (invoke)
-+  packet.m_headerType = RTMP_PACKET_SIZE_MEDIUM;
-+  packet.m_packetType = 0x14; // INVOKE
-+
-+  packet.AllocPacket(256); // should be enough
-+  char *enc = packet.m_body;
+   RTMPPacket packet;
+   packet.m_nChannel = 0x03;   // control channel (invoke)
+   packet.m_headerType = RTMP_PACKET_SIZE_MEDIUM;
+@@ -598,6 +610,27 @@ bool CRTMP::SendCreateStream(double dStr
+ 
+   packet.AllocPacket(256); // should be enough
+   char *enc = packet.m_body;
 +  enc += EncodeString(enc, "FCSubscribe");
 +  enc += EncodeNumber(enc, 0);
 +  *enc = 0x05; // NULL
@@ -57,10 +68,20 @@ diff -rupN rtmpdump/rtmp.cpp rtmpdump-mlbviewer/rtmp.cpp
 +  return SendRTMP(packet);
 +}
 +
- bool CRTMP::SendCreateStream(double dStreamId)
- {
-   RTMPPacket packet;
-@@ -605,7 +638,7 @@ bool CRTMP::SendPlay()
++
++bool CRTMP::SendCreateStream(double dStreamId)
++{
++  RTMPPacket packet;
++  packet.m_nChannel = 0x03;   // control channel (invoke)
++  packet.m_headerType = RTMP_PACKET_SIZE_MEDIUM;
++  packet.m_packetType = 0x14; // INVOKE
++
++  packet.AllocPacket(1024); // should be enough
++  char *enc = packet.m_body;
+   enc += EncodeString(enc, "createStream");
+   enc += EncodeNumber(enc, dStreamId);
+   *enc = 0x05; // NULL
+@@ -729,7 +762,7 @@ bool CRTMP::SendPlay()
    packet.m_packetType = 0x14; // INVOKE
    packet.m_nInfoField2 = m_stream_id; //0x01000000;
  
@@ -68,17 +89,8 @@ diff -rupN rtmpdump/rtmp.cpp rtmpdump-mlbviewer/rtmp.cpp
 +  packet.AllocPacket(1024); // should be enough
    char *enc = packet.m_body;
    enc += EncodeString(enc, "play");
-   enc += EncodeNumber(enc, 0.0);
-@@ -630,7 +663,7 @@ bool CRTMP::SendPlay()
-   Log(LOGERROR, "dd: %lf", d);
-   exit(1);
-   // */
--  enc += EncodeNumber(enc, 0.0); // tincan
-+  //enc += EncodeNumber(enc, 0.0); // tincan
-   //////enc += EncodeNumber(enc, -1.0); // seems to work for all so far
-   //enc += EncodeNumber(enc, -1000.0); // k-tv.at
-   
-@@ -702,6 +735,10 @@ void CRTMP::HandleInvoke(const RTMPPacke
+   enc += EncodeNumber(enc, 0.0); // stream id??
+@@ -848,6 +881,10 @@ void CRTMP::HandleInvoke(const char *bod
        SendPing(3, 0, 300);
  
        SendCreateStream(2.0);
@@ -89,126 +101,100 @@ diff -rupN rtmpdump/rtmp.cpp rtmpdump-mlbviewer/rtmp.cpp
      }
      else if (methodInvoked == "createStream")
      {
-@@ -723,6 +760,10 @@ void CRTMP::HandleInvoke(const RTMPPacke
+@@ -874,6 +911,10 @@ void CRTMP::HandleInvoke(const char *bod
    {
-     //SendCheckBW();
+     SendCheckBWResult();
    }
 +  else if (method == "onFCSubscribe")
 +  {
-+    //onFCSubscribe
++    // onFCSubscribe
 +  }
-   else if (method == "_onbwcheck")
+   else if (method == "_error")
    {
-     SendCheckBWResult();
-diff -rupN rtmpdump/rtmpdump.cpp rtmpdump-mlbviewer/rtmpdump.cpp
---- rtmpdump/rtmpdump.cpp	2009-03-12 10:13:04.000000000 -0700
-+++ rtmpdump-mlbviewer/rtmpdump.cpp	2009-04-06 21:40:33.000000000 -0700
-@@ -407,6 +407,7 @@ int main(int argc, char **argv)
+     Log(LOGERROR, "rtmp server sent error");
+Binary files rtmpdump/rtmpdump and rtmpdump-subscribe/rtmpdump differ
+diff -rupN rtmpdump/rtmpdump.cpp rtmpdump-subscribe/rtmpdump.cpp
+--- rtmpdump/rtmpdump.cpp	2009-04-26 03:52:47.000000000 -0700
++++ rtmpdump-subscribe/rtmpdump.cpp	2009-04-29 00:15:56.000000000 -0700
+@@ -431,6 +431,7 @@ int main(int argc, char **argv)
  	bool bResume = false;    // true in resume mode
- 	bool bNoHeader = false;  // in resume mode this will tell not to write an FLV header again
+ 	//bool bNoHeader = false;  // in resume mode this will tell not to write an FLV header again
  	bool bAudioOnly = false; // when resuming this will tell whether its an audio only stream
-+        bool bSubscribe = false; // for CDN FCSubscribe method after connect
++	bool bSubscribe = false; // for CDN FCSubscribe method after connect
  	uint32_t dSeek = 0;	 // seek position in resume mode, 0 otherwise
  	uint32_t bufferTime = 10*60*60*1000; // 10 hours as default
  
-@@ -422,6 +423,7 @@ int main(int argc, char **argv)
+@@ -446,6 +447,7 @@ int main(int argc, char **argv)
  
  	char *hostname = 0;
  	char *playpath = 0;
-+        char *subscribepath = 0;
++	char *subscribepath = 0;
  	int port = -1;
  	int protocol = RTMP_PROTOCOL_UNDEFINED;
- 
-@@ -442,26 +444,27 @@ int main(int argc, char **argv)
- 
- 	int opt;
- 	struct option longopts[] = {
--		{"help",    0, NULL, 'h'},
--		{"host",    1, NULL, 'n'},
--		{"port",    1, NULL, 'c'},
--		{"protocol",1, NULL, 'l'},
--		{"playpath",1, NULL, 'y'},
--		{"rtmp",    1, NULL, 'r'},
--		{"swfUrl",  1, NULL, 's'},
--		{"tcUrl",   1, NULL, 't'},
--		{"pageUrl", 1, NULL, 'p'},
--		{"app",     1, NULL, 'a'},
--		{"auth",    1, NULL, 'u'},
--		{"flashVer",1, NULL, 'f'},
--		{"flv",     1, NULL, 'o'},
--		{"resume",  0, NULL, 'e'},
-+		{"help",       0, NULL, 'h'},
-+		{"host",       1, NULL, 'n'},
-+		{"port",       1, NULL, 'c'},
-+		{"protocol",   1, NULL, 'l'},
-+		{"playpath",   1, NULL, 'y'},
-+		{"rtmp",       1, NULL, 'r'},
-+		{"swfUrl",     1, NULL, 's'},
-+		{"tcUrl",      1, NULL, 't'},
-+		{"pageUrl",    1, NULL, 'p'},
-+		{"app",        1, NULL, 'a'},
-+		{"auth",       1, NULL, 'u'},
-+		{"flashVer",   1, NULL, 'f'},
-+		{"flv",        1, NULL, 'o'},
-+		{"subscribe",  1, NULL, 'b'},
-+		{"resume",     0, NULL, 'e'},
+ 	bool bLiveStream = false; // is it a live stream? then we can't seek/resume
+@@ -491,12 +493,13 @@ int main(int argc, char **argv)
+ 		{"timeout", 1, NULL, 'm'},
+ 		{"buffer",  1, NULL, 'b'},
+ 		{"skip",    1, NULL, 'k'},
++                {"subscribe", 1, NULL, 'd'},
  		{0,0,0,0}
  	};
  
  	signal(SIGINT, sigIntHandler);
  
--	while((opt = getopt_long(argc, argv, "hr:s:t:p:a:f:o:u:n:c:l:y:", longopts, NULL)) != -1) {
-+	while((opt = getopt_long(argc, argv, "hr:s:t:p:a:f:o:u:n:c:l:y:b:", longopts, NULL)) != -1) {
+-	while((opt = getopt_long(argc, argv, "hver:s:t:p:a:f:o:u:n:c:l:y:m:k:w:x:", longopts, NULL)) != -1) {
++	while((opt = getopt_long(argc, argv, "hver:s:t:p:a:f:o:u:n:c:l:y:m:k:d:w:x:", longopts, NULL)) != -1) {
  		switch(opt) {
  			case 'h':
- 				printf("\nThis program dumps the media content streamed over rtmp.\n\n");
-@@ -477,7 +480,8 @@ int main(int argc, char **argv)
- 				printf("--app|-a app\t\tName of player used\n");
- 				printf("--auth|-u string\tAuthentication string to be appended to the connect string\n");
- 				printf("--flashVer|-f string\tflash version string (default: \"LNX 9,0,124,0\")\n");
--				printf("--flv|-o string\t\tflv output file name\n\n");
-+				printf("--flv|-o string\t\tflv output file name\n");
-+                                printf("--subscribe|-b string\tstream name to subscribe to\n\n");
- 				printf("--resume|-e\n\n");
- 				printf("If you don't pass parameters for swfUrl, tcUrl, pageUrl, app or auth these propertiews will not be included in the connect ");
- 				printf("packet.\n\n");
-@@ -551,6 +555,10 @@ int main(int argc, char **argv)
- 			case 'e':
- 				bResume = true;
+ 				LogPrintf("\nThis program dumps the media content streamed over rtmp.\n\n");
+@@ -520,8 +523,9 @@ int main(int argc, char **argv)
+ 				LogPrintf("--timeout|-m num        Timeout connection num seconds (default: %lu)\n", timeout);
+ 				LogPrintf("--buffer|-b             Buffer time in milliseconds (default: %lu), this option makes only sense in stdout mode (-o -)\n", 
+ 					bufferTime);
+-				LogPrintf("--skip|-k num           Skip num keyframes when looking for last keyframe to resume from. Useful if resume fails (default: %d)\n\n",
++				LogPrintf("--skip|-k num           Skip num keyframes when looking for last keyframe to resume from. Useful if resume fails (default: %d)\n",
+ 					nSkipKeyFrames);
++				LogPrintf("--subscribe|-d string	Stream name to subscribe to\n\n");
+ 				LogPrintf("If you don't pass parameters for swfUrl, pageUrl, app or auth these propertiews will not be included in the connect ");
+ 				LogPrintf("packet.\n\n");
+ 				return RD_SUCCESS;
+@@ -645,6 +649,10 @@ int main(int argc, char **argv)
+ 			case 'm':
+ 				timeout = atoi(optarg);
  				break;
-+                        case 'b':
-+                                subscribepath = optarg;
-+                                bSubscribe = true;
-+                                break;
- 			case 'u':
- 				auth = optarg;		
++			case 'd':
++				subscribepath = optarg;
++				bSubscribe = true;
++				break;
+ 			default:
+ 				LogPrintf("unknown option: %c\n", opt);
  				break;
-@@ -607,6 +615,9 @@ int main(int argc, char **argv)
+@@ -721,6 +729,9 @@ int main(int argc, char **argv)
  	Log(LOGDEBUG, "Setting buffer time to: %dms", bufferTime);
  	rtmp->SetBufferMS(bufferTime);
  
 +	rtmp->SetSubscribe(bSubscribe);
-+        rtmp->SetSubscribePath(subscribepath);
++	rtmp->SetSubscribePath(subscribepath);
 +
  	unsigned long size = 0;
          uint32_t timestamp = 0;
  
-diff -rupN rtmpdump/rtmp.h rtmpdump-mlbviewer/rtmp.h
---- rtmpdump/rtmp.h	2009-03-11 14:37:17.000000000 -0700
-+++ rtmpdump-mlbviewer/rtmp.h	2009-04-06 21:39:26.000000000 -0700
-@@ -111,6 +111,11 @@ class CRTMP
+diff -rupN rtmpdump/rtmp.h rtmpdump-subscribe/rtmp.h
+--- rtmpdump/rtmp.h	2009-04-26 03:46:17.000000000 -0700
++++ rtmpdump-subscribe/rtmp.h	2009-04-29 00:15:56.000000000 -0700
+@@ -149,6 +149,11 @@ class CRTMP
        static double ReadNumber(const char *data);
  
        static bool FindFirstMatchingProperty(AMFObject &obj, std::string name, AMFObjectProperty &p);
-+     
++      
 +      bool GetSubscribe();
 +      void SetSubscribe(bool subscribe);
 +      char * GetSubscribePath();
 +      void SetSubscribePath(char *path);
  
      protected:
-       bool HandShake();
-@@ -123,6 +128,7 @@ class CRTMP
+       bool HandShake(bool FP9HandShake=true);
+@@ -161,6 +166,7 @@ class CRTMP
        bool SendPing(short nType, unsigned int nObject, unsigned int nTime = 0);
        bool SendBGHasStream(double dId, char *playpath);
        bool SendCreateStream(double dStreamId);
@@ -216,7 +202,7 @@ diff -rupN rtmpdump/rtmp.h rtmpdump-mlbviewer/rtmp.h
        bool SendPlay();
        bool SendPause();
        bool SendSeek(double dTime);
-@@ -156,6 +162,9 @@ class CRTMP
+@@ -194,6 +200,9 @@ class CRTMP
        int  m_nBufferMS;
        int  m_stream_id; // returned in _result from invoking createStream
  
