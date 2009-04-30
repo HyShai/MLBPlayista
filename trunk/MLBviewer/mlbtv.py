@@ -57,6 +57,7 @@ SOAPCODES = {
     "1"    : "OK",
     "-1000": "Requested Media Not Found",
     "-1500": "Other Undocumented Error",
+    "-1600": "Requested Media Not Archived Yet.",
     "-2000": "Authentication Error",
     "-2500": "Blackout Error",
     "-3000": "Identity Error",
