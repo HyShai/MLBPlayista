@@ -4,6 +4,7 @@ curdir=`pwd`
 patch=`/bin/ls *.patch`
 patchfile=$curdir/$patch
 
+echo "This patch is for version 1.5 of rtmpdump. It will not work for earlier version."
 
 echo -n "Enter path to rtmpdump source directory: "
 read sourcedir
