@@ -65,6 +65,21 @@ SOAPCODES = {
     "-4000": "System Error",
 }
 
+# Status codes: Reverse mapping of status strings back to the status codes
+# that were used in the json days.  Oh, those were the days. ;-)
+STATUSCODES = {
+    "In Progress"     : "I",
+    "Final"           : "F",
+    "Preview"         : "P",
+    "Postponed"       : "PO",
+    "Game Over"       : "GO",
+    "Delayed"         : "D",
+    "Pregame"         : "IP",
+    "Suspended"       : "S",
+    "Warm-up"         : "IP",
+}
+
+
 
 # We've never used the first field, so I'm going to expand its use for 
 # audio and video follow functionality.  The first field will contain a tuple
@@ -321,7 +336,9 @@ class MLBSchedule:
             home = node.getAttribute('home_team_id')
             away = node.getAttribute('away_team_id')
             gameinfo[id]['content'] = self.parse_media_grid(node,away,home)
+            #raise Exception,repr(gameinfo[id]['content'])
             out.append(gameinfo[id])
+        #raise Exception,repr(out)
         return out
 
     def parse_media_grid(self,xp,away,home):
@@ -332,6 +349,7 @@ class MLBSchedule:
         content['video']['800'] = []
         content['video']['swarm'] = []
         content['condensed'] = []
+        event_id = str(xp.getAttribute('calendar_event_id'))
         for media in xp.getElementsByTagName('media'):
            tmp = {}
            for attr in media.attributes.keys():
@@ -343,7 +361,7 @@ class MLBSchedule:
                        coverage = away
                    elif tmp['type'] == 'home_audio':
                        coverage = home
-                   out = (tmp['display'], coverage, tmp['id'])
+                   out = (tmp['display'], coverage, tmp['id'], event_id)
                    #print 'Found audio: ' + repr(out)
                    content['audio'].append(out)
            elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
@@ -360,7 +378,7 @@ class MLBSchedule:
                        coverage = away
                    else:
                        coverage = home
-                   out = (tmp['display'], coverage, tmp['id'])
+                   out = (tmp['display'], coverage, tmp['id'], event_id)
                    #print 'Found video: ' + repr(out)
                    if tmp['playback_scenario'] == 'MLB_FLASH_SWARMCLOUD':
                        content['video']['swarm'].append(out)
@@ -369,7 +387,7 @@ class MLBSchedule:
                    else:
                        content['video']['400'].append(out)
            elif tmp['type'] == 'condensed_game':
-               out = ('CG',0,tmp['id'])
+               out = ('CG',0,tmp['id'], event_id)
                #print 'Found condensed: ' + repr(out)
                content['condensed'].append(out)
         return content
@@ -437,10 +455,13 @@ class MLBSchedule:
             if dct['event_id'] == "":
                  dct['event_id'] = None
             dct['ind']   = game['ind']
-            dct['status']   = game['status']
+            try:
+                dct['status'] = STATUSCODES[game['status']]
+            except:
+                dct['status'] = game['status'] 
             if game['status'] in ('In Progress','Preview','Delayed','Warm-up'):
                 if game['content']['blackout'] == 'MLB_NATIONAL_BLACKOUT':
-                    dct['status'] = 'National Blackout'
+                    dct['status'] = 'NB'
             dct['gameid'] = game['id']
             # I'm parsing the time by hand because strptime
             # doesn't work on windows and only works on
@@ -467,21 +488,6 @@ class MLBSchedule:
             # And now we convert that to the user's local, or
             # chosen time zone.
             dct['event_time'] = gameTimeConvert(raw_time, self.shift)
-            """ NOT SURE WE NEED THIS CODE
-            if TEAMCODES.has_key(dct['away']):
-                text = game['away_team_city'] + ' ' + game['away_team_name']
-            else:
-		t = (dct['away'],)
-                TEAMCODES[dct['away']] = TEAMCODES['unk'] + t
-                text =  ' '.join(TEAMCODES[dct['away']][1:]).strip()
-            text += ' at '
-            if TEAMCODES.has_key(dct['home']):
-                text += game['home_team_city'] + ' ' + game['home_team_name']
-            else:
-		t = (dct['home'],)
-                TEAMCODES[dct['home']] = TEAMCODES['unk'] + t
-                text +=  ' '.join(TEAMCODES[dct['away']][1:]).strip()
-            NOT SURE WE NEED THIS CODE """
             if not TEAMCODES.has_key(dct['away']):
                 TEAMCODES[dct['away']] = TEAMCODES['unk'] + t
             if not TEAMCODES.has_key(dct['home']):
@@ -506,10 +512,14 @@ class MLBSchedule:
                 dct['condensed'] = game['content']['condensed']
             except KeyError:
                 dct['condensed'] = None
+            if dct['condensed']:
+                dct['status'] = 'CG'
             dct['media_state'] = game['media_state']
             #dct['text'] = text
             out.append((dct['gameid'], dct))
+        #raise Exception,repr(out)
         return out
+
  
 
     def trimList(self,blackout=()):
@@ -643,13 +653,54 @@ class MLBSchedule:
         return out
 
     def getCondensedVideo(self,gameid):
+        listtime = datetime.datetime(self.year, self.month, self.day)
+        if listtime >= self.xmltime:
+            self.use_xml = True
+        else:
+            self.use_xml = False
+
+        if self.use_xml:
+            return self.getXmlCondensedVideo(gameid)
+        else:
+            return self.getJsonCondensedVideo(gameid)
+
+    def getJsonCondensedVideo(self,gameid):
         out = {}
+
         condensed = self.trimList()
 
         for elem in condensed:
             if elem[0] == gameid:
                 out = elem[1]['condensed']
         return out
+
+    def getXmlCondensedVideo(self,gameid):
+        out = ''
+        condensed = self.trimXmlList()
+        for elem in condensed:
+            #raise Exception,repr(condensed)
+            if elem[0] == gameid:
+                content_id = elem[1]['condensed'][0][2]
+        url = 'http://mlb.mlb.com/gen/multimedia/detail/' 
+        url += content_id[4] + '/' + content_id[5] + '/' + content_id[6]
+        url += '/' + content_id + '.xml'
+        try:
+            req = urllib2.Request(url)
+            rsp = urllib2.urlopen(req)
+        except Exception,detail:
+            self.error_str = 'Error while locating condensed game:'
+            self.error_str = '\n\n' + str(detail)
+            raise
+        try:
+            media = parse(rsp)
+        except Exception,detail:
+            self.error_str = 'Error parsing condensed game location'
+            self.error_str += '\n\n' + str(detail)
+            raise
+        out = str(media.getElementsByTagName('url')[0].childNodes[0].data)
+        return out
+            
+        
 
     def getJsonTopPlays(self,gameid):
         out = []
@@ -746,8 +797,8 @@ class MLBSchedule:
 
         return [(elem[1]['teams'],\
                      elem[1]['event_time'],
-                     elem[1]['event_id'],
-                     elem[1]['event_id'],
+                     elem[1]['video'][str(myspeed)],
+                     elem[1]['audio'],
                      elem[1]['status'],
                      elem[0],
                      elem[1]['media_state'])\
@@ -784,7 +835,10 @@ class GameStream:
         self.use_soap = use_soap
         try:
             if self.use_soap:
-                self.event_id = self.stream
+                ( self.call_letters, 
+                  self.team_id, 
+                  self.content_id, 
+                  self.event_id ) = self.stream
             else:
                 self.id = self.stream['w_id']
                 self.gameid = stream['gid']
@@ -1067,7 +1121,7 @@ class GameStream:
                     scenario = media['media-item']['playback-scenario']
                     if scenario == self.scenario and\
                                 state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON', 'MEDIA_DONE', 'MEDIA_OFF' ):
-                        content_list.append( ( call_letters, coverage, stream['content-id'] ) )
+                        content_list.append( ( call_letters, coverage, stream['content-id'] , self.event_id ) )
         return content_list
 
 
@@ -1090,11 +1144,11 @@ class GameStream:
         wsdl_file = os.path.join(os.environ['HOME'], AUTHDIR, 'MediaService.wsdl')
         soap_url = 'file://' + str(wsdl_file)
         client = Client(soap_url)
-        soapd = {'event-id':str(self.stream), 'subject':self.subject}
+        soapd = {'event-id':str(self.event_id), 'subject':self.subject}
         reply = client.service.find(**soapd)
         # if the reply is unsuccessful, log it and raise an exception
         if reply['status-code'] != "1":
-            self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response\n")
+            self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response event_id = " + str(self.event_id) + "\n")
             self.log.write(repr(reply) + '\n')
             self.error_str = SOAPCODES[reply['status-code']]
             raise Exception,self.error_str
@@ -1106,7 +1160,7 @@ class GameStream:
         # 2. if preferred coverage is available use it
         # 3. if coverage association is non-zero and preferred not available, then what?
         for content in content_list:
-            ( call_letters, coverage, content_id ) = content
+            ( call_letters, coverage, content_id , event_id ) = content
             if coverage == '0':
                 self.content_id = content_id
                 self.call_letters = call_letters
@@ -1117,7 +1171,7 @@ class GameStream:
         # select any coverage available
         if self.content_id is None:
             try:
-                ( call_letters, coverage, content_id ) = content_list[0]
+                ( call_letters, coverage, content_id, event_id ) = content_list[0]
                 self.content_id = content_id
                 self.call_letters = call_letters
             except:
@@ -1443,9 +1497,7 @@ class GameStream:
         if self.tc_url is not None:
             rec_cmd_str += ' -t "' + self.tc_url + '"'
         if self.sub_path is not None:
-            rec_cmd_str += ' -d ' + str(self.sub_path) + ' -v '
-        else:
-            rec_cmd_str += ' --resume'
+            rec_cmd_str += ' -d ' + str(self.sub_path) + ' -v'
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         return rec_cmd_str
         
