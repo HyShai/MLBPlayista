@@ -355,6 +355,11 @@ class MLBSchedule:
            for attr in media.attributes.keys():
                tmp[attr] = str(media.getAttribute(attr))
            out = []
+           try:
+               tmp['playback_scenario']
+           except:
+               continue
+               raise Exception,repr(tmp)
            if tmp['type'] in ('home_audio','away_audio'):
                if tmp['playback_scenario'] == 'MLB_FMS_AUDIO_32K_STREAM':
                    if tmp['type'] == 'away_audio':
