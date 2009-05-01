@@ -24,8 +24,8 @@ import time
 import pickle
 import copy
 
-DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
-DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
+DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -really-quiet'
+DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -really-quiet'
 DEFAULT_SPEED = '800'
 
 DEFAULT_FLASH_BROWSER='firefox %s'
@@ -232,7 +232,10 @@ def mainloop(myscr,cfg):
         "away" : "[AWAY]",
         "home" : "[HOME]"}
 
-    cfg['coverage'] = "home"
+    hdtoggle = {
+        True  : "[HD]",
+        False : "[--]"}
+
 
     while True:
         myscr.clear()
@@ -303,33 +306,51 @@ def mainloop(myscr,cfg):
             # Only draw the screen if there are any games
             if available:
                 if n == current_cursor:
-                    if available[n][4] == 'I' or str(available[n][4]) == 'In Progress':
-                        #myscr.addstr(n+2,0,s, curses.A_REVERSE|curses.A_BOLD)
+                    if available[n][4] == 'I':
                         cursesflags = curses.A_REVERSE|curses.A_BOLD
                     else:
-                        #myscr.addstr(n+2,0,s, curses.A_REVERSE)
                         cursesflags = curses.A_REVERSE
                     if 'topPlays' in CURRENT_SCREEN:
                         status_str = 'Press L to return to listings...'
                     else:
-                        if use_xml:
-                            status = str(available[n][4])
-                            if available[n][0]['home'] in cfg['blackout'] or \
-                               available[n][0]['away'] in cfg['blackout']:
-                                if status in ('Warmup', 'Preview', 'In Progress', 'Pre-Game'):
-                                    status = "Local Blackout"
-                            status_str = 'Status: ' + status
-                        else:
-                            status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
+                        status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
 			if available[n][2] is None and available[n][3] is None:
                             status_str += ' (No media available)'
                         elif available[n][2] is None:
                             status_str += ' (No video available)'
                         elif available[n][3] is None:
                             status_str += ' (No audio available)'
+                        # Is the preferred coverage in HD?
+                        # First see if home or away is in video_follow
+                        if home in cfg['video_follow']:
+                            mycoverage = TEAMCODES[home][0]
+                        elif away in cfg['video_follow']:
+                            mycoverage = TEAMCODES[away][0]
+                        else:
+                            mycoverage = TEAMCODES[available[n][0][cfg['coverage']]][0]
+                        # Next if 'HD' is in the call letters, light up the HD 
+                        # indicator
+                        hd_pat = re.compile(r'HD')
+                        for myteam in range(len(available[n][2])):
+                            if available[n][2][myteam][1] == mycoverage:
+                                try:
+                                    ( call_letters, 
+                                      team_id, 
+                                      content_id , 
+                                      event_id ) = available[n][2][myteam]
+                                except:
+                                    raise Exception,repr(available[n][2][myteam])
+                        try:
+                            call_letters
+                        except:
+                            raise KeyError,mycoverage
+                        if re.search(hd_pat,call_letters) is not None:
+                            hd_available = True
+                        else:
+                            hd_available = False
                 else:
                     if n < len(available):
-                        if available[n][4] == 'I' or str(available[n][4]) == 'In Progress':
+                        if available[n][4] == 'I':
                             cursesflags = curses.A_BOLD
                         else:
                             cursesflags = 0
@@ -355,6 +376,7 @@ def mainloop(myscr,cfg):
 
         # Add the speed toggle plus padding
         status_str_len = len(status_str) + len(speedtoggle.get(cfg['speed'])) +\
+                            + len(hdtoggle.get(hd_available)) +\
                             + len(coveragetoggle.get(cfg['coverage'])) + 2
         if cfg['debug']:
             status_str_len += len('[DEBUG]')
@@ -369,8 +391,14 @@ def mainloop(myscr,cfg):
             speedstr = '[600K]'
         else:
             speedstr = speedtoggle.get(cfg['speed'])
+        if cfg['use_nexdef']:
+            speedstr = '[NEXD]'
+            hdstr = hdtoggle.get(hd_available)
+        else:
+            hdstr = hdtoggle.get(False)
         coveragestr = coveragetoggle.get(cfg['coverage'])
-        status_str += ' '*padding + debug_str +  coveragestr + speedstr
+        
+        status_str += ' '*padding + debug_str +  coveragestr + speedstr + hdstr
 
         # Print an indicator if more bookmarks than lines
         if 'bookmarks' in CURRENT_SCREEN:
@@ -526,6 +554,15 @@ def mainloop(myscr,cfg):
             statuswin.refresh()
             time.sleep(1)
             continue
+
+        # use_nexdef toggle
+        if c in ('Nexdef', ord('n')):
+            # there's got to be an easier way to do this
+            if cfg['use_nexdef']:
+                cfg['use_nexdef'] = False
+            else:
+                cfg['use_nexdef'] = True
+            #statuswin.clear()
 
         # coveragetoggle ('c' is taken by condensed games, 's' was
         # reserved for scores but I don't think I'll implement that.
@@ -804,7 +841,7 @@ def mainloop(myscr,cfg):
 
         if c in ('Flash', ord('f')):
             flash_url = 'http://mlb.mlb.com/flash/mediaplayer/v4/RC11/MP4.jsp?calendar_event_id='
-            flash_url += available[current_cursor][3]
+            flash_url += event_id
             try:
                 browser_cmd_str = cfg['flash_browser'].replace('%s',flash_url)
             except:
@@ -884,10 +921,9 @@ def mainloop(myscr,cfg):
                 dbg.write('DEBUG>> checking for video_follow = ' + repr(cfg['video_follow']) + '\n')
                 dbg.flush()
                 
-                use_nexdef = cfg['use_nexdef']
 
                 if audio:
-                    stream = available[current_cursor][3]
+                    stream = available[current_cursor][3][myteam]
 
                     if use_xml:
                         if away in cfg['audio_follow']:
@@ -910,6 +946,24 @@ def mainloop(myscr,cfg):
                         if available[current_cursor][4] in ('CG'):
                             gameid = available[current_cursor][5]
                             stream = mysched.getCondensedVideo(gameid)
+                            # Again, we have to do 2009 code separate from
+                            # regular audio and video for now.
+                            if use_xml:
+                                if '%s' in player:
+                                    cmd_str = player.replace('%s', stream)
+                                else:
+                                    cmd_str = player + ' ' + stream
+                                try:
+                                    player_process = subprocess.Popen(cmd_str,
+                                                                   shell=True)
+                                    myscr.clear()
+                                    myscr.addstr(0,0,cmd_str)
+                                    myscr.refresh()
+                                    player_process.wait()
+                                except:
+                                    raise
+                                time.sleep(2)
+                                continue
                         else:
                             statuswin.clear()
                             statuswin.addstr(0,0,'Condensed Game Not Yet Available')
@@ -918,7 +972,7 @@ def mainloop(myscr,cfg):
                             time.sleep(2)
                             continue
                     else:
-                        stream = available[current_cursor][2]
+                        stream = available[current_cursor][2][myteam]
                     if mysched.use_xml:
                         if away in cfg['video_follow']:
                             coverage = TEAMCODES[away][0]
@@ -937,8 +991,10 @@ def mainloop(myscr,cfg):
 
 
                         g = GameStream(stream, cfg['user'], cfg['pass'],
-                                   cfg['debug'],use_soap=True,speed=cfg['speed'],
-                                   coverage=coverage,use_nexdef=use_nexdef,
+                                   cfg['debug'],use_soap=True,
+                                   use_nexdef=cfg['use_nexdef'],
+                                   speed=cfg['speed'],
+                                   coverage=coverage,
                                    max_bps=cfg['max_bps'],start_time=start_time)
                     else:
                         g = GameStream(stream, cfg['user'], cfg['pass'],
@@ -990,13 +1046,13 @@ def mainloop(myscr,cfg):
                     continue
                 try:
                     if '%s' in player:
-                        if use_nexdef:
+                        if cfg['use_nexdef'] and not audio:
                             cmd_str = player.replace('%s', '"' + u + '"')
                         else:
                             cmd_str = player.replace('%s', '-')
                             cmd_str = u + ' | ' + player
                     else:
-                        if use_nexdef:
+                        if cfg['use_nexdef'] and not audio:
                             cmd_str = player + ' "' + u + '" '
                         else:
                             cmd_str = u + ' | ' + player + ' - '
@@ -1007,18 +1063,12 @@ def mainloop(myscr,cfg):
                         else:
                             suf = '.mp4'
                         cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + suf + "'")
-                    #if not use_nexdef:
+                    #if not cfg['use_nexdef']:
                     #    g.rec_process.open()
                     if cfg['show_player_command']:
                         myscr.clear()
                         titlewin.clear()
                         myscr.addstr(0,0,cmd_str)
-                        ''' NOT NEEDED
-                        if not use_nexdef:
-                            myscr.addstr(curses.LINES-2,0,"Please wait for stream to buffer...")
-                            myscr.refresh()
-                            time.sleep(30)
-                        NOT NEEDED '''
                         myscr.refresh()
                         time.sleep(3)
 		    else:
@@ -1026,12 +1076,12 @@ def mainloop(myscr,cfg):
                             statuswin.clear()
                             statuswin.addstr(0,0,"Buffering stream")
                             statuswin.refresh()
-                            if use_nexdef:
+                            if cfg['use_nexdef']:
                                 time.sleep(.5)
                             else:
-                                time.sleep(30)
+                                time.sleep(3)
                         else:
-                            time.sleep(10)
+                            time.sleep(3)
 
                     play_process=subprocess.Popen(cmd_str,shell=True)
                     while play_process.poll() is None:
@@ -1040,7 +1090,7 @@ def mainloop(myscr,cfg):
                         try:
                             time.sleep(10)
                             g.control(action='ping')
-                            if not use_nexdef:
+                            if not cfg['use_nexdef']:
                                 continue
                             myscr.clear()
                             status_str =  'STREAM: ' + g.current_encoding[0]
@@ -1051,22 +1101,12 @@ def mainloop(myscr,cfg):
                         except:
                             pass
                     play_process.wait()
-                    '''try:
-                        if not use_nexdef:
-                            g.rec_process.close(signal=signal.SIGINT)
-                    except:
-                        pass'''
                     # I want to see mplayer errors before returning to 
                     # listings screen
                     if ['show_player_command']:
                         time.sleep(3)
                 except:
                     raise
-                    '''try:
-                        if not use_nexdef:
-                            g.rec_process.close(signal=signal.SIGINT)
-                    except:
-                        pass'''
                     myscr.clear()
                     titlewin.clear()
                     ERROR_STRING = "There was an error in the player process."
@@ -1135,6 +1175,7 @@ if __name__ == "__main__":
                   'max_bps': 800000,
                   'live_from_start': 0,
                   'use_nexdef': 1,
+                  'coverage' : 'home',
                   'flash_browser': DEFAULT_FLASH_BROWSER}
 
     # Auto-install of default configuration file
