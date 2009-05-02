@@ -949,7 +949,9 @@ class GameStream:
         auth_values = {'uri' : '/account/login_register.jsp',
                        'registrationAction' : 'identify',
                        'emailAddress' : self.email,
-                       'password' : self.passwd}
+                       'password' : self.passwd,
+                       'submit.x' : 0,
+                       'submit.y' : 0}
         auth_data = urllib.urlencode(auth_values)
         req = urllib2.Request(auth_url,auth_data,txheaders)
         try:
