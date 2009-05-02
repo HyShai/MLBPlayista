@@ -981,7 +981,7 @@ def mainloop(myscr,cfg):
                         else:
                             coverage = TEAMCODES[defaultcoverage][0]
 
-                        if str(available[current_cursor][4]) in ('In Progress', 'Delayed'):
+                        if str(available[current_cursor][4]) in ('I', 'D'):
                             if cfg['live_from_start']:
                                 start_time=0
                             else:
