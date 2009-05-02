@@ -131,7 +131,7 @@ for n in range(len(available)):
        ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
        ' '.join(TEAMCODES[home][1:]).strip()
     #print str(s)
-    c = padstr(available[n][4],4) + ": " +\
+    c = padstr(available[n][4],2) + ": " +\
         available[n][1].strftime('%l:%M %p') + ': ' +\
         available[n][5] 
     try:
