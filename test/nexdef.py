@@ -51,12 +51,12 @@ except:
     EVENT = '164-251362-2009-03-16'
 
 try:
-    SCENARIO = sys.argv[2]
+    SCENARIO = sys.argv[3]
 except:
     SCENARIO = "MLB_FLASH_SWARMCLOUD"
 
 try:
-    content_id = sys.argv[3]
+    content_id = sys.argv[2]
 except:
     content_id = None
 
