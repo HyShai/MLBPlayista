@@ -343,7 +343,9 @@ def mainloop(myscr,cfg):
                         try:
                             call_letters
                         except:
-                            raise KeyError,mycoverage
+                            #raise KeyError,available[n][2]
+                            call_letters = ""
+                            myteam = 0
                         if re.search(hd_pat,call_letters) is not None:
                             hd_available = True
                         else:
