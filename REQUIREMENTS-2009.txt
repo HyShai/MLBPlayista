@@ -1,16 +1,16 @@
 REQUIREMENTS FOR MLBVIEWER 2009 SEASON
 
-Quite a bit has changed for the 2009 season.  mlbviewer is making a best 
-attempt to support the 2009 season but should be considered a very unstable 
-and incomplete solution for 2009 support.  Additionally, while every attempt is
-being made to preserve support for previous seasons, some of the new code may
-have a destabilizing effect on existing code.  
-
-Expect bugs and don't expect many of last year's features to be working
-with the early SVN revisions.  Subscribe to the Linuxquestions.org thread for
-tips and updates.
+Quite a bit has changed between last season and next.  While every attempt has
+been made to minimize changes to the requirements and the features supported 
+last year, some things are just out of my control.
 
 To get going for the 2009 season, you will need the following packages:
+
+OPTIONAL (but very helpful, especially for Linux beginners!):
+
+Setuptools - http://pypi.python.org/pypi/setuptools
+
+This will help you download and install the required python packages
 
 REQUIRED:
 
@@ -18,22 +18,110 @@ PyXML - http://pyxml.sourceforge.net/topics/download.html
 
 suds - https://fedorahosted.org/suds/
 
+Simplejson - http://pypi.python.org/pypi/simplejson/
+
+setuptools users: You can install these with the following commands (as root):
+
+$ easy_install pyxml
+$ easy_install suds
+$ easy_install simplejson
+
+Please read on for further requirements depending on whether you are an MLB.TV
+Premium or MLB.TV Basic subscriber.
+
+PREMIUM USERS
+
+You will need the autobahn.jar file from the NexDef plugin.  You can find that
+file here:
+
+http://mlb.com/nexdef-jars/
+
+To run the NexDef plugin:
+
+$ java -jar autobahn.jar
+
+NON-PREMIUM USERS (and Gameday Audio subscribers)
+
+You will need rtmpdump version 1.5.
+
 rtmpdump - http://sourceforge.net/projects/rtmpdump/
 
-HIGHLY RECOMMENDED:
+You will need version 1.5 of rtmpdump.  You will also need to patch version 1.5
+using the Patch.sh script in the rtmpdump-patches directory.
 
-ffmpeg - http://ffmpeg.mplayerhq.hu/
+You can find version 1.5 at this URL:
 
-x264 - http://www.videolan.org/developers/x264.html
+http://sourceforge.net/project/showfiles.php?group_id=248826&package_id=303903
 
-faad - http://www.audiocoding.com/faad2.html
+The patch is not tested with version 1.5a or later.  It might work with version
+1.5a but it probably won't work with any later versions.
 
-You will likely need to compile the latest version of these from source as 
-many distributions include outdated versions.  To test whether you will need
-to recompile these, you can download a Flash sample clip (12MB) from here:
+ALL USERS - VERY IMPORTANT
 
-http://www.eds.org/~straycat/2009-03-17-purint-usaint-1.mp4
+You will need to re-compile MPlayer from source.  MPlayer requires a bug fix
+to play MLB.TV streams smoothly.  This fix is only a couple of weeks old and 
+far too new for any distribution's version of MPlayer to have it.
 
-You may also need to rebuild mplayer from latest source to be sure of 
-compatibility.
+QUICK INSTRUCTIONS FOR GETTING AND BUILDING THE LATEST MPLAYER
+
+Step 1: Verify you have subversion by typing "svn":
+
+$ svn
+Type 'svn help' for usage.
+$
+
+If you don't have subversion, you can download it from your distribution's
+package management system (e.g. apt-get install subversion if you're using 
+Ubuntu or Debian), or you can get it here:
+
+http://subversion.tigris.org/
+
+Step 2: Download the latest MPlayer source via svn:
+
+$ svn checkout svn://svn.mplayerhq.hu/mplayer/trunk mplayer
+
+Step 3: Run the configure script with, at a minimum, the following options:
+
+$ cd mplayer
+$ sh configure --enable-dynamic-plugins --prefix=/usr
+
+It's very important you use --prefix=/usr as you want to install this new 
+version of mplayer over your pre-distributed package.
+
+Step 4: Run 'make'
+
+$ make
+
+Step 5: (as root), run 'make install'
+
+$ make install
+
+
+ALL USERS - EQUALLY IMPORTANT :-)
+
+In order to make media requests, mlbviewer must use the SOAP protocol (the 
+suds package required above.)  HOWEVER, mlb.com's description files are 
+not entirely valid.  To make valid requests, it is necessary to use our
+own description files.  It's not necessary to understand this except that you
+will need to copy the two MediaService files to your .mlb directory:
+
+$ mkdir -p ~/.mlb 
+
+(This is not necessary if you already have a ~/.mlb directory from last year.)
+
+$ cp MediaService.* ~/.mlb/
+
+READ THE README FOR MORE HELP ON USING MLBVIEWER 2009.
+
+Also, you can post any support questions either to the Sourceforge forum at:
+
+https://sourceforge.net/forum/?group_id=224512
+
+Or the Linux Questions thread here:
+
+http://www.linuxquestions.org/questions/fedora-35/mlb.tv-in-linux-432479/
+
+No, you don't have to read all 100+ pages.  Just skip to the last page
+and post question to the end of the thread.  There are several helpful
+testers who have been with this project since the start.
 
