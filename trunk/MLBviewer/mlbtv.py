@@ -73,10 +73,10 @@ STATUSCODES = {
     "Preview"         : "P",
     "Postponed"       : "PO",
     "Game Over"       : "GO",
-    "Delayed"         : "D",
+    "Delayed Start"   : "D",
     "Pre-Game"        : "IP",
     "Suspended"       : "S",
-    "Warm-up"         : "IP",
+    "Warmup"          : "IP",
 }
 
 
