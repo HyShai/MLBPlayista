@@ -1085,14 +1085,36 @@ def mainloop(myscr,cfg):
                         else:
                             time.sleep(3)
 
-                    play_process=subprocess.Popen(cmd_str,shell=True)
+                    play_process=subprocess.Popen(cmd_str,shell=True,
+                                                  preexec_fn=os.setsid)
+                    myscr.timeout(10000)
                     while play_process.poll() is None:
                         if not use_xml:
                             continue
                         try:
-                            time.sleep(10)
+                            c = myscr.getch()
+                            #time.sleep(5)
+                        except KeyboardInterrupt:
+                            myscr.clear()
+                            myscr.addstr('Quitting player, cleaning up...')
+                            myscr.refresh()
+                            os.killpg(play_process.pid,signal.SIGINT)
+                            time.sleep(3)
+                            continue
+                        if c in ('Close', ord('q')):
+                            myscr.clear()
+                            myscr.addstr('Quitting player, cleaning up...')
+                            myscr.refresh()
+                            os.killpg(play_process.pid,signal.SIGINT)
+                            c = ''
+                            time.sleep(3)
+                            continue
+                        try:
+                            #time.sleep(5)
                             g.control(action='ping')
                             if not cfg['use_nexdef']:
+                                continue
+                            if audio:
                                 continue
                             myscr.clear()
                             status_str =  'STREAM: ' + g.current_encoding[0]
@@ -1103,6 +1125,7 @@ def mainloop(myscr,cfg):
                         except:
                             pass
                     play_process.wait()
+                    myscr.timeout(-1)
                     # I want to see mplayer errors before returning to 
                     # listings screen
                     if ['show_player_command']:
