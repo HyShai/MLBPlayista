@@ -1243,17 +1243,20 @@ class GameStream:
     def nexdef_url(self,game_url):
         self.nexdef_media_url = None
         nexdef_base = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/'
-        nexdef_use  = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:'
         # build the first url for stream descriptions
 
-        """ BEGIN PAIN IN THE ASS CODE """
         url = nexdef_base + 'describe' + '/base64:' + game_url + '&refetch=true'
         req = urllib2.Request(url)
-        rsp = urllib2.urlopen(req)
+        try:
+            rsp = urllib2.urlopen(req)
+        except:
+            self.error_str = "Could not connect to NexDef.  Is autobahn.jar running?"
+            raise Exception,self.error_str
         # parse the stream descriptions for time of head of stream
         try:
-            xp = parse(rsp)
+            return self.parse_nexdef_describe_response(rsp,game_url)
         except:
+            #raise
             try:
                 req = urllib2.Request(url)
                 rsp = urllib2.urlopen(req)
@@ -1265,6 +1268,7 @@ class GameStream:
             self.error_str = "Could not parse NexDef stream list.  Try alternate coverage."
             self.error_str += "\n\n" + str(text)
             raise Exception,self.error_str
+        """ BEGIN PAIN IN THE ASS CODE
         for time in xp.getElementsByTagName('streamHead'):
             timestamp = time.getAttribute('timeStamp')
         try:
@@ -1280,14 +1284,14 @@ class GameStream:
             self.nexdef_media_url += '&start_time=' + str(milliseconds) + '&v=0'
         else:
             self.nexdef_media_url += '&v=0'
-        """ END PAIN IN THE ASS CODE """
+        END PAIN IN THE ASS CODE """
         
         return self.nexdef_media_url
 
-    def control(self,action='ping',encoding=None):
+    def control(self,action='ping',encoding=None,strict=False):
         if self.use_nexdef:
             #self.log.write('DEBUG>> calling nexdef_control \n')
-            self.nexdef_control(action,encoding)
+            self.nexdef_control(action,encoding,strict)
         else:
             #self.log.write('DEBUG>> calling rtmpdump_control \n')
             self.rtmpdump_control(action)
@@ -1296,19 +1300,21 @@ class GameStream:
         # todo: move the recording process monitor code to here
         return
 
-    def nexdef_control(self,action='ping',encoding=None):
+    def nexdef_control(self,action='ping',encoding=None, strict=False):
         url = self.nexdef_media_url.split('&')[0]
         url = url.replace('base64:','control/base64:')
         if action == 'select' and encoding is not None:
-            url += '&encoding_group=' + encoding[0]
-            url += '&height=' + encoding[3]
-            url += '&width=' + encoding[2]
+            url += '&encoding_group=' + str(encoding[0])
+            url += '&height=' + str(encoding[3])
+            url += '&width=' + str(encoding[2])
+        if strict:
             url += '&strict=true'
         # not sure what their random algorithm is but we'll just cat the
         # seconds with the microseconds of the current time.
         rand  = str(datetime.datetime.now().second)
         rand += str(datetime.datetime.now().microsecond)
-        url += '&rand=' + rand + '&v=0'
+        #url += '&rand=' + rand + '&v=0'
+        url += '&v=0'
         try:
             req = urllib2.Request(url)
             rsp = urllib2.urlopen(req)
@@ -1320,22 +1326,41 @@ class GameStream:
         self.parse_nexdef_control_response(rsp)
         
     
-    def parse_nexdef_describe_response(self,rsp):
+    def parse_nexdef_describe_response(self,rsp,game_url):
+        nexdef_use  = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:'
         try:
             xp = parse(rsp)
         except:
-            self.error_str = 'Could not parse nexdef describe response.'
+            self.error_str = 'Could not parse NexDef stream list. Try alternate coverage.'
             raise Exception,self.error_str
         selected = (None, 0, 0, 0)
-        self.encodings = []
+        for time in xp.getElementsByTagName('streamHead'):
+            timestamp = time.getAttribute('timeStamp')
+        try:
+            (hrs, min, sec) = timestamp.split(':')
+            milliseconds = 1000 * ( int(hrs) * 3600 + int(min) * 60 + int(sec) )
+            # nexdef plugin appears to be off by an hour
+            milliseconds += 3600*1000
+        except:
+            self.start_time = None
+        # return the media url with the correct timestamp
+        self.nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps)
+        if self.start_time is not None:
+            self.nexdef_media_url += '&start_time=' + str(milliseconds) + '&v=0'
+        else:
+            self.nexdef_media_url += '&v=0'
+
+        self.encodings = {}
         for enc in xp.getElementsByTagName('encoding'):
             id  = str(enc.getAttribute('id'))
             bps = int(enc.getAttribute('bps'))
             width = int(enc.getAttribute('width'))
             height = int(enc.getAttribute('height'))
-            if bps <= int(self.max_bps) and bps > selected[1]:
-                selected = ( id , bps , width, height )
-                self.encodings.append( selected )
+            if bps <= int(self.max_bps):
+                self.encodings[bps] = ( id , bps , width, height )
+                #self.encodings.append( selected )
+        #raise Exception,repr(self.encodings)
+        return self.nexdef_media_url
 
  
     def parse_nexdef_control_response(self,rsp):
@@ -1344,13 +1369,13 @@ class GameStream:
         except:
             self.error_str = 'Could not parse nexdef control response.'
             raise Exception,self.error_str
-        self.encoding_group = []
+        self.encoding_group = {}
         for enc_group in xp.getElementsByTagName('encodingGroup'):
             for enc in enc_group.getElementsByTagName('encoding'):
                 id = str(enc.getAttribute('id'))
                 bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K_STREAM')
                 bps = re.search(bps_pat, id).groups()[0]
-                self.encoding_group.append(( bps, id ))
+                self.encoding_group[bps] = id
         for pos in xp.getElementsByTagName('currentPosition'):
             msec = pos.getAttribute('millis')
         for current in xp.getElementsByTagName('currentEncoding'):
@@ -1358,7 +1383,6 @@ class GameStream:
             bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K_STREAM')
             bps = re.search(bps_pat, id).groups()[0]
             self.current_encoding = ( id, bps, msec )
-         
         
 
     def flash_url(self,game_url):

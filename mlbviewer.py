@@ -27,6 +27,7 @@ import copy
 DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -really-quiet'
 DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -really-quiet'
 DEFAULT_SPEED = '800'
+STREAM_SPEEDS = ( '164', '400', '600', '800', '1200', '1800', '2200', '3000' )
 
 DEFAULT_FLASH_BROWSER='firefox %s'
 
@@ -1065,8 +1066,6 @@ def mainloop(myscr,cfg):
                         else:
                             suf = '.mp4'
                         cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + suf + "'")
-                    #if not cfg['use_nexdef']:
-                    #    g.rec_process.open()
                     if cfg['show_player_command']:
                         myscr.clear()
                         titlewin.clear()
@@ -1087,13 +1086,13 @@ def mainloop(myscr,cfg):
 
                     play_process=subprocess.Popen(cmd_str,shell=True,
                                                   preexec_fn=os.setsid)
+                    # non-blocking getch(), ten second timeout
                     myscr.timeout(10000)
                     while play_process.poll() is None:
                         if not use_xml:
                             continue
                         try:
                             c = myscr.getch()
-                            #time.sleep(5)
                         except KeyboardInterrupt:
                             myscr.clear()
                             myscr.addstr('Quitting player, cleaning up...')
@@ -1109,27 +1108,67 @@ def mainloop(myscr,cfg):
                             c = ''
                             time.sleep(3)
                             continue
+                        if c in ('Streams', ord('1'), ord('2'), ord('3'), 
+                                            ord('4'), ord('5'), ord('6'), 
+                                            ord('7'), ord('8'), ord('9')):
+                            if audio:
+                                continue
+                            if not cfg['use_nexdef']:
+                                continue
+                            try:
+                                # convert an ascii number to its numeral value
+                                # minus one to arrive at offset
+                                speed = STREAM_SPEEDS[int(c) - 49] + '000'
+                                encoding = g.encodings[int(speed)]
+                                g.control(action='select',encoding=encoding,
+                                          strict=cfg['strict_stream'])
+                                statuswin.clear()
+                                statuswin.addstr(0,0,'Attempting stream switch...please wait...')
+                                statuswin.refresh()
+                                time.sleep(3)
+                            except Exception,details:
+                                raise Exception,details
+                                sys.exit()
+                            continue
                         try:
-                            #time.sleep(5)
                             g.control(action='ping')
                             if not cfg['use_nexdef']:
                                 continue
                             if audio:
                                 continue
-                            myscr.clear()
+                        except:
+                            pass
+                        try:
+                            if audio:
+                                continue
+                            if g.current_encoding is not None:
+                                myscr.clear()
+                                myscr.addstr(0,0,'AVAILABLE STREAMS (Use number keys to select a stream)')
+                                myscr.hline(1,0,curses.ACS_HLINE, curses.COLS-1)
+                                e = 2
+                                for speed in STREAM_SPEEDS:
+                                    kspeed = speed
+                                    speed += '000'
+                                    padding = 4 - len(kspeed)
+                                    if g.encodings.has_key(int(speed)):
+                                        speed_str = '[' + ' '*padding + kspeed + 'K] '
+                                        myscr.addstr(e,0,str(e-1) + ' ) ' + speed_str + g.encodings[int(speed)][0])
+                                    e += 1
                             status_str =  'STREAM: ' + g.current_encoding[0]
-                            status_str += '\nBPS   : ' + g.current_encoding[1]
+                            status_str += '\nKBPS  : ' + g.current_encoding[1]
                             status_str += '\nMS    : ' + g.current_encoding[2]
                             myscr.addstr(curses.LINES-5,0,status_str)
                             myscr.refresh()
                         except:
+                            raise
                             pass
+                             
                     play_process.wait()
                     myscr.timeout(-1)
                     # I want to see mplayer errors before returning to 
                     # listings screen
-                    if ['show_player_command']:
-                        time.sleep(3)
+                    #if ['show_player_command']:
+                    #    time.sleep(3)
                 except:
                     raise
                     myscr.clear()
@@ -1147,6 +1186,7 @@ def mainloop(myscr,cfg):
                     irc_socket=irc_conn.conn
                     inputlst = [sys.stdin, irc_socket]
             except IndexError:
+                raise
                 pass
 
         if c in ('Refresh', ord('r')):
@@ -1200,6 +1240,7 @@ if __name__ == "__main__":
                   'max_bps': 800000,
                   'live_from_start': 0,
                   'use_nexdef': 1,
+                  'strict_stream': 1,
                   'coverage' : 'home',
                   'flash_browser': DEFAULT_FLASH_BROWSER}
 
