@@ -1123,9 +1123,13 @@ def mainloop(myscr,cfg):
                                 g.control(action='select',encoding=encoding,
                                           strict=cfg['strict_stream'])
                                 statuswin.clear()
-                                statuswin.addstr(0,0,'Attempting stream switch...please wait...')
+                                statuswin.addstr(0,0,'Attempting stream switch to ' + str(speed)[:-3] + 'K ...please wait...')
                                 statuswin.refresh()
                                 time.sleep(3)
+                            except KeyError:
+                                statuswin.clear()
+                                statuswin.addstr(0,0,'Requested stream out of range.  Not switching.')
+                                statuswin.refresh()
                             except Exception,details:
                                 raise Exception,details
                                 sys.exit()
