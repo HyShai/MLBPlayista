@@ -1154,11 +1154,14 @@ def mainloop(myscr,cfg):
                                         speed_str = '[' + ' '*padding + kspeed + 'K] '
                                         myscr.addstr(e,0,str(e-1) + ' ) ' + speed_str + g.encodings[int(speed)][0])
                                     e += 1
-                            status_str =  'STREAM: ' + g.current_encoding[0]
-                            status_str += '\nKBPS  : ' + g.current_encoding[1]
-                            status_str += '\nMS    : ' + g.current_encoding[2]
-                            myscr.addstr(curses.LINES-5,0,status_str)
-                            myscr.refresh()
+                            try:
+                                status_str =  'STREAM: ' + g.current_encoding[0]
+                                status_str += '\nKBPS  : ' + g.current_encoding[1]
+                                status_str += '\nMS    : ' + g.current_encoding[2]
+                                myscr.addstr(curses.LINES-5,0,status_str)
+                                myscr.refresh()
+                            except:
+                                pass
                         except:
                             raise
                             pass
