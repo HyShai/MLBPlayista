@@ -378,7 +378,7 @@ cmd_str = recorder.replace('%s', '"' + game_url + '"')
 if play_path is not None:
     cmd_str += ' -y "' + play_path + '"'
 if bSubscribe:
-    cmd_str += ' -b ' + sub_path
+    cmd_str += ' -v -d ' + sub_path
 if app is not None:
     cmd_str += ' -a "' + app + '"'
 cmd_str = cmd_str.replace('%e', event_id)
