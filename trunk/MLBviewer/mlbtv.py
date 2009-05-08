@@ -824,6 +824,46 @@ class MLBSchedule:
                   elem[0])\
                      for elem in listings]
 
+    def parse_innings_xml(self,event_id):
+        gameid = event_id.split('-')[1]
+        url = 'http://mlb.mlb.com/mlb/mmls2009/' + gameid + '.xml'
+        req = urllib2.Request(url)
+        try:
+            rsp = urllib2.urlopen(req)
+        except:
+            self.error_str = "Could not open " + url
+            raise Exception,self.error_str
+        try:
+            iptr = parse(rsp)
+        except:
+            self.error_str = "Could not parse the innings xml."
+            raise Exception,self.error_str
+        out = []
+        for inning in iptr.getElementsByTagName('inningTimes'):
+            number = inning.getAttribute('inning_number')
+            is_top = inning.getAttribute('top')
+            for inning_time in inning.getElementsByTagName('inningTime'):
+                type = inning_time.getAttribute('type')
+                if type == 'SCAST':
+                    time = inning_time.getAttribute('start')
+                    try:
+                        ( hrs, min, sec ) = time.split(':')
+                    except:
+                        self.error_str = "Could not parse time = " + time
+                        raise Exception, self.error_str
+                    msec = 1000 * ( 3600 * int(hrs) + 60 * int(min) + int(sec)) 
+                    # don't know why this works, but this seems to be what mlb
+                    # does, rounding down to nearest 5 seconds
+                    msec -= (int(sec)%5) * 1000
+                    # one other correction needs to be made...
+                    # if the hrs is less than 8, this must be an extra innings
+                    # game that has gone into the next day.  add 24 hrs.
+                    # why 8?  there is never an 8am EST start time
+                    if int(hrs) <= 8:
+                        msec += 3600 * 24 * 1000
+                    out.append((number, is_top, msec))
+        return out
+
 
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,
@@ -837,7 +877,7 @@ class GameStream:
         self.streamtype = streamtype
         self.speed = speed
         self.log = MLBLog(LOGFILE)
-        self.error_str = "Uncaught error"
+        self.error_str = "What happened here?\nPlease enable debug with the d key and try your request again."
         self.use_soap = use_soap
         try:
             if self.use_soap:
@@ -1080,27 +1120,6 @@ class GameStream:
         self.session_cookies = None
         # END logout
 
-    def parse_innings_xml(self):
-        gameid = self.event_id.split('-')[1]
-        url = 'http://mlb.mlb.com/mlb/mmls2009/' + gameid + '.xml'
-        req = urllib2.Request(url)
-        rsp = urllib2.urlopen(req)
-        try:
-            iptr = parse(rsp)
-        except:
-            self.error_str = "Could not parse the innings xml."
-            raise Exception,self.error_str
-        out = []
-        for inning in iptr.getElementsByTagName('inningTimes'):
-            number = inning.getAttribute('inning_number')
-            is_top = inning.getAttribute('top')
-            for inning_time in inning.getElementsByTagName('inningTime'):
-                type = inning_time.getAttribute('type')
-                if type == 'SCAST':
-                    time = inning_time.getAttribute('start')
-                    out.append((number, is_top, time))
-        return out
-
     def parse_soap_content(self,reply):
         # iterate over all the media items
         content_list = []
@@ -1341,6 +1360,9 @@ class GameStream:
             milliseconds = 1000 * ( int(hrs) * 3600 + int(min) * 60 + int(sec) )
             # nexdef plugin appears to be off by an hour
             milliseconds += 3600*1000
+            # if we actually get a non-zero start_time from init, use it
+            if self.start_time is not None and self.start_time > 0:
+                milliseconds = self.start_time
         except:
             self.start_time = None
         # return the media url with the correct timestamp
