@@ -136,7 +136,7 @@ for n in range(len(available)):
         available[n][5] 
     try:
         c += ' E:' + padstr(str(available[n][3][0][3]),21)
-    except TypeError:
+    except (TypeError, IndexError):
         c += ' E:' + padstr('None',21)
     print str(c)
 
