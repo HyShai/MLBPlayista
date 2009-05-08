@@ -71,6 +71,7 @@ COLORS = { 'black'   : curses.COLOR_BLACK,
            'xterm'   : -1
          }
 
+
 def doinstall(config,dct,dir=None):
     print "Creating configuration files"
     if dir:
@@ -239,6 +240,9 @@ def mainloop(myscr,cfg):
 
 
     while True:
+        # some initialization
+        start_time = None
+
         myscr.clear()
         statuswin.clear()
         titlewin.clear()
@@ -427,6 +431,18 @@ def mainloop(myscr,cfg):
         elif LIRC:
             if irc_socket in inputs:
                 c = irc_conn.next_code()
+
+        if c in ('InningsRaw', ord('x')):
+            innings = []
+            try:
+                innings = mysched.parse_innings_xml(event_id)
+            except:
+                innings = mysched.error_str
+            myscr.clear()
+            myscr.addstr(0,0,repr(innings))
+            myscr.refresh()
+            myscr.getch()
+            continue
 
         if c in ('Highlights', ord('t')):
             if 'topPlays' in CURRENT_SCREEN:
@@ -859,7 +875,8 @@ def mainloop(myscr,cfg):
             time.sleep(2)
             browser_process.process.wait()
 
-        if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c')):
+        if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c'),
+                 'Innings', ord('i')):
             if c in ('Audio', ord('a')):
                 audio = True
                 player = cfg['audio_player']
@@ -869,6 +886,147 @@ def mainloop(myscr,cfg):
                     player = cfg['top_plays_player']
                 else:
                     player = cfg['video_player']
+            elif c in ('Innings', ord('i')):
+                if not cfg['use_nexdef']:
+                    statuswin.clear()
+                    statuswin.addstr(0,0,'ERROR: Jump to innings only supported for NexDef mode.',curses.A_BOLD)
+                    statuswin.refresh()
+                    time.sleep(3)
+                    continue
+                # hate inserting a whole other screen here, but I'm 
+                # eventually writing a new gui library
+                innings = {}
+                try:
+                    try:
+                        this_event = available[current_cursor][2][0][3]
+                    except:
+                        raise Exception,'Innings list is not available for this game'
+                    myinnings = mysched.parse_innings_xml(this_event)
+                except Exception,detail:
+                    myscr.clear()
+                    myscr.addstr(0,0,'Could not parse innings: ')
+                    myscr.addstr(1,0,str(detail))
+                    myscr.refresh()
+                    time.sleep(3)
+                    continue
+                for inning in range(len(myinnings)):
+                    # top half innings will be 1 - 10, 10 being extra innings
+                    # bottom half innings will be top half plus 10
+                    if myinnings[inning][1] == 'false':
+                        innings[int(myinnings[inning][0]) + 10] = myinnings[inning][2]
+                    else:
+                        innings[int(myinnings[inning][0])] = myinnings[inning][2]
+                # print header first:
+                myscr.clear()
+                title_str = 'JUMP TO HALF INNINGS: ' 
+                title_str += str(available[current_cursor][5])
+                myscr.addstr(0,0,title_str)
+                myscr.hline(1,0,curses.ACS_HLINE,curses.COLS-1)
+                # skip a line
+                #myscr.addstr(2,0,'Use number keys to select top half innings.')
+                #myscr.addstr(3,0,'Use Shift+number for bottom half innings.')
+                #myscr.addstr(4,0,'Use zero or shift+zero for extra-innings.')
+                #myscr.addstr(2,0,'Enter a half inning to jump to.')
+                myscr.addstr(2,0,'Enter T or B for top or bottom plus inning to jump to.')
+                myscr.addstr(3,0,'Example: T6 to jump to Top of 6th inning.')
+                myscr.addstr(4,0,'Enter E for Extra Innings.')
+                myscr.addstr(5,0,'Press <Enter> to return to listings.')
+                # skip a line, print top half innings
+                inn_str = ' '*5 + '[1] [2] [3] [4] [5] [6] [7] [8] [9] [Extra]'
+                latest = 0
+                for city in ( 'away', 'home' ):
+                    team = available[current_cursor][0][city]
+                    if len(team) < 3:
+                        pad = 1
+                    else:
+                        pad = 0
+                    if city == 'away':
+                        top_str = ' '*pad + team + ' '
+                    else:
+                        bot_str = ' '*pad + team + ' '
+                for i in range(21):
+                    if i == 0:
+                         continue
+                    if innings.has_key(i):
+                        log.write('this_event: ' + this_event + ' has_key(' + str(i) + ') = ' + repr(innings[i]) + '\n')
+                        if i > 10:
+                            bot_str += ' [+]'
+                            if (i - 10) >= latest:
+                                latest = i
+                        else:
+                            top_str += ' [+]'
+                            latest = i
+                    else:
+                        if i > 10:
+                            bot_str += ' [-]'
+                        else:
+                            top_str += ' [-]'
+                if cfg['show_inning_frames']:
+                    myscr.addstr(7,0,'[+] = Half inning is available')
+                    myscr.addstr(8,0,'[-] = Half inning is not available')
+                    myscr.addstr(12,0,inn_str)
+                    myscr.addstr(14,0,top_str)
+                    myscr.addstr(16,0,bot_str)
+                latest_str = 'Last available half inning is: '
+                if latest == 0:
+                    latest_str += 'None'
+                elif latest < 10:
+                    latest_str += 'Top ' + str(latest)
+                elif latest < 20:
+                    latest_str += 'Bot ' + str(latest - 10)
+                else:
+                    latest_str += 'Extra Innings'
+                myscr.addstr(curses.LINES-3,0,latest_str)
+                #myscr.addstr(curses.LINES-1,0,'Press l to return to listings...')
+                myscr.refresh()
+
+                # now for some input
+                jump_prompt = 'Enter half inning to jump to: '
+                jump = prompter(statuswin, jump_prompt)
+                if jump == '':
+                    # return to listings
+                    continue
+                jump_pat = re.compile(r'(B|T|E)([1-9])?')
+                match = re.search(jump_pat, jump.upper())
+                if match is None:
+                    statuswin.clear()
+                    statuswin.addstr(0,0,'You have entered invalid half inning. Returning to listings...')
+                    statuswin.refresh()
+                    time.sleep(3)
+                    continue
+                elif match.groups()[0] == 'E':
+                    try:
+                        start_time = innings[10]
+                    except KeyError:
+                        statuswin.clear()
+                        statuswin.addstr(0,0,'You have entered invalid half inning. Returning to listings...')
+                        statuswin.refresh()
+                        time.sleep(3)
+                        continue
+                elif match.groups()[1] is None:
+                    statuswin.clear()
+                    statuswin.addstr(0,0,'You have entered invalid half inning. Returning to listings...')
+                    statuswin.refresh()
+                    time.sleep(3)
+                    continue
+                elif match.groups()[0] == 'B':
+                    log.write('Matched ' + match.groups()[1] + ' inning.\n')
+                    inning = int(match.groups()[1]) + 10
+                elif match.groups()[0] == 'T':
+                    log.write('Matched ' + match.groups()[1] + ' inning.\n')
+                    inning = int(match.groups()[1])
+                try:
+                    start_time = innings[inning]
+                except KeyError:
+                    statuswin.clear()
+                    statuswin.addstr(0,0,'You have entered invalid half inning. Returning to listings...')
+                    statuswin.refresh()
+                    time.sleep(3)
+                    continue
+                log.write('Selected start_time = ' + str(start_time))
+                audio = False
+                player = cfg['video_player']
+                # END INNINGS SCREEN
             else:
                 audio = False
                 player = cfg['video_player']
@@ -988,10 +1146,9 @@ def mainloop(myscr,cfg):
                         if str(available[current_cursor][4]) in ('I', 'D'):
                             if cfg['live_from_start']:
                                 start_time=0
-                            else:
-                                start_time=None
                         else:
-                            start_time=0
+                            if start_time is None:
+                                start_time=0
 
 
                         g = GameStream(stream, cfg['user'], cfg['pass'],
@@ -1250,6 +1407,7 @@ if __name__ == "__main__":
                   'use_nexdef': 1,
                   'strict_stream': 1,
                   'coverage' : 'home',
+                  'show_inning_frames': 1,
                   'flash_browser': DEFAULT_FLASH_BROWSER}
 
     # Auto-install of default configuration file
