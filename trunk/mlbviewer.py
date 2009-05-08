@@ -843,7 +843,8 @@ def mainloop(myscr,cfg):
                 time.sleep(1)
 
         if c in ('Flash', ord('f')):
-            flash_url = 'http://mlb.mlb.com/flash/mediaplayer/v4/RC11/MP4.jsp?calendar_event_id='
+            #flash_url = 'http://mlb.mlb.com/flash/mediaplayer/v4/RC11/MP4.jsp?calendar_event_id='
+            flash_url = 'http://mlb.mlb.com/media/player/entry.jsp?calendar_event_id='
             flash_url += event_id
             try:
                 browser_cmd_str = cfg['flash_browser'].replace('%s',flash_url)
