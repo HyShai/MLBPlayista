@@ -859,6 +859,7 @@ class MLBSchedule:
                     # if the hrs is less than 8, this must be an extra innings
                     # game that has gone into the next day.  add 24 hrs.
                     # why 8?  there is never an 8am EST start time
+                    # nor an extra hours game that goes this late
                     if int(hrs) <= 8:
                         msec += 3600 * 24 * 1000
                     out.append((number, is_top, msec))

@@ -895,6 +895,9 @@ def mainloop(myscr,cfg):
                     continue
                 # hate inserting a whole other screen here, but I'm 
                 # eventually writing a new gui library
+                statuswin.clear()
+                statuswin.addstr(0,0,'Fetching innings index...')
+                statuswin.refresh()
                 innings = {}
                 try:
                     try:
@@ -948,7 +951,7 @@ def mainloop(myscr,cfg):
                     if i == 0:
                          continue
                     if innings.has_key(i):
-                        log.write('this_event: ' + this_event + ' has_key(' + str(i) + ') = ' + repr(innings[i]) + '\n')
+                        #log.write('this_event: ' + this_event + ' has_key(' + str(i) + ') = ' + repr(innings[i]) + '\n')
                         if i > 10:
                             bot_str += ' [+]'
                             if (i - 10) >= latest:
