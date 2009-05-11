@@ -1320,10 +1320,34 @@ def mainloop(myscr,cfg):
                                         myscr.addstr(e,0,str(e-1) + ' ) ' + speed_str + g.encodings[int(speed)][0])
                                     e += 1
                             try:
-                                status_str =  'STREAM: ' + g.current_encoding[0]
-                                status_str += '\nKBPS  : ' + g.current_encoding[1]
-                                status_str += '\nMS    : ' + g.current_encoding[2]
-                                myscr.addstr(curses.LINES-5,0,status_str)
+                                ( stream, kbps, millis ) = g.current_encoding
+                                sec = int(millis) / 1000
+                                hrs = sec / 3600
+                                min = ( sec % 3600 ) / 60
+                                sec = sec - ( hrs * 3600 + min * 60 )
+                                ms = int(millis) - ( hrs * 3600 + min * 60 + sec ) * 1000
+                                # now do some str formatting
+                                hrs = str(hrs)
+                                min = str(min)
+                                sec = str(sec)
+                                ms = str(ms)
+                                if len(hrs) < 2:
+                                    hrs = '0' + hrs
+                                if len(min) < 2:
+                                    min = '0' + min
+                                if len(sec) < 2:
+                                    sec = '0' + sec
+                                if len(ms) < 2:
+                                    ms = '00' + ms
+                                elif len(ms) < 3:
+                                    ms = '0' + ms
+                                status_str =  'STREAM: ' + stream
+                                status_str += '\nKBPS  : ' + kbps
+                                status_str += '\nMS    : ' + millis
+                                status_str += '\nTIME  : ' + hrs + ':' +\
+                                               min + ':' + sec + '.'+\
+                                               ms + ' ET'
+                                myscr.addstr(curses.LINES-6,0,status_str)
                                 myscr.refresh()
                             except:
                                 pass
