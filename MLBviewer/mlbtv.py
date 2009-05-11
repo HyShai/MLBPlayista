@@ -1269,8 +1269,14 @@ class GameStream:
         req = urllib2.Request(url)
         try:
             rsp = urllib2.urlopen(req)
-        except:
-            self.error_str = "Could not connect to NexDef.  Is autobahn.jar running?"
+        except IOError,e:
+            try:
+                if hasattr(e, 'code') and e.code == 400:
+                    self.error_str = 'Nexdef reports that requested stream is not available.'
+                else:
+                    self.error_str = e.msg
+            except:
+                self.error_str = "Could not connect to NexDef.  Is autobahn.jar running?"
             raise Exception,self.error_str
         # parse the stream descriptions for time of head of stream
         try:
