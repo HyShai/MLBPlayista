@@ -24,8 +24,8 @@ import time
 import pickle
 import copy
 
-DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -really-quiet'
-DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -really-quiet'
+DEFAULT_V_PLAYER = 'mplayer -cache 2048 -really-quiet'
+DEFAULT_A_PLAYER = 'mplayer -cache 64 -really-quiet'
 DEFAULT_SPEED = '800'
 STREAM_SPEEDS = ( '164', '400', '600', '800', '1200', '1800', '2200', '3000' )
 
@@ -952,7 +952,10 @@ def mainloop(myscr,cfg):
                          continue
                     if innings.has_key(i):
                         #log.write('this_event: ' + this_event + ' has_key(' + str(i) + ') = ' + repr(innings[i]) + '\n')
-                        if i > 10:
+                        # remove spoiler of home victories
+                        if i == 19:
+                            bot_str += ' [?]'
+                        elif i > 10:
                             bot_str += ' [+]'
                             if (i - 10) >= latest:
                                 latest = i
@@ -960,19 +963,26 @@ def mainloop(myscr,cfg):
                             top_str += ' [+]'
                             latest = i
                     else:
-                        if i > 10:
+                        # remove spoiler of home victories
+                        if i == 19:
+                            bot_str += ' [?]'
+                        elif i > 10:
                             bot_str += ' [-]'
                         else:
                             top_str += ' [-]'
                 if cfg['show_inning_frames']:
                     myscr.addstr(7,0,'[+] = Half inning is available')
                     myscr.addstr(8,0,'[-] = Half inning is not available')
+                    myscr.addstr(9,0,'[?] = Bottom of 9th availability is never shown to avoid spoilers')
                     myscr.addstr(12,0,inn_str)
                     myscr.addstr(14,0,top_str)
                     myscr.addstr(16,0,bot_str)
                 latest_str = 'Last available half inning is: '
                 if latest == 0:
                     latest_str += 'None'
+                elif available[current_cursor][4] in ('F','CG','GO'):
+                    # remove spoiler of home victories
+                    latest_str += 'Game Completed'
                 elif latest < 10:
                     latest_str += 'Top ' + str(latest)
                 elif latest < 20:
