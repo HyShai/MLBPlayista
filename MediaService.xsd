@@ -81,9 +81,11 @@
 	<complexType name="UserVerifiedContent">
 		<sequence>
 			<element name="content-id" type="xsd:long"/>
-            <element minOccurs="0" name="type" type="xsd:string"/> <!-- HACKED HERE, added -->
+            		<element minOccurs="0" name="type" type="xsd:string"/> 
+			<!-- HACKED HERE, added -->
 			<element maxOccurs="unbounded" name="user-verified-media-item" type="tns:UserVerifiedMediaItem"/>
 			<element minOccurs="0" name="domain-specific-attributes" type="tns:MediaAttributes"/>
+			<element minOccurs="0" name="view-keys" type="tns:ViewKeys"/>
 		</sequence>
 	</complexType>
 	<complexType name="UserVerifiedMediaItem">
@@ -110,6 +112,16 @@
         <element minOccurs="0" name="cdn" type="xsd:string"/> <!-- HACKED HERE, added -->
         <element minOccurs="0" name="sequence" type="xsd:long"/> <!-- HACKED HERE, added -->
         <element minOccurs="0" name="duration" nillable="true" type="xsd:string"/> <!-- HACKED HERE, added -->
+		</sequence>
+	</complexType>
+	<complexType name="ViewKeys">
+		<sequence>
+			<element maxOccurs="unbounded" minOccurs="0" name="view-key" type="tns:ViewKey"/>
+		</sequence>
+	</complexType>
+	<complexType name="ViewKey">
+		<sequence>
+			<element maxOccurs="unbounded" minOccurs="0" name="key" type="xsd:string" nillable="true"/>
 		</sequence>
 	</complexType>
 	<complexType name="MediaAttributes">
