@@ -15,8 +15,8 @@ logging.getLogger('suds.client').setLevel(logging.DEBUG)
 from suds.client import Client
 from suds import WebFault
 
-DEFAULT_PLAYER = 'mplayer -dumpstream %s -dumpfile %f'
-#DEFAULT_PLAYER = 'mplayer -fs -really-quiet -autosync 30 %s'
+#DEFAULT_PLAYER = 'mplayer -dumpstream %s -dumpfile %f'
+DEFAULT_PLAYER = 'mplayer -really-quiet -autosync 30 %s'
 #DEFAULT_PLAYER = 'mplayer -autosync 30 %s'
 
 url = 'file://'
