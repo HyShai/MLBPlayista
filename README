@@ -93,7 +93,7 @@ use_nexdef=True/False (Default: True)
 
 live_from_start=True/False (Default: False)
 
-max_bps=x (Default: 800000 or 800K)
+max_bps=x (Default: 800000, use 3000000 to for HD)
 
 flash_browser=x (Default: firefox %s &)
 
@@ -111,7 +111,7 @@ NOTE: Top Plays don't require a login, but these parameters are still mandatory.
 You can include them as user= and pass= without values if you don't have an 
 mlb.com account and only intend to use Top Plays feature.
 
-speed =x (speed for streaming video, 800 or 400)
+speed =x (speed for streaming video, 800 or 400, non-NexDef only)
 
 video_player = x (use %s for url, otherwise it will come at the end)
 
@@ -254,9 +254,32 @@ key.  In this case, the [NEXD] indicator will change to [800K] or [600K]
 depending on your speed setting from last year (if you have speed=400, you
 will actually see [600K] for your speed setting.)
 
-+ Jump To Innings (Not yet - but planned)
++ Jump To Innings (Yes)
 
-+ Qualtiy Bars / Disable Auto-Adjust Quality (Not yet - but planned)
+Mlbviewer implements jump to innings slightly different than the Flash player.
+In the flash player, you can jump to an inning at any time during the playback.
+In mlbviewer, you can use the 'i' key (instead of "Enter") on a highlighted
+game to open the Jump to Innings screen.  On this screen, you will see a 
+line score graphic (without scores, no spoilers!) and you'll be told which
+is the last available half inning.  The bottom of the 9th will always show as
+'?' so as not to reveal a home victory spoiler.  Jump to extra innings is not 
+yet working.  To jump to a half inning, use 'b' or 't' (for bottom or top) plus the inning number.  For example, to jump to the bottom of the 9th, you would 
+type 'b9' in the Jump To Inning prompt.
+
++ Qualtiy Bars / Disable Auto-Adjust Quality (Yes)
+
+Mlbviewer has a stream selection screen that appears in the mlbviewer window
+after playback begins.  The streams available in this screen depends on the 
+max_bps configuration file option.  Only streams less than or equal to your 
+max_bps setting will appear as available in this screen.  Set max_bps to 3000000
+(3 million) to see all available streams.  You can then select a stream by the
+number given to the stream name.  The speed of the stream will appear in 
+brackets next to the number and name.  Selecting a stream in this screen 
+also turns off auto-adjust quality, though you may still get a downshift in 
+speed if the selected stream is unavailable (from the network side) or if 
+NexDef determines, based on network or system performance, that it can't 
+deliver that stream at that time.  These are usually temporary errors and 
+you can retry the stream selection at any time.
 
 + Live Game Highlights (Not yet - maybe planned?)
 
