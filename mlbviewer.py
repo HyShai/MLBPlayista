@@ -173,7 +173,7 @@ def mainloop(myscr,cfg):
         except curses.error:
             pass
 
-    myscr = curses.initscr()
+    #myscr = curses.initscr()
 
     # This will be used for statuslines
     statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
@@ -336,15 +336,16 @@ def mainloop(myscr,cfg):
                         # Next if 'HD' is in the call letters, light up the HD 
                         # indicator
                         hd_pat = re.compile(r'HD')
-                        for myteam in range(len(available[n][2])):
-                            if available[n][2][myteam][1] == mycoverage:
+                        if use_xml:
+                            for myteam in range(len(available[n][2])):
                                 try:
-                                    ( call_letters, 
-                                      team_id, 
-                                      content_id , 
-                                      event_id ) = available[n][2][myteam]
+                                    if available[n][2][myteam][1] == mycoverage:
+                                        ( call_letters, 
+                                          team_id, 
+                                          content_id , 
+                                          event_id ) = available[n][2][myteam]
                                 except:
-                                    raise Exception,repr(available[n][2][myteam])
+                                    raise Exception,repr(available[n][2])
                         try:
                             call_letters
                         except:
@@ -1147,7 +1148,10 @@ def mainloop(myscr,cfg):
                             time.sleep(2)
                             continue
                     else:
-                        stream = available[current_cursor][2][myteam]
+                        if use_xml:
+                            stream = available[current_cursor][2][myteam]
+                        else:
+                            stream = available[current_cursor][2]
                     if mysched.use_xml:
                         if away in cfg['video_follow']:
                             coverage = TEAMCODES[away][0]
@@ -1203,7 +1207,10 @@ def mainloop(myscr,cfg):
                     myscr.refresh()
                     time.sleep(3)
                     continue
-                call_letters = g.call_letters
+                try:
+                    call_letters = g.call_letters
+                except:
+                    call_letters = 'MLB'
 
                 # removing over 200 lines of else to the except above (892-1136)
                 if cfg['debug']:
@@ -1220,13 +1227,13 @@ def mainloop(myscr,cfg):
                     continue
                 try:
                     if '%s' in player:
-                        if cfg['use_nexdef'] and not audio:
+                        if ( cfg['use_nexdef'] and not audio ) or not use_xml:
                             cmd_str = player.replace('%s', '"' + u + '"')
                         else:
                             cmd_str = player.replace('%s', '-')
-                            cmd_str = u + ' | ' + player
+                            cmd_str  = u + ' | ' + cmd_str
                     else:
-                        if cfg['use_nexdef'] and not audio:
+                        if ( cfg['use_nexdef'] and not audio ) or not use_xml:
                             cmd_str = player + ' "' + u + '" '
                         else:
                             cmd_str = u + ' | ' + player + ' - '
@@ -1356,7 +1363,7 @@ def mainloop(myscr,cfg):
                                 status_str += '\nMS    : ' + millis
                                 status_str += '\nTIME  : ' + hrs + ':' +\
                                                min + ':' + sec + '.'+\
-                                               ms + ' ET'
+                                               ms + ' ET\n'
                                 myscr.addstr(curses.LINES-6,0,status_str)
                                 myscr.refresh()
                             except:
