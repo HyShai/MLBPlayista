@@ -302,12 +302,12 @@ except:
     play_path = None
 try:
     if play_path is None:
-        live_sub_pat = re.compile(r'live\/mlb_s800(.*)\?')
+        live_sub_pat = re.compile(r'live\/mlb_s(.*)\?')
         sub_path = re.search(live_sub_pat,game_url).groups()[0]
-        sub_path = 'mlb_s800' + sub_path
-        live_play_pat = re.compile(r'live\/mlb_s800(.*)$')
+        sub_path = 'mlb_s' + sub_path
+        live_play_pat = re.compile(r'live\/mlb_s(.*)$')
         play_path = re.search(live_play_pat,game_url).groups()[0]
-        play_path = 'mlb_s800' + play_path
+        play_path = 'mlb_s' + play_path
         app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
         bSubscribe = True
         
@@ -411,7 +411,7 @@ if bSubscribe:
     cmd_str += ' -v'
 if app is not None:
     cmd_str += ' -a "' + app + '"'
-    cmd_str += ' -o - '
+cmd_str += ' -o - '
 cmd_str = cmd_str.replace('%e', event_id)
 cmd_str += ' | mplayer -autosync 30 -really-quiet -cache 8196 -'
 try:
