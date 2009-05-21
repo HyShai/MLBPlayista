@@ -57,7 +57,7 @@ SOAPCODES = {
     "1"    : "OK",
     "-1000": "Requested Media Not Found",
     "-1500": "Other Undocumented Error",
-    "-1600": "Requested Media Not Archived Yet.",
+    "-1600": "Requested Media Available Yet.",
     "-2000": "Authentication Error",
     "-2500": "Blackout Error",
     "-3000": "Identity Error",
@@ -1446,16 +1446,16 @@ class GameStream:
                     self.app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
                 else:
                     try:
-                        live_sub_pat = re.compile(r'live\/mlb_s800(.*)\?')
+                        live_sub_pat = re.compile(r'live\/mlb_s(.*)\?')
                         self.sub_path = re.search(live_sub_pat,game_url).groups()[0]
-                        self.sub_path = 'mlb_s800' + self.sub_path
+                        self.sub_path = 'mlb_s' + self.sub_path
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream subscribe path: ' + str(detail)
                         raise Exception,self.error_str
                     try:
-                        live_path_pat = re.compile(r'live\/mlb_s800(.*)$')
+                        live_path_pat = re.compile(r'live\/mlb_s(.*)$')
                         self.play_path = re.search(live_path_pat,game_url).groups()[0]
-                        self.play_path = 'mlb_s800' + self.play_path
+                        self.play_path = 'mlb_s' + self.play_path
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream play path: ' + str(detail)
                         raise Exception,self.error_str
