@@ -703,7 +703,10 @@ class MLBSchedule:
             self.error_str = 'Error parsing condensed game location'
             self.error_str += '\n\n' + str(detail)
             raise
-        out = str(media.getElementsByTagName('url')[0].childNodes[0].data)
+        for url in media.getElementsByTagName('url'):
+            if url.getAttribute('playback_scenario') == 'MLB_FLASH_1000K_PROGDNLD':
+                
+                out = str(url.childNodes[0].data)
         return out
             
         
