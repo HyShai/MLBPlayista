@@ -1130,11 +1130,18 @@ def mainloop(myscr,cfg):
                                 else:
                                     cmd_str = player + ' ' + stream
                                 try:
-                                    player_process = subprocess.Popen(cmd_str,
-                                                                   shell=True)
                                     myscr.clear()
                                     myscr.addstr(0,0,cmd_str)
                                     myscr.refresh()
+                                    if cfg['debug']:
+                                        statuswin.clear()
+                                        statuswin.addstr('Debug set, showing URL but not playing it...')
+                                        statuswin.refresh()
+                                        time.sleep(2)
+                                        continue
+                                    myscr.refresh()
+                                    player_process = subprocess.Popen(cmd_str,
+                                                                   shell=True)
                                     player_process.wait()
                                 except:
                                     raise
