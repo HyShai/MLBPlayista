@@ -112,6 +112,7 @@
         <element minOccurs="0" name="cdn" type="xsd:string"/> <!-- HACKED HERE, added -->
         <element minOccurs="0" name="sequence" type="xsd:long"/> <!-- HACKED HERE, added -->
         <element minOccurs="0" name="duration" nillable="true" type="xsd:string"/> <!-- HACKED HERE, added -->
+	<element minOccurs="0" name="platform" type="xsd:string"/> <!-- HACKED HERE, added -->
 		</sequence>
 	</complexType>
 	<complexType name="ViewKeys">
