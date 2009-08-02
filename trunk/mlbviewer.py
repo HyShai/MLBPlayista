@@ -271,9 +271,11 @@ def mainloop(myscr,cfg):
 
         padding = curses.COLS - (len(titlestr) + 6)
         titlestr += ' '*padding
-        pos = len(titlestr)
+        #pos = len(titlestr)
+        pos = curses.COLS - 6
 
         # Draw the date
+        #titlewin.addstr(0,0,titlestr[:curses.COLS-6])
         titlewin.addstr(0,0,titlestr)
         titlewin.addstr(0,pos,'H', curses.A_BOLD)
         titlewin.addstr(0,pos+1,'elp')
@@ -327,12 +329,18 @@ def mainloop(myscr,cfg):
                             status_str += ' (No audio available)'
                         # Is the preferred coverage in HD?
                         # First see if home or away is in video_follow
-                        if home in cfg['video_follow']:
-                            mycoverage = TEAMCODES[home][0]
-                        elif away in cfg['video_follow']:
-                            mycoverage = TEAMCODES[away][0]
-                        else:
-                            mycoverage = TEAMCODES[available[n][0][cfg['coverage']]][0]
+                        try:
+                            if home in cfg['video_follow']:
+                                mycoverage = TEAMCODES[home][0]
+                            elif away in cfg['video_follow']:
+                                mycoverage = TEAMCODES[away][0]
+                            else:
+                                mycoverage = TEAMCODES[available[n][0][cfg['coverage']]][0]
+                            #use_xml = True
+                        except:
+                            call_letters = ""
+                            myteam = 0
+                            use_xml = False
                         # Next if 'HD' is in the call letters, light up the HD 
                         # indicator
                         hd_pat = re.compile(r'HD')
@@ -346,6 +354,8 @@ def mainloop(myscr,cfg):
                                           event_id ) = available[n][2][myteam]
                                 except:
                                     raise Exception,repr(available[n][2])
+                        else:
+			    hd_available = False
                         try:
                             call_letters
                         except:
@@ -1159,7 +1169,7 @@ def mainloop(myscr,cfg):
                             stream = available[current_cursor][2][myteam]
                         else:
                             stream = available[current_cursor][2]
-                    if mysched.use_xml:
+                    if use_xml:
                         if away in cfg['video_follow']:
                             coverage = TEAMCODES[away][0]
                         elif home in cfg['video_follow']:
