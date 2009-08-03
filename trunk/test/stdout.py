@@ -413,7 +413,7 @@ if app is not None:
     cmd_str += ' -a "' + app + '"'
 cmd_str += ' -o - '
 cmd_str = cmd_str.replace('%e', event_id)
-cmd_str += ' | mplayer -autosync 30 -really-quiet -cache 8196 -'
+cmd_str += ' | mplayer -autosync 30 -really-quiet -cache 8196 -fs -'
 try:
     print "\nplay_path = " + play_path
     print "\nsub_path  = " + sub_path
