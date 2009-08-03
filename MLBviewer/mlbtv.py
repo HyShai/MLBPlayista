@@ -1135,6 +1135,8 @@ class GameStream:
                 for i in range(len(stream['domain-specific-attributes']['domain-attribute'])):
                     domain_attr = stream['domain-specific-attributes']['domain-attribute'][i]
                     dict[domain_attr._name] = domain_attr
+                if 'in-market' in str(dict['coverage_type']):
+                    continue
                 try:
                     cov_pat = re.compile(r'([0-9][0-9]*)')
                     coverage = re.search(cov_pat, str(dict['coverage_association'])).groups()[0]
