@@ -374,6 +374,10 @@ class MLBSchedule:
                if tmp['playback_scenario'] in \
                      ('MLB_FLASH_600K_STREAM', 'MLB_FLASH_800K_STREAM',
                       'MLB_FLASH_SWARMCLOUD'):
+                   try:
+                       tmp['blackout']
+                   except:
+                       tmp['blackout'] = ""
                    if tmp['blackout'] == 'MLB_NATIONAL_BLACKOUT':
                        content['blackout'] = tmp['blackout']
                    else:
@@ -466,6 +470,11 @@ class MLBSchedule:
             except:
                 dct['status'] = game['status'] 
             if game['status'] in ('In Progress','Preview','Delayed','Warm-up'):
+                try:
+                    game['content']['blackout']
+                except:
+                    # damn bogus WBC entries
+                    game['content']['blackout'] = ""
                 if game['content']['blackout'] == 'MLB_NATIONAL_BLACKOUT':
                     dct['status'] = 'NB'
             dct['gameid'] = game['id']
