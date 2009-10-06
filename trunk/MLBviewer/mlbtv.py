@@ -1144,6 +1144,8 @@ class GameStream:
                 for i in range(len(stream['domain-specific-attributes']['domain-attribute'])):
                     domain_attr = stream['domain-specific-attributes']['domain-attribute'][i]
                     dict[domain_attr._name] = domain_attr
+                if 'mlb_multiangle_epg' in str(dict['in_epg']):
+                    continue
                 if 'in-market' in str(dict['coverage_type']):
                     continue
                 try:
