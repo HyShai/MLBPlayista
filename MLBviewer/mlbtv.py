@@ -881,7 +881,11 @@ class MLBSchedule:
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,
                  auth=True, streamtype='video',use_soap=False,speed=800,
-                 coverage=None,use_nexdef=False,max_bps=800000,start_time=0):
+                 coverage=None,use_nexdef=False,max_bps=800000,start_time=0,
+                 postseason=False,camera=0):
+        self.postseason = postseason
+        self.camera = camera
+        self.this_camera = 0
         self.use_nexdef = use_nexdef
         self.rec_process = None
         self.start_time = start_time
@@ -1144,8 +1148,12 @@ class GameStream:
                 for i in range(len(stream['domain-specific-attributes']['domain-attribute'])):
                     domain_attr = stream['domain-specific-attributes']['domain-attribute'][i]
                     dict[domain_attr._name] = domain_attr
-                if 'mlb_multiangle_epg' in str(dict['in_epg']):
-                    continue
+                if self.postseason == True:
+                    if 'mlb_mp4_epg' in str(dict['in_epg']):
+                        continue
+                else:
+                    if 'mlb_multiangle_epg' in str(dict['in_epg']):
+                        continue
                 if 'in-market' in str(dict['coverage_type']):
                     continue
                 try:
@@ -1161,6 +1169,10 @@ class GameStream:
                     raise Exception,repr(call_letters)
                 for media in stream['user-verified-media-item']:
                     #raise Exception,repr(media['media-item']['state'])
+                    if self.postseason == True:
+                        if self.this_camera != self.camera:
+                            self.this_camera += 1
+                            continue
                     state = media['media-item']['state']
                     scenario = media['media-item']['playback-scenario']
                     if scenario == self.scenario and\
