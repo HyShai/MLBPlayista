@@ -180,7 +180,7 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
         '2007': (datetime.datetime(2007,3,11),datetime.datetime(2007,11,4)),
         '2008': (datetime.datetime(2008,3,9),datetime.datetime(2008,11,2)),
         '2009': (datetime.datetime(2009,3,8),datetime.datetime(2009,11,1)),
-        '2010': (datetime.datetime(2009,3,14),datetime.datetime(2009,11,7)),
+        '2010': (datetime.datetime(2010,3,14),datetime.datetime(2010,11,7)),
                }
     now = datetime.datetime.now()            
     if (now >= DAYLIGHT[str(now.year)][0]) \
