@@ -322,11 +322,11 @@ def mainloop(myscr,cfg):
                         status_str = 'Press L to return to listings...'
                     else:
                         status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
-			if available[n][2] is None and available[n][3] is None:
+			if len(available[n][2]) + len(available[n][3]) == 0:
                             status_str += ' (No media available)'
-                        elif available[n][2] is None:
+                        elif len(available[n][2]) == 0:
                             status_str += ' (No video available)'
-                        elif available[n][3] is None:
+                        elif len(available[n][3]) == 0:
                             status_str += ' (No audio available)'
                         # Is the preferred coverage in HD?
                         # First see if home or away is in video_follow
