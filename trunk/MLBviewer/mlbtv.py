@@ -970,7 +970,7 @@ class GameStream:
             self.subject  = "MLBCOM_GAMEDAY_AUDIO"
         else:
             if self.use_nexdef:
-                self.scenario = 'FLASH_1200K_800X448'
+                self.scenario = 'MLB_FLASH_SWARMCLOUD'
             elif str(self.speed) == '400':
                 self.scenario = "FLASH_500K_400X224"
             else:
