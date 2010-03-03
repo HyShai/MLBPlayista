@@ -444,6 +444,24 @@ def mainloop(myscr,cfg):
         elif LIRC:
             if irc_socket in inputs:
                 c = irc_conn.next_code()
+
+        if c in ('Angles', ord('y')):
+            myscr.clear()
+            titlewin.clear()
+            statuswin.clear()
+            myscr.refresh()
+            titlewin.addstr(0,0,"CAMERA VIEWS AVAILABLE:")
+            titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
+            titlewin.refresh()
+            statuswin.addstr(0,0,"Requesting multi-angle descriptions...")
+            statuswin.refresh()
+            eid  = available[current_cursor][2][0][3]
+            cameras = mysched.getMultiAngleFromXml(eid)
+            myscr.addstr(2,0,repr(cameras))
+            myscr.refresh()
+            statuswin.clear()
+            statuswin.refresh()
+            myscr.getch()
         
         if c in ('CameraPrev', ord(',')):
             camera -= 1

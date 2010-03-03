@@ -213,6 +213,7 @@ def mainloop(myscr,cfg):
     use_xml = mysched.use_xml
 
     statusline = {
+        "E" : "Status: Completed Early",
         "I" : "Status: In Progress",
         "W" : "Status: Not Yet Available",
         "F" : "Status: Final",
