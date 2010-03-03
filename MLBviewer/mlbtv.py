@@ -69,6 +69,7 @@ SOAPCODES = {
 # that were used in the json days.  Oh, those were the days. ;-)
 STATUSCODES = {
     "In Progress"     : "I",
+    "Completed Early" : "E",
     "Final"           : "F",
     "Preview"         : "P",
     "Postponed"       : "PO",
@@ -278,6 +279,11 @@ class MLBSchedule:
             + padstr(self.year)\
             + "/month_" + padstr(self.month)\
             + "/day_" + padstr(self.day) + "/grid.xml"
+        self.multiangle = "http://gdx.mlb.com/components/game/mlb/year_"\
+            + padstr(self.year)\
+            + "/month_" + padstr(self.month)\
+            + "/day_" + padstr(self.day) + "/multi_angle_epg.xml"
+        # For BETA testing, use my own xml
         # For BETA testing, use my own xml
         #self.epg = "http://eds.org/~straycat/wbc_epg.xml"
         self.xmltime = datetime.datetime(2009, 3, 30)
@@ -313,6 +319,39 @@ class MLBSchedule:
         fp.close()
         return out
 
+    def getMultiAngleFromXml(self,event_id):
+        out = []
+        camerainfo = dict()
+        txheaders = {'User-agent' : USERAGENT}
+        data = None
+        req = urllib2.Request(self.multiangle,data,txheaders)
+        try:
+            fp = urllib2.urlopen(req)
+        except urllib2.HTTPError:
+            raise MLBUrlError
+        xp = parse(fp)
+        for node in xp.getElementsByTagName('game'):
+            id = node.getAttribute('calendar_event_id')
+            if id != event_id:
+                continue
+            home = node.getAttribute('home_file_code')
+            away = node.getAttribute('away_file_code')
+            title  = ' '.join(TEAMCODES[away][1:]).strip() + ' at '
+            title += ' '.join(TEAMCODES[home][1:]).strip()
+            camerainfo[id] = dict()
+            camerainfo[id]['angles'] = []
+            for attr in node.attributes.keys():
+                camerainfo[id][attr] = node.getAttribute(attr)
+            for angle in node.getElementsByTagName('angle'):
+                cdict = dict()
+                for attr in angle.attributes.keys():
+                    cdict[attr] = angle.getAttribute(attr)
+                media = angle.getElementsByTagName('media')[0]
+                cdict['content_id'] = media.getAttribute('content_id')
+                camerainfo[id]['angles'].append(cdict)
+            out.append(camerainfo[id])
+        return out
+
     def __scheduleFromXml(self):
         out = []
         gameinfo = dict()
@@ -327,7 +366,6 @@ class MLBSchedule:
                 media_detail = media.getElementsByTagName('media')[0]
                 gameinfo[id]['state'] = media_detail.getAttribute('media_state')
             except:
-                #raise
                 gameinfo[id]['media_state'] = 'media_dead'
             try:
                 gameinfo[id]['time']
@@ -362,7 +400,7 @@ class MLBSchedule:
                continue
                raise Exception,repr(tmp)
            if tmp['type'] in ('home_audio','away_audio'):
-               if tmp['playback_scenario'] == 'MLB_FMS_AUDIO_32K_STREAM':
+               if tmp['playback_scenario'] == 'AUDIO_FMS_32K':
                    if tmp['type'] == 'away_audio':
                        coverage = away
                    elif tmp['type'] == 'home_audio':
@@ -372,8 +410,8 @@ class MLBSchedule:
                    content['audio'].append(out)
            elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
                if tmp['playback_scenario'] in \
-                     ('MLB_FLASH_600K_STREAM', 'MLB_FLASH_800K_STREAM',
-                      'MLB_FLASH_SWARMCLOUD'):
+                     ('FLASH_1200K_800X448', 'FLASH_800K_400X448',
+                      'FLASH_500K_400X224', 'FLASH_128K_256X144'):
                    try:
                        tmp['blackout']
                    except:
@@ -390,9 +428,9 @@ class MLBSchedule:
                        coverage = home
                    out = (tmp['display'], coverage, tmp['id'], event_id)
                    #print 'Found video: ' + repr(out)
-                   if tmp['playback_scenario'] == 'MLB_FLASH_SWARMCLOUD':
+                   if tmp['playback_scenario'] == 'FLASH_1200K_800X448':
                        content['video']['swarm'].append(out)
-                   elif tmp['playback_scenario'] == 'MLB_FLASH_800K_STREAM':
+                   elif tmp['playback_scenario'] == 'FLASH_800K_400X448':
                        content['video']['800'].append(out)
                    else:
                        content['video']['400'].append(out)
@@ -452,7 +490,7 @@ class MLBSchedule:
         # This is the XML version of trimList
         # easier to write a new method than adapt the old one
         if not self.data:
-            raise MLBJsonError
+            raise MLBJsonError, "No games available today."
         out = []
         for game in self.data:
             dct = {}
@@ -928,15 +966,15 @@ class GameStream:
         #self.auth = auth
         self.debug = debug
         if self.streamtype == 'audio':
-            self.scenario = "MLB_FMS_AUDIO_32K_STREAM"
+            self.scenario = "AUDIO_FMS_32K"
             self.subject  = "MLBCOM_GAMEDAY_AUDIO"
         else:
             if self.use_nexdef:
-                self.scenario = 'MLB_FLASH_SWARMCLOUD'
+                self.scenario = 'FLASH_1200K_800X448'
             elif str(self.speed) == '400':
-                self.scenario = "MLB_FLASH_600K_STREAM"
+                self.scenario = "FLASH_500K_400X224"
             else:
-                self.scenario = "MLB_FLASH_800K_STREAM"
+                self.scenario = "FLASH_800K_400X448"
             self.subject  = "LIVE_EVENT_COVERAGE"
         self.cookies = {}
         self.content_id = None
