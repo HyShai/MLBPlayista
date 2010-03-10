@@ -70,6 +70,7 @@ SOAPCODES = {
 STATUSCODES = {
     "In Progress"     : "I",
     "Completed Early" : "E",
+    "Cancelled"       : "C",
     "Final"           : "F",
     "Preview"         : "P",
     "Postponed"       : "PO",

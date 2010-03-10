@@ -214,6 +214,7 @@ def mainloop(myscr,cfg):
 
     statusline = {
         "E" : "Status: Completed Early",
+        "C" : "Status: Cancelled",
         "I" : "Status: In Progress",
         "W" : "Status: Not Yet Available",
         "F" : "Status: Final",
@@ -640,17 +641,17 @@ def mainloop(myscr,cfg):
             #statuswin.refresh()
 
         # down
-        if c in ('Down', curses.KEY_DOWN):
+        if c in ('Down', curses.KEY_DOWN, ord('.')):
             if current_cursor + 1 < len(available):
                 current_cursor += 1            
         
         # up
-        if c in ('Up', curses.KEY_UP):
+        if c in ('Up', curses.KEY_UP, ord(',')):
             if current_cursor > 0:
                 current_cursor -= 1
 
         # left (backward)
-        if c in ('Left', curses.KEY_LEFT):
+        if c in ('Left', curses.KEY_LEFT, ord('?')):
             # subtract a day:
             t = datetime.datetime(mysched.year, mysched.month, mysched.day)
             opening = datetime.datetime(2008,3,31)
@@ -677,7 +678,7 @@ def mainloop(myscr,cfg):
             current_cursor = 0
 
         # right (foward)
-        if c in ('Right', curses.KEY_RIGHT):
+        if c in ('Right', curses.KEY_RIGHT, ord('!')):
             # add a day:
             t = datetime.datetime(mysched.year, mysched.month, mysched.day)
             now = datetime.datetime.now()
