@@ -48,7 +48,7 @@ except:
 try:
     SCENARIO = sys.argv[2]
 except:
-    SCENARIO = "MLB_FLASH_800K_STREAM"
+    SCENARIO = "FLASH_1200K_800X448"
 
 try:
     content_id = sys.argv[3]
