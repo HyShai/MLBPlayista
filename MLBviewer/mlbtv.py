@@ -1469,14 +1469,14 @@ class GameStream:
         for enc_group in xp.getElementsByTagName('encodingGroup'):
             for enc in enc_group.getElementsByTagName('encoding'):
                 id = str(enc.getAttribute('id'))
-                bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K_STREAM')
+                bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K')
                 bps = re.search(bps_pat, id).groups()[0]
                 self.encoding_group[bps] = id
         for pos in xp.getElementsByTagName('currentPosition'):
             msec = pos.getAttribute('millis')
         for current in xp.getElementsByTagName('currentEncoding'):
             id = str(current.getAttribute('id'))
-            bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K_STREAM')
+            bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K')
             bps = re.search(bps_pat, id).groups()[0]
             self.current_encoding = ( id, bps, msec )
         
