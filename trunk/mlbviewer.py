@@ -1072,6 +1072,7 @@ def mainloop(myscr,cfg):
                         if cfg['debug']:
                             myscr.addstr(0,0,'Url received:')
                             myscr.addstr(1,0,u)
+                            #myscr.getch()
                         else:
                             myscr.addstr(0,0,cmd_str)
                         myscr.refresh()
@@ -1238,6 +1239,7 @@ def mainloop(myscr,cfg):
                     myscr.addstr(0,0,'Url received:')
                     myscr.addstr(1,0,u)
                     myscr.refresh()
+                    #myscr.getch()
                     time.sleep(3)
                 # I'd rather leave an error on the screen but you'll need
                 # to write a lirc handler for getch()
