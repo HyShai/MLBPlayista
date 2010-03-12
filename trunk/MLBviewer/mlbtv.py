@@ -134,6 +134,7 @@ TEAMCODES = {
     'wft': ('WFT', 'World', 'Futures', 'Team' ),
     'uft': ('UFT', 'USA', 'Futures', 'Team' ),
     'cif': ('CIF', 'Cincinnati Futures Team'),
+    't3944': ( 'T3944', 'CPBL All-Stars' ),
     'unk': ( None, 'Unknown', 'Teamcode'),
     'tbd': ( None, 'TBD'),
     't235': ('T235', 'Memphis Redbirds'),
@@ -543,9 +544,9 @@ class MLBSchedule:
             # chosen time zone.
             dct['event_time'] = gameTimeConvert(raw_time, self.shift)
             if not TEAMCODES.has_key(dct['away']):
-                TEAMCODES[dct['away']] = TEAMCODES['unk'] + t
+                TEAMCODES[dct['away']] = TEAMCODES['unk']
             if not TEAMCODES.has_key(dct['home']):
-                TEAMCODES[dct['home']] = TEAMCODES['unk'] + t
+                TEAMCODES[dct['home']] = TEAMCODES['unk']
             #raise Exception,repr(game)
             dct['video'] = {}
             dct['video']['400'] = []
