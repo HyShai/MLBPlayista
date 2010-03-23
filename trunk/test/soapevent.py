@@ -303,12 +303,12 @@ except:
     play_path = None
 try:
     if play_path is None:
-        live_sub_pat = re.compile(r'live\/mlb_s800(.*)\?')
+        live_sub_pat = re.compile(r'live\/mlb_c(.*)\?')
         sub_path = re.search(live_sub_pat,game_url).groups()[0]
-        sub_path = 'mlb_s800' + sub_path
-        live_play_pat = re.compile(r'live\/mlb_s800(.*)$')
+        sub_path = 'mlb_c' + sub_path
+        live_play_pat = re.compile(r'live\/mlb_c(.*)$')
         play_path = re.search(live_play_pat,game_url).groups()[0]
-        play_path = 'mlb_s800' + play_path
+        play_path = 'mlb_c' + play_path
         app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
         bSubscribe = True
         
