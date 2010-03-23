@@ -1514,16 +1514,16 @@ class GameStream:
                     self.app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
                 else:
                     try:
-                        live_sub_pat = re.compile(r'live\/mlb_s(.*)\?')
+                        live_sub_pat = re.compile(r'live\/mlb_c(.*)\?')
                         self.sub_path = re.search(live_sub_pat,game_url).groups()[0]
-                        self.sub_path = 'mlb_s' + self.sub_path
+                        self.sub_path = 'mlb_c' + self.sub_path
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream subscribe path: ' + str(detail)
                         raise Exception,self.error_str
                     try:
-                        live_path_pat = re.compile(r'live\/mlb_s(.*)$')
+                        live_path_pat = re.compile(r'live\/mlb_c(.*)$')
                         self.play_path = re.search(live_path_pat,game_url).groups()[0]
-                        self.play_path = 'mlb_s' + self.play_path
+                        self.play_path = 'mlb_c' + self.play_path
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream play path: ' + str(detail)
                         raise Exception,self.error_str
