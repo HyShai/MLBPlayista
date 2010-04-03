@@ -1438,6 +1438,7 @@ class GameStream:
         selected = (None, 0, 0, 0)
         for time in xp.getElementsByTagName('streamHead'):
             timestamp = time.getAttribute('timeStamp')
+            milliseconds = time.getAttribute('timeStamp')
         try:
             (hrs, min, sec) = timestamp.split(':')
             milliseconds = 1000 * ( int(hrs) * 3600 + int(min) * 60 + int(sec) )
@@ -1447,7 +1448,8 @@ class GameStream:
             if self.start_time is not None and self.start_time > 0:
                 milliseconds = self.start_time
         except:
-            self.start_time = None
+            #self.start_time = None
+            self.start_time = int(milliseconds)
         # return the media url with the correct timestamp
         self.nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps)
         if self.start_time is not None:
@@ -1459,10 +1461,11 @@ class GameStream:
         for enc in xp.getElementsByTagName('encoding'):
             id  = str(enc.getAttribute('id'))
             bps = int(enc.getAttribute('bps'))
-            width = int(enc.getAttribute('width'))
-            height = int(enc.getAttribute('height'))
+            #width = int(enc.getAttribute('width'))
+            #height = int(enc.getAttribute('height'))
             if bps <= int(self.max_bps):
-                self.encodings[bps] = ( id , bps , width, height )
+                #self.encodings[bps] = ( id , bps , width, height )
+                self.encodings[bps] = ( id , bps )
                 #self.encodings.append( selected )
         #raise Exception,repr(self.encodings)
         return self.nexdef_media_url
