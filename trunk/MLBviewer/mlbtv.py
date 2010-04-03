@@ -436,12 +436,14 @@ class MLBSchedule:
                        coverage = home
                    out = (tmp['display'], coverage, tmp['id'], event_id)
                    #print 'Found video: ' + repr(out)
-                   if tmp['playback_scenario'] == 'FLASH_1200K_800X448':
+                   if tmp['playback_scenario'] == 'HTTP_CLOUD_WIRED':
                        content['video']['swarm'].append(out)
-                   elif tmp['playback_scenario'] == 'FLASH_800K_400X448':
+                   elif tmp['playback_scenario'] == 'FLASH_1200K_800X448':
                        content['video']['800'].append(out)
-                   else:
+                   elif tmp['playback_scenario'] == 'FLASH_800K_400X448':
                        content['video']['400'].append(out)
+                   else:
+                       continue
            elif tmp['type'] == 'condensed_game':
                out = ('CG',0,tmp['id'], event_id)
                #print 'Found condensed: ' + repr(out)
@@ -978,11 +980,11 @@ class GameStream:
             self.subject  = "MLBCOM_GAMEDAY_AUDIO"
         else:
             if self.use_nexdef:
-                self.scenario = 'MLB_FLASH_SWARMCLOUD'
+                self.scenario = 'HTTP_CLOUD_WIRED'
             elif str(self.speed) == '400':
-                self.scenario = "FLASH_500K_400X224"
-            else:
                 self.scenario = "FLASH_800K_400X448"
+            else:
+                self.scenario = "FLASH_1200K_800X448"
             self.subject  = "LIVE_EVENT_COVERAGE"
         self.cookies = {}
         self.content_id = None

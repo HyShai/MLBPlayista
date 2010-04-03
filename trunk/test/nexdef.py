@@ -53,7 +53,7 @@ except:
 try:
     SCENARIO = sys.argv[3]
 except:
-    SCENARIO = "MLB_FLASH_SWARMCLOUD"
+    SCENARIO = "HTTP_CLOUD_WIRED"
 
 try:
     content_id = sys.argv[2]
