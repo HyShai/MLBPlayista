@@ -324,11 +324,11 @@ def mainloop(myscr,cfg):
                     else:
                         status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
 			if len(available[n][2]) + len(available[n][3]) == 0:
-                            status_str += ' (No media available)'
+                            status_str += ' (No media)'
                         elif len(available[n][2]) == 0:
-                            status_str += ' (No video available)'
+                            status_str += ' (No video)'
                         elif len(available[n][3]) == 0:
-                            status_str += ' (No audio available)'
+                            status_str += ' (No audio)'
                         # Is the preferred coverage in HD?
                         # First see if home or away is in video_follow
                         try:
@@ -428,7 +428,10 @@ def mainloop(myscr,cfg):
                 myscr.addstr(curses.LINES-2,0,'--End--',curses.A_REVERSE)
 
         # And write the status
-        statuswin.addstr(0,0,status_str,curses.A_BOLD)
+        try:
+            statuswin.addstr(0,0,status_str,curses.A_BOLD)
+        except:
+            raise Exception,status_str
 
         # And refresh
         myscr.refresh() 
