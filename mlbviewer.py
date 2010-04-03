@@ -229,8 +229,8 @@ def mainloop(myscr,cfg):
         "LB": "Status: Local Blackout"}
 
     speedtoggle = {
-        "400" : "[400K]",
-        "800" : "[800K]"}
+        "400" : "[ 800K]",
+        "800" : "[1200K]"}
 
     coveragetoggle = {
         "away" : "[AWAY]",
@@ -285,6 +285,7 @@ def mainloop(myscr,cfg):
         # Draw a line
         titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
 
+        hd_available = False
         for n in range(curses.LINES-4):
             if n < len(available):
                 if 'topPlays' in CURRENT_SCREEN:
