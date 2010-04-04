@@ -413,7 +413,7 @@ def mainloop(myscr,cfg):
         else:
             speedstr = speedtoggle.get(cfg['speed'])
         if cfg['use_nexdef']:
-            speedstr = '[NEXD]'
+            speedstr = '[NEXDF]'
             hdstr = hdtoggle.get(hd_available)
         else:
             hdstr = hdtoggle.get(False)
