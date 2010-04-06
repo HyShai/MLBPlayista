@@ -1204,6 +1204,8 @@ class GameStream:
                         continue
                 if 'in-market' in str(dict['coverage_type']):
                     continue
+                if dict.has_key('language'):
+                    continue
                 try:
                     cov_pat = re.compile(r'([0-9][0-9]*)')
                     coverage = re.search(cov_pat, str(dict['coverage_association'])).groups()[0]
