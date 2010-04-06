@@ -761,7 +761,7 @@ class MLBSchedule:
             self.error_str += '\n\n' + str(detail)
             raise
         for url in media.getElementsByTagName('url'):
-            if url.getAttribute('playback_scenario') == 'MLB_FLASH_1000K_PROGDNLD':
+            if url.getAttribute('playback_scenario') == 'FLASH_1000K_640X360':
                 
                 out = str(url.childNodes[0].data)
         return out
@@ -823,7 +823,7 @@ class MLBSchedule:
             for urls in highlight.getElementsByTagName('url'):
                 scenario = urls.getAttribute('playback_scenario')
                 state    = urls.getAttribute('state')
-                speed_pat = re.compile(r'MLB_FLASH_([1-9][0-9]*)K')
+                speed_pat = re.compile(r'FLASH_([1-9][0-9]*)K')
                 speed = int(re.search(speed_pat,scenario).groups()[0])
                 if speed > selected:
                     selected = speed
