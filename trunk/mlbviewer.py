@@ -133,6 +133,7 @@ def mainloop(myscr,cfg):
     # Toggle the speed to 400k for top plays.  
     # Initialize the value here in case 'l' selected before 't'
     RESTORE_SPEED = cfg['speed']
+    cfg['use_nexdef'] = False
 
     if cfg['x_display']:
         os.environ['DISPLAY'] = cfg['x_display']
@@ -597,7 +598,12 @@ def mainloop(myscr,cfg):
             if cfg['use_nexdef']:
                 cfg['use_nexdef'] = False
             else:
-                cfg['use_nexdef'] = True
+                #cfg['use_nexdef'] = True
+                cfg['use_dexdef'] = False
+                statuswin.clear()
+                statuswin.addstr(0,0,'Nexdef is not supported in 2010 yet.')
+                statuswin.refresh()
+                time.sleep(1)
             #statuswin.clear()
 
         # coveragetoggle ('c' is taken by condensed games, 's' was
@@ -1473,7 +1479,7 @@ if __name__ == "__main__":
                   'time_offset': '',
                   'max_bps': 800000,
                   'live_from_start': 0,
-                  'use_nexdef': 1,
+                  'use_nexdef': 0,
                   'strict_stream': 1,
                   'coverage' : 'home',
                   'show_inning_frames': 1,
