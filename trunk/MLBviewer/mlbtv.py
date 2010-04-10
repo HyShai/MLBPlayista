@@ -392,8 +392,11 @@ class MLBSchedule:
         content = {}
         content['audio'] = []
         content['video'] = {}
-        content['video']['400'] = []
+        content['video']['128'] = []
+        content['video']['500'] = []
         content['video']['800'] = []
+        content['video']['1200'] = []
+        content['video']['1800'] = []
         content['video']['swarm'] = []
         content['condensed'] = []
         event_id = str(xp.getAttribute('calendar_event_id'))
@@ -418,8 +421,9 @@ class MLBSchedule:
                    content['audio'].append(out)
            elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
                if tmp['playback_scenario'] in \
-                     ('FLASH_1200K_800X448', 'FLASH_800K_400X448',
-                      'FLASH_500K_400X224', 'FLASH_128K_256X144'):
+                     ('FLASH_128K_256X144', 'FLASH_500K_400X224',
+                      'FLASH_800K_400X448', 'FLASH_1200K_800X448', 
+                      'FLASH_1800K_800X448'):
                    try:
                        tmp['blackout']
                    except:
@@ -435,13 +439,19 @@ class MLBSchedule:
                    else:
                        coverage = home
                    out = (tmp['display'], coverage, tmp['id'], event_id)
-                   #print 'Found video: ' + repr(out)
+                   #print 'Found video: ' + repr(out) + tmp['playback_scenario']
                    if tmp['playback_scenario'] == 'HTTP_CLOUD_WIRED':
                        content['video']['swarm'].append(out)
-                   elif tmp['playback_scenario'] == 'FLASH_1200K_800X448':
-                       content['video']['800'].append(out)
+                   elif tmp['playback_scenario'] == 'FLASH_128K_256X144':
+                       content['video']['128'].append(out)
+                   elif tmp['playback_scenario'] == 'FLASH_500K_400X224':
+                       content['video']['500'].append(out)
                    elif tmp['playback_scenario'] == 'FLASH_800K_400X448':
-                       content['video']['400'].append(out)
+                       content['video']['800'].append(out)
+                   elif tmp['playback_scenario'] == 'FLASH_1200K_800X448':
+                       content['video']['1200'].append(out)
+                   elif tmp['playback_scenario'] == 'FLASH_1800K_800X448':
+                       content['video']['1800'].append(out)
                    else:
                        continue
            elif tmp['type'] == 'condensed_game':
@@ -557,11 +567,15 @@ class MLBSchedule:
                 TEAMCODES[dct['home']] = TEAMCODES['unk']
             #raise Exception,repr(game)
             dct['video'] = {}
-            dct['video']['400'] = []
+            dct['video']['128'] = []
+            dct['video']['500'] = []
             dct['video']['800'] = []
+            dct['video']['1200'] = []
+            dct['video']['1800'] = []
             dct['video']['swarm'] = []
             dct['condensed'] = []
-            for key in ('400', '800', 'swarm'):
+            #raise Exception,repr(game['content']['video'])
+            for key in ('128', '500', '800', '1200', '1800', 'swarm'):
                 try:
                     dct['video'][key] = game['content']['video'][key]
                 except KeyError:
@@ -675,10 +689,10 @@ class MLBSchedule:
                     except TypeError:
                         dct['video']['400'] = None
                         dct['video']['800'] = None
-                    if dct['video'].has_key('400'):
-                        if dct['video'].has_key('800') == False:
+                    if dct['video'].has_key('800'):
+                        if dct['video'].has_key('1200') == False:
                             # don't let a black sheep ruin it for everyone
-                            dct['video']['800'] = deepcopy(dct['video']['400'])
+                            dct['video']['1200'] = deepcopy(dct['video']['800'])
                     dct['audio'] = {}
                     for audio_feed in ('home_audio', 'away_audio','alt_home_audio', 'alt_away_audio'):
                         if elem[audio_feed]:
@@ -981,10 +995,18 @@ class GameStream:
         else:
             if self.use_nexdef:
                 self.scenario = 'HTTP_CLOUD_WIRED'
-            elif str(self.speed) == '400':
+            elif str(self.speed) == '128':
+                self.scenario = "FLASH_128K_256X144"
+            elif str(self.speed) == '500':
+                self.scenario = "FLASH_500K_400X224"
+            elif str(self.speed) == '800':
                 self.scenario = "FLASH_800K_400X448"
-            else:
+            elif str(self.speed) == '1200':
                 self.scenario = "FLASH_1200K_800X448"
+            elif str(self.speed) == '1800':
+                self.scenario = "FLASH_1800K_800X448"
+            else:
+                self.scenario = "FLASH_800K_400X448"
             self.subject  = "LIVE_EVENT_COVERAGE"
         self.cookies = {}
         self.content_id = None

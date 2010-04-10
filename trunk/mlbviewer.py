@@ -230,8 +230,11 @@ def mainloop(myscr,cfg):
         "LB": "Status: Local Blackout"}
 
     speedtoggle = {
-        "400" : "[ 800K]",
-        "800" : "[1200K]"}
+        "128"  : "[ 128K]",
+        "500"  : "[ 500K]",
+        "800"  : "[ 800K]",
+        "1200" : "[1200K]",
+        "1800" : "[1800K]"}
 
     coveragetoggle = {
         "away" : "[AWAY]",
@@ -620,11 +623,10 @@ def mainloop(myscr,cfg):
         # speedtoggle
         if c in ('Speed', ord('p')):
             # there's got to be an easier way to do this
-            temp = speedtoggle.copy()
-            del temp[cfg['speed']]
-            for speed in temp:
-                cfg['speed'] = speed
-            del temp
+            speeds = map(int, speedtoggle.keys())
+            speeds.sort()
+            newspeed = (speeds.index(int(cfg['speed']))+1) % len(speeds)
+            cfg['speed'] = str(speeds[newspeed])
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
@@ -1179,7 +1181,14 @@ def mainloop(myscr,cfg):
                             continue
                     else:
                         if use_xml:
-                            stream = available[current_cursor][2][myteam]
+                            try:
+                                stream = available[current_cursor][2][myteam]
+                            except:
+                                statuswin.clear()
+                                statuswin.addstr(0,0,'ERROR: Stream not found!')
+                                statuswin.refresh()
+                                time.sleep(2)
+                                continue
                         else:
                             stream = available[current_cursor][2]
                     if use_xml:
