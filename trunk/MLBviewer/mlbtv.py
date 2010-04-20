@@ -898,9 +898,9 @@ class MLBSchedule:
                   elem[0])\
                      for elem in listings]
 
-    def parse_innings_xml(self,event_id):
-        gameid = event_id.split('-')[1]
-        url = 'http://mlb.mlb.com/mlb/mmls2009/' + gameid + '.xml'
+    def parse_innings_xml(self,event_id,use_nexdef):
+	gameid, year = event_id.split('-')[1:3]
+        url = 'http://mlb.mlb.com/mlb/mmls%s/%s.xml' % (year, gameid)
         req = urllib2.Request(url)
         try:
             rsp = urllib2.urlopen(req)
@@ -918,7 +918,7 @@ class MLBSchedule:
             is_top = inning.getAttribute('top')
             for inning_time in inning.getElementsByTagName('inningTime'):
                 type = inning_time.getAttribute('type')
-                if type == 'SCAST':
+                if use_nexdef and type == 'SCAST':
                     time = inning_time.getAttribute('start')
                     try:
                         ( hrs, min, sec ) = time.split(':')
@@ -937,6 +937,8 @@ class MLBSchedule:
                     if int(hrs) <= 8:
                         msec += 3600 * 24 * 1000
                     out.append((number, is_top, msec))
+                elif type == "FMS":
+                    out.append((number, is_top, inning_time.getAttribute('start')))
         return out
 
 
@@ -1662,6 +1664,8 @@ class GameStream:
             rec_cmd_str += ' -t "' + self.tc_url + '"'
         if self.sub_path is not None:
             rec_cmd_str += ' -d ' + str(self.sub_path) + ' -v'
+        if self.start_time is not None:
+            rec_cmd_str += ' -A ' + str(self.start_time)
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         return rec_cmd_str
         
