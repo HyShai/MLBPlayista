@@ -912,9 +912,13 @@ def mainloop(myscr,cfg):
                 else:
                     player = cfg['video_player']
             elif c in ('Innings', ord('i')):
-                if not cfg['use_nexdef']:
+                if cfg['use_nexdef'] or \
+                   available[current_cursor][4] in ('F', 'CG') or \
+                   use_xml and available[current_cursor][6] == 'media_archive':
+                    pass
+                else:
                     statuswin.clear()
-                    statuswin.addstr(0,0,'ERROR: Jump to innings only supported for NexDef mode.',curses.A_BOLD)
+                    statuswin.addstr(0,0,'ERROR: Jump to innings only supported for NexDef mode and archived games.',curses.A_BOLD)
                     statuswin.refresh()
                     time.sleep(3)
                     continue
@@ -929,7 +933,7 @@ def mainloop(myscr,cfg):
                         this_event = available[current_cursor][2][0][3]
                     except:
                         raise Exception,'Innings list is not available for this game'
-                    myinnings = mysched.parse_innings_xml(this_event)
+                    myinnings = mysched.parse_innings_xml(this_event, cfg['use_nexdef'])
                 except Exception,detail:
                     myscr.clear()
                     myscr.addstr(0,0,'Could not parse innings: ')
