@@ -483,7 +483,7 @@ def mainloop(myscr,cfg):
             RESTORE_SPEED = cfg['speed']
             # Switch to 400 for highlights since all highlights are 400k
             # This is really just to toggle the indicator
-            cfg['speed'] = '400'
+            cfg['speed'] = '800'
             available = mysched.getTopPlays(GAMEID)
             CURRENT_SCREEN = 'topPlays'
             current_cursor = 0
