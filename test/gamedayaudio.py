@@ -36,7 +36,7 @@ except:
 try:
     SCENARIO = sys.argv[2]
 except:
-    SCENARIO = "MLB_FMS_AUDIO_32K_STREAM"
+    SCENARIO = "AUDIO_FMS_32K"
 
 try:
     play_path = sys.argv[3]
