@@ -109,12 +109,17 @@
 			<element name="preview-url" nillable="true" type="xsd:string"/>
 			<element maxOccurs="unbounded" minOccurs="0" name="audio-track" type="tns:AudioTrack"/>
 			<element maxOccurs="unbounded" minOccurs="0" name="innings-index" nillable="true" type="xsd:string"/>
-        <element minOccurs="0" name="cdn" type="xsd:string"/> <!-- HACKED HERE, added -->
-        <element minOccurs="0" name="sequence" type="xsd:long"/> <!-- HACKED HERE, added -->
-        <element minOccurs="0" name="duration" nillable="true" type="xsd:string"/> <!-- HACKED HERE, added -->
-	<element minOccurs="0" name="platform" type="xsd:string"/> <!-- HACKED HERE, added -->
+        		<element minOccurs="0" name="cdn" type="tns:Cdn"/> 
+        		<element minOccurs="0" name="sequence" type="xsd:long"/> 
+        		<element minOccurs="0" name="duration" nillable="true" type="xsd:string"/> 
+			<element minOccurs="0" name="platform" type="xsd:string"/> 
 		</sequence>
 	</complexType>
+    	<complexType name="Cdn">
+		<sequence>
+          		<element maxOccurs="unbounded" minOccurs="0" name="cdn" type="xsd:string"/>
+        	</sequence>
+    	</complexType>
 	<complexType name="ViewKeys">
 		<sequence>
 			<element maxOccurs="unbounded" minOccurs="0" name="view-key" type="tns:ViewKey"/>

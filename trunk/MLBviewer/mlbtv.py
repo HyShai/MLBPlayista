@@ -1354,7 +1354,7 @@ class GameStream:
             self.write_session_key(self.session_key)
         except:
             self.session_key = None
-        game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
+        game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url'][0]
         if self.use_nexdef:
             #raise Exception,self.nexdef_url(game_url)
             return self.nexdef_url(game_url)
