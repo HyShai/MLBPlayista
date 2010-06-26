@@ -51,6 +51,7 @@ except:
     #SCENARIO = "MLB_FLASH_800K_STREAM"
     #SCENARIO = "FLASH_800K_400X448"
     SCENARIO = "FLASH_1200K_800X448"
+    #SCENARIO = "FLASH_1800K_800X448"
 
 try:
     content_id = sys.argv[2]
@@ -420,6 +421,7 @@ try:
 except:
     pass
 print cmd_str + '\n'
+#sys.exit()
 playprocess = subprocess.Popen(cmd_str,shell=True)
 playprocess.wait()
 
