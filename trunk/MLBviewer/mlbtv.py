@@ -759,7 +759,7 @@ class MLBSchedule:
             if elem[0] == gameid:
                 content_id = elem[1]['condensed'][0][2]
         url = 'http://mlb.mlb.com/gen/multimedia/detail/' 
-        url += content_id[4] + '/' + content_id[5] + '/' + content_id[6]
+        url += content_id[-3] + '/' + content_id[-2] + '/' + content_id[-1]
         url += '/' + content_id + '.xml'
         try:
             req = urllib2.Request(url)
