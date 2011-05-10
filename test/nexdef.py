@@ -11,14 +11,30 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
-from suds.client import Client
-from suds import WebFault
+from xml.dom.minidom import parse
+
+#from suds.client import Client
+#from suds import WebFault
+
+import xml.etree.ElementTree
 
 url = 'file://'
 url += os.path.join(os.environ['HOME'], '.mlb', 'MediaService.wsdl')
-client = Client(url)
+#client = Client(url)
 
 SESSIONKEY = os.path.join(os.environ['HOME'], '.mlb', 'sessionkey')
+
+SOAPCODES = {
+    "1"    : "OK",
+    "-1000": "Requested Media Not Found",
+    "-1500": "Other Undocumented Error",
+    "-2000": "Authentication Error",
+    "-2500": "Blackout Error",
+    "-3000": "Identity Error",
+    "-3500": "Sign-on Restriction Error",
+    "-4000": "System Error",
+}
+
 
 bSubscribe = False
 
@@ -34,22 +50,27 @@ except:
     EVENT = '164-251362-2009-03-16'
 
 try:
-    SCENARIO = sys.argv[2]
+    SCENARIO = sys.argv[3]
 except:
-    SCENARIO = "AUDIO_FMS_32K"
+    SCENARIO = "HTTP_CLOUD_WIRED"
 
 try:
-    play_path = sys.argv[3]
+    content_id = sys.argv[2]
+except:
+    content_id = None
+
+try:
+    play_path = sys.argv[4]
 except:
     play_path = None
 
 try:
-    app = sys.argv[4]
+    app = sys.argv[5]
 except:
     app = None
 
 try:
-    session = sys.argv[5]
+    session = sys.argv[6]
 except:
     session = None
 
@@ -62,11 +83,15 @@ if session is None:
         print "no sessionkey file found."
 
 COOKIEFILE = 'mlbcookie.lwp'
+try:
+    os.remove(COOKIEFILE)
+except:
+    pass
 
 AUTHFILE = os.path.join(os.environ['HOME'],'.mlb/config')
  
 DEFAULT_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
-DEFAULT_RECORDER = 'rtmpdump -f \"LNX 10,0,22,87\" -o %e.mp3 -r %s --resume'
+DEFAULT_RECORDER = 'rtmpdump -f \"LNX 10,0,22,87\" -o %e.mp4 -r %s --resume'
 
 try:
    import cookielib
@@ -222,44 +247,92 @@ except:
     #session = None
 
 event_id = EVENT
-pd = {'event-id':event_id, 'subject':'MLBCOM_GAMEDAY_AUDIO' }
-reply = client.service.find(**pd)
-print reply
+#pd = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE' }
+#reply = client.service.find(**pd)
+values = {
+    'eventId': event_id, 
+    'sessionKey': session,
+    'fingerprint': urllib.unquote(cookies['fprt']),
+    'identityPointId': cookies['ipid'],
+    'subject':'LIVE_EVENT_COVERAGE'
+}
+theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.1?' +\
+    urllib.urlencode(values)
+req = urllib2.Request(theUrl, None, txheaders);
+response = urllib2.urlopen(req).read()
+print response
+el = xml.etree.ElementTree.XML(response)
+utag = re.search('(\{.*\}).*', el.tag).group(1)
+status = el.find(utag + 'status-code').text
+
 try:
-    session = reply['session-key']
+    session = el.find(utag + ['session-key']).text
     sk = open(SESSIONKEY,"w")
     sk.write(session_key)
 except:
     print "no session-key found in reply"
+if status != "1":
+    error_str = SOAPCODES[status]
+    raise Exception,error_str
     
-for stream in reply[0][0]['user-verified-content']:
-    type = stream['type']
-    if type == 'audio':
-        content_id = stream['content-id']
+if content_id is None:
+    for stream in el.findall('*/' + utag + 'user-verified-content'):
+        type = stream.find(utag + 'type').text
+        if type == 'video':
+            content_id = stream.find(utag + 'content-id').text
+else:
+    print "Using content_id from arguments: " + content_id
+#for i in range(len(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'])): 
+#    print str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i]._name) + " = " + str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i])
 
-#content_id = reply[0][0]['user-verified-content'][0]['content-id']
+#content_id = reply[0][0]['user-verified-content'][1]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
-
+#sys.exit()
 #cmd_str = 'rm -rf /tmp/suds'
 #subprocess.Popen(cmd_str,shell=True).wait()
 
-ip = client.factory.create('ns0:IdentityPoint')
-ip.__setitem__('identity-point-id', cookies['ipid'])
-ip.__setitem__('fingerprint', urllib.unquote(cookies['fprt']))
+#ip = client.factory.create('ns0:IdentityPoint')
+#ip.__setitem__('identity-point-id', cookies['ipid'])
+#ip.__setitem__('fingerprint', urllib.unquote(cookies['fprt']))
 
-pe = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE', 'playback-scenario':SCENARIO, 'content-id':content_id, 'fingerprint-identity-point':ip , 'session-key':session}
+#pe = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE', 'playback-scenario':SCENARIO, 'content-id':content_id, 'fingerprint-identity-point':ip , 'session-key':session}
 
-try:
-    reply = client.service.find(**pe)
-except WebFault ,e:
-    print "WebFault received from content request:"
-    print e
-    sys.exit(1)
 
-print reply
+#try:
+#    reply = client.service.find(**pe)
+#except WebFault ,e:
+#    print "WebFault received from content request:"
+#    print e
+#    sys.exit(1)
+
+values = {
+    'subject':'LIVE_EVENT_COVERAGE',
+    'sessionKey': session,
+    'identityPointId': cookies['ipid'],
+    'contentId': content_id,
+    'playbackScenario': SCENARIO,
+    'eventId': event_id, 
+    'fingerprint': urllib.unquote(cookies['fprt']),
+}
+theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.1?' +\
+    urllib.urlencode(values)
+req = urllib2.Request(theUrl, None, txheaders);
+response = urllib2.urlopen(req).read()
+print response
+#sys.exit()
+el = xml.etree.ElementTree.XML(response)
+utag = re.search('(\{.*\}).*', el.tag).group(1)
+status = el.find(utag + 'status-code').text
+
+if status != "1":
+    error_str = SOAPCODES[status]
+    raise Exception,error_str
 
 #print reply[0][0]['user-verified-content'][0]['content-id']
-game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
+#game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url'][0]
+game_url = el.find('%suser-verified-event/%suser-verified-content/%suser-verified-media-item/%surl' %\
+    (utag, utag, utag, utag)).text
+
 try:
     if play_path is None:
         #play_path_pat = re.compile(r'ondemand\/(.*)\?')
@@ -273,12 +346,12 @@ except:
     play_path = None
 try:
     if play_path is None:
-        live_sub_pat = re.compile(r'live\/mlb_ga(.*)\?')
+        live_sub_pat = re.compile(r'live\/mlb_s800(.*)\?')
         sub_path = re.search(live_sub_pat,game_url).groups()[0]
-        sub_path = 'mlb_ga' + sub_path
-        live_play_pat = re.compile(r'live\/mlb_ga(.*)$')
+        sub_path = 'mlb_s800' + sub_path
+        live_play_pat = re.compile(r'live\/mlb_s800(.*)$')
         play_path = re.search(live_play_pat,game_url).groups()[0]
-        play_path = 'mlb_ga' + play_path
+        play_path = 'mlb_s800' + play_path
         app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
         bSubscribe = True
         
@@ -287,108 +360,6 @@ except:
     sub_path = None
 
 print "url = " + str(game_url)
-print "play_path = " + str(play_path)
-#sys.exit()
+#print "play_path = " + str(play_path)
 
-#sys.exit()
-# End MORSEL extraction
-
-""" BEGIN COMMENT OLD CODE
-wfurl = "http://www.mlb.com/enterworkflow.do?" +\
-   "flowId=media.media&keepWfParams=true&mediaId=" +\
-   sys.argv[1] + "&catCode=mlb_lg&av=v"
-data = None
-
-#http://www.mlb.com/enterworkflow.do?flowId=media.media&keepWfParams=true&mediaId=643342&catCode=mlb_lg&av=v
-
-try:
-   req = urllib2.Request(wfurl,data,txheaders)
-   response = urllib2.urlopen(req)
-   game_info = response.read()
-   response.close()
-except IOError, e:
-   print 'We failed to open "%s".' % wfurl
-   if hasattr(e, 'code'):
-       print 'We failed with error code - %s.' % e.code
-   elif hasattr(e, 'reason'):
-       print "The error object has the following 'reason' attribute :", e.reason
-       print "This usually means the server doesn't exist, is down, or we don't have an internet connection."
-       sys.exit()
-
-vid_pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
-aud_pattern = re.compile(r'(url:.*\")(http:\/\/[^ ]*)(".*)')
-
-
-# handle http urls for audio and older video
-try:
-   game_url = re.search(vid_pattern, game_info).groups()[1]
-   player = datadct['video_player']
-   recorder = datadct['video_recorder']
-except:
-   try:
-       game_url = re.search(aud_pattern, game_info).groups()[1]
-       player = datadct['audio_player']
-   except:
-       raise Exception, game_info
-
-print
-if cj == None:
-    print "We don't have a cookie library available - sorry."
-    print "I can't show you any cookies."
-else:
-    print 'These are the cookies we have received so far :'
-    for index, cookie in enumerate(cj):
-        print index, '  :  ', cookie        
-    cj.save(COOKIEFILE,ignore_discard=True) 
-
-logout_url = 'https://secure.mlb.com/enterworkflow.do?flowId=registration.logout&c_id=mlb'
-txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
-             'Referer' : 'http://mlb.mlb.com/index.jsp'}
-data = None
-req = urllib2.Request(logout_url,data,txheaders)
-response = urllib2.urlopen(req)
-logout_info = response.read()
-response.close()
-
-print logout_info
-
-print 'The game url parsed is: '
-print game_url
-#sys.exit()
-END COMMENT OLD CODE"""
-
-theurl = 'http://cp65670.edgefcs.net/fcs/ident'
-txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
-data = None
-req = urllib2.Request(theurl,data,txheaders)
-response = urllib2.urlopen(req)
-print response.read()
-#sys.exit()
-
-#theurl = 'https://cp65670.edgefcs.net/crossdomain.xml'
-#txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
-#data = None
-#req = urllib2.Request(theurl,data,txheaders)
-#response = urllib2.urlopen(req)
-#print response.read()
-
-#cmd_str = player + ' "' + game_url + '"'
-recorder = datadct['video_recorder']
-cmd_str = recorder.replace('%s', '"' + game_url + '"')
-if play_path is not None:
-    cmd_str += ' -y "' + play_path + '"'
-if bSubscribe:
-    cmd_str += ' -v -d ' + sub_path
-if app is not None:
-    cmd_str += ' -a "' + app + '"'
-cmd_str = cmd_str.replace('%e', event_id)
-try:
-    print "\nplay_path = " + play_path
-    print "\nsub_path  = " + sub_path
-    print "\napp       = " + app
-except:
-    pass
-print cmd_str + '\n'
-playprocess = subprocess.Popen(cmd_str,shell=True)
-playprocess.wait()
-
+sys.exit()
