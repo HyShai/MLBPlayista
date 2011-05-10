@@ -15,7 +15,6 @@
 
 import urllib
 import urllib2
-import simplejson
 import re
 import time
 import datetime
@@ -32,11 +31,9 @@ from mlbprocess import MLBprocess
 
 try:
     from xml.dom.minidom import parse
-    from suds.client import Client
-    from suds import WebFault
 except:
-    print "The requirements for the 2009 season have changed."
-    print "Please read the REQUIREMENTS-2009.txt file."
+    print "Missing python external dependencies."
+    print "Please read the REQUIREMENTS-2010.txt file."
     sys.exit()
 
 # Set this to True if you want to see all the html pages in the logfile
@@ -52,12 +49,13 @@ SESSIONKEY = os.path.join(os.environ['HOME'], AUTHDIR, 'sessionkey')
 LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
 USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
 TESTXML = os.path.join(os.environ['HOME'], AUTHDIR, 'test_epg.xml')
+BLACKFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'blackout')
 
 SOAPCODES = {
     "1"    : "OK",
     "-1000": "Requested Media Not Found",
     "-1500": "Other Undocumented Error",
-    "-1600": "Requested Media Available Yet.",
+    "-1600": "Requested Media Not Available Yet.",
     "-2000": "Authentication Error",
     "-2500": "Blackout Error",
     "-3000": "Identity Error",
@@ -138,13 +136,18 @@ TEAMCODES = {
     't3944': ( 'T3944', 'CPBL All-Stars' ),
     'unk': ( None, 'Unknown', 'Teamcode'),
     'tbd': ( None, 'TBD'),
+    't102': ('T102', 'Round Rock Express'),
     't103': ('T103', 'Lake Elsinore Storm'),
     't234': ('T234', 'Durham Bulls'),
     't235': ('T235', 'Memphis Redbirds'),
     't249': ('T249', 'Carolina Mudcats'),
+    't260': ('T260', 'Tulsa Drillers'),
+    't445': ('T445', 'Columbus Clippers'),
     't477': ('T477', 'Greensboro Grasshoppers'),
     't494': ('T493', 'Charlotte Knights'),
     't564': ('T564', 'Jacksonville Suns'),
+    't569': ('T569', 'Quintana Roo Tigres'),
+    't580': ('T580', 'Winston-Salem Dash'),
     't784': ('T784', 'WBC Canada'),
     't805': ('T805', 'WBC Dominican Republic'),
     't841': ('T841', 'WBC Italy'),
@@ -189,6 +192,7 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
         '2008': (datetime.datetime(2008,3,9),datetime.datetime(2008,11,2)),
         '2009': (datetime.datetime(2009,3,8),datetime.datetime(2009,11,1)),
         '2010': (datetime.datetime(2010,3,14),datetime.datetime(2010,11,7)),
+        '2011': (datetime.datetime(2011,3,13),datetime.datetime(2011,11,6)),
                }
     now = datetime.datetime.now()            
     if (now >= DAYLIGHT[str(now.year)][0]) \
@@ -355,9 +359,26 @@ class MLBSchedule:
                 for attr in angle.attributes.keys():
                     cdict[attr] = angle.getAttribute(attr)
                 media = angle.getElementsByTagName('media')[0]
+                platform = media.getAttribute('platform')
+                if platform != 'WEB_MEDIAPLAYER':
+                    continue 
                 cdict['content_id'] = media.getAttribute('content_id')
                 camerainfo[id]['angles'].append(cdict)
             out.append(camerainfo[id])
+        return out
+
+    def getMultiAngleListing(self,event_id):
+        out = []
+        teams = dict()
+        angles = []
+        null = []
+        raw = self.getMultiAngleFromXml(event_id)[0]
+        id = raw['id']
+        desc = raw['description']
+        teams['home'] = raw['home_file_code']
+        teams['away'] = raw['away_file_code']
+        for angle in raw['angles']:
+            out.append((teams, 0, (angle['name'], 0, angle['content_id'], event_id), null, null, 'NB', event_id, 0))
         return out
 
     def __scheduleFromXml(self):
@@ -428,12 +449,13 @@ class MLBSchedule:
                        tmp['blackout']
                    except:
                        tmp['blackout'] = ""
-                   if tmp['blackout'] == 'MLB_NATIONAL_BLACKOUT':
-                       content['blackout'] = tmp['blackout']
+                   nb_pat = re.compile(r'MLB_NATIONAL_BLACKOUT')
+                   if re.search(nb_pat,tmp['blackout']) is not None:
+                       content['blackout'] = 'MLB_NATIONAL_BLACKOUT'
                    else:
                        content['blackout'] = None
                    if tmp['type'] == 'mlbtv_national':
-                       coverage = 0
+                       coverage = '0'
                    elif tmp['type'] == 'mlbtv_away':
                        coverage = away
                    else:
@@ -460,38 +482,6 @@ class MLBSchedule:
                content['condensed'].append(out)
         return content
     
-    def __scheduleToJson(self):
-        # The schedule will be downloaded in JSP format, which is
-        # almost the same as JSON, which python can easily import. We
-        # just have to make a few cosmetic changes to make it into
-        # correct JSON.
-
-        # First, get rid of the white space (except spaces). This
-        # isn't strictly necessary, but it makes the other
-        # replacements easier, and makes it easier to check for
-        # errors:
-        mystr = re.sub(r'[\t\n]','',self.__getSchedule())
-        # Take off everything up to and including the first open
-        # parenthesis, and enclose the entire thing in brackets (just
-        # the open bracket here. Close bracket is next.):
-        mystr = '[' + '('.join(mystr.split('(')[1:])
-        # Take off everything after and including the last close
-        # parenthesis, and enclose the entire thing in
-        # brackets. (Close bracket.):
-        mystr = ')'.join(mystr.split(')')[:-1]) + ']'
-        # First, escape any double quotes.
-        mystr = mystr.replace('\"', '\\\"')
-        # Now turn single quotes into double quotes, which JSON
-        # requires.
-        mystr = mystr.replace('\'', '\"')
-        # Now put double quotes around the keys, which JSP doesn't do.
-        mystr = re.sub(r'([\{\[\}\]\,]+)([^ "]+)(:)', '\\1"\\2"\\3', mystr)
-
-        return mystr
-
-    def __jsonToPython(self):
-        return simplejson.loads(self.__scheduleToJson())
-
     def __xmlToPython(self):
         return self.__scheduleFromXml()
         
@@ -499,10 +489,7 @@ class MLBSchedule:
         # This is the public method that puts together the private
         # steps above. Fills it up with data.
         try:
-            if self.use_xml:
-                self.data = self.__xmlToPython()
-            else:
-                self.data = self.__jsonToPython()
+            self.data = self.__xmlToPython()
         except ValueError,detail:
             raise MLBJsonError,detail
 
@@ -668,11 +655,6 @@ class MLBSchedule:
                     dct['video'] = {}
                     try:
                         for url in elem['mlbtv']['urls']:
-                            # handle 2007 season where 700K is top quality
-                            # mask 700K to look like 800K
-                            if str(self.year) == '2007' and url['speed'] == '700':
-                                dct['video']['800'] = url['url']
-
                             # Wtf!? Why is WBC 600?  Why not 400 or 800?
                             if str(self.year) == '2009' and url['speed'] == '600':
                                 dct['video']['400'] = url['url']
@@ -736,20 +718,7 @@ class MLBSchedule:
         else:
             self.use_xml = False
 
-        if self.use_xml:
-            return self.getXmlCondensedVideo(gameid)
-        else:
-            return self.getJsonCondensedVideo(gameid)
-
-    def getJsonCondensedVideo(self,gameid):
-        out = {}
-
-        condensed = self.trimList()
-
-        for elem in condensed:
-            if elem[0] == gameid:
-                out = elem[1]['condensed']
-        return out
+        return self.getXmlCondensedVideo(gameid)
 
     def getXmlCondensedVideo(self,gameid):
         out = ''
@@ -780,35 +749,12 @@ class MLBSchedule:
                 out = str(url.childNodes[0].data)
         return out
             
-        
-
-    def getJsonTopPlays(self,gameid):
-        out = []
-        plays = self.trimList()
-
-        for elem in plays:
-            if elem[0] == gameid:
-                for play in elem[1]['top_plays'].keys():
-                    if play != 'game':
-                        dummy  = ''
-                        title  = elem[1]['top_plays']['game']
-                        text   = play
-                        status = elem[1]['status']
-                        recap_pat = re.compile(r'Recap')
-                        if re.search(recap_pat,play):
-                            out.insert(0,(title,text,elem[1]['top_plays'][text],status,elem[0]))   
-                        else:
-                            out.append((title,text,elem[1]['top_plays'][text],status,elem[0]))
-        #raise Exception,out
-        return out
 
     def getXmlTopPlays(self,gameid):
         gid = gameid
         gid = gid.replace('/','_')
         gid = gid.replace('-','_')
-        #url = self.epg.replace('epg.xml','gid_' + gid + '/media/highlights.xml')
         url = self.epg.replace('grid.xml','gid_' + gid + '/media/highlights.xml')
-        #raise Exception,url
         out = []
         try:
             req = urllib2.Request(url)
@@ -842,7 +788,7 @@ class MLBSchedule:
                 if speed > selected:
                     selected = speed
                     url = urls.childNodes[0].data
-            out.append(( title, headline, url, state, gameid)) 
+            out.append(( title, headline, url, state, gameid, '0')) 
         #raise Exception,out
         return out
 
@@ -853,11 +799,7 @@ class MLBSchedule:
         else:
             self.use_xml = False
 
-        if self.use_xml:
-            return self.getXmlTopPlays(gameid)
-        else:
-            return self.getJsonTopPlays(gameid)
-        
+        return self.getXmlTopPlays(gameid)
 
     def getListings(self, myspeed, blackout, audiofollow):
         listtime = datetime.datetime(self.year, self.month, self.day)
@@ -866,10 +808,8 @@ class MLBSchedule:
         else:
             self.use_xml = False
 
-        if self.use_xml:
-            return self.getXmlListings(myspeed, blackout, audiofollow)
-        else:
-            return self.getJsonListings(myspeed, blackout, audiofollow)
+        return self.getXmlListings(myspeed, blackout, audiofollow)
+
 
     def getXmlListings(self, myspeed, blackout, audiofollow):
         self.getData()
@@ -879,27 +819,15 @@ class MLBSchedule:
                      elem[1]['event_time'],
                      elem[1]['video'][str(myspeed)],
                      elem[1]['audio'],
+                     elem[1]['condensed'],
                      elem[1]['status'],
                      elem[0],
                      elem[1]['media_state'])\
                          for elem in listings]
 
-    def getJsonListings(self, myspeed, blackout, audiofollow):
-        self.getData()
-        listings = self.trimList(blackout)
-
-        return  [(elem[1]['teams'],\
-                      elem[1]['event_time'],
-                      elem[1]['video'][str(myspeed)],\
-                      (elem[1]['audio']['home_audio'],
-                       elem[1]['audio']['away_audio'])[elem[1]['away'] \
-                                                           in audiofollow],
-                      elem[1]['status'],
-                  elem[0])\
-                     for elem in listings]
 
     def parse_innings_xml(self,event_id,use_nexdef):
-	gameid, year = event_id.split('-')[1:3]
+	gameid, year, month, day = event_id.split('-')[1:5]
         url = 'http://mlb.mlb.com/mlb/mmls%s/%s.xml' % (year, gameid)
         req = urllib2.Request(url)
         try:
@@ -926,6 +854,8 @@ class MLBSchedule:
                         self.error_str = "Could not parse time = " + time
                         raise Exception, self.error_str
                     msec = 1000 * ( 3600 * int(hrs) + 60 * int(min) + int(sec)) 
+                    # inning times seem to be off by one hour
+                    #msec += 3600 * 1000
                     # don't know why this works, but this seems to be what mlb
                     # does, rounding down to nearest 5 seconds
                     msec -= (int(sec)%5) * 1000
@@ -937,17 +867,23 @@ class MLBSchedule:
                     if int(hrs) <= 8:
                         msec += 3600 * 24 * 1000
                     out.append((number, is_top, msec))
-                elif type == "FMS":
+                    #tc_str = '%s/%s/%s %s' % (year, month, day, time)
+                    #timecode = urllib.quote(tc_str)
+                    #out.append((number, is_top, time))
+                elif use_nexdef == False and type == "FMS":
                     out.append((number, is_top, inning_time.getAttribute('start')))
         return out
 
 
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,
-                 auth=True, streamtype='video',use_soap=False,speed=800,
+                 auth=True, streamtype='video',use_soap=True,speed=800,
                  coverage=None,use_nexdef=False,max_bps=800000,start_time=0,
-                 postseason=False,camera=0):
+                 strict=False,condensed=False,postseason=False,camera=0):
+        self.strict = strict
+        self.condensed = condensed
         self.postseason = postseason
+        self.auth = auth
         self.camera = camera
         self.this_camera = 0
         self.use_nexdef = use_nexdef
@@ -961,14 +897,10 @@ class GameStream:
         self.error_str = "What happened here?\nPlease enable debug with the d key and try your request again."
         self.use_soap = use_soap
         try:
-            if self.use_soap:
-                ( self.call_letters, 
-                  self.team_id, 
-                  self.content_id, 
-                  self.event_id ) = self.stream
-            else:
-                self.id = self.stream['w_id']
-                self.gameid = stream['gid']
+            ( self.call_letters, 
+              self.team_id, 
+              self.content_id, 
+              self.event_id ) = self.stream
         except:
             self.error_str = "No stream available for selected game."
         else:
@@ -1011,10 +943,13 @@ class GameStream:
                 self.scenario = "FLASH_800K_400X448"
             self.subject  = "LIVE_EVENT_COVERAGE"
         self.cookies = {}
-        self.content_id = None
+        #self.content_id = None
         self.play_path = None
         self.tc_url = None
         self.app = None
+        self.rtmp_url = None
+        self.rtmp_host = None
+        self.rtmp_port = None
         self.sub_path = None
         self.logged_in = None
         self.current_encoding = None
@@ -1032,12 +967,17 @@ class GameStream:
         return session_key
 
     def extract_cookies(self,response):
+        """ BEGIN Is any of this necessary?
         ns_headers = response.headers.getheaders("Set-Cookie")
         attrs_set = cookielib.parse_ns_headers(ns_headers)
         cookie_tuples = cookielib.CookieJar()._normalized_cookie_tuples(attrs_set)
         for tup in cookie_tuples:
             name, value, standard, rest = tup
             self.cookies[name] = value
+        END Is any of this necessary? """
+        # let's also try a different method
+        for c in self.session_cookies:
+            self.cookies[c.name] = c.value
     
     def login(self):
         # BEGIN login()
@@ -1045,7 +985,8 @@ class GameStream:
         self.session_cookies = cookielib.LWPCookieJar()
         if self.session_cookies != None:
            if os.path.isfile(COOKIEFILE):
-              self.session_cookies.load(COOKIEFILE)
+              #self.session_cookies.load(COOKIEFILE,ignore_discard=True)
+              os.remove(COOKIEFILE)
         else:
            self.error_str = "Couldn't open cookie jar"
            raise Exception,self.error_str
@@ -1053,7 +994,25 @@ class GameStream:
         urllib2.install_opener(opener)
 
         # First visit the login page and get the session cookie
-        login_url = 'https://secure.mlb.com/enterworkflow.do?flowId=registration.wizard&c_id=mlb'
+        callback = str(int(time.time() * 1000))
+        login_url = 'http://mlb.mlb.com/account/quick_login_hdr.jsp?'\
+            'successRedirect=http://mlb.mlb.com/shared/account/v2/login_success.jsp'\
+            '%3Fcallback%3Dl' + callback + '&callback=l' + callback + \
+            '&stylesheet=/style/account_management/myAccountMini.css&submitImage='\
+            '/shared/components/gameday/v4/images/btn-login.gif&'\
+            'errorRedirect=http://mlb.mlb.com/account/quick_login_hdr.jsp%3Ferror'\
+            '%3Dtrue%26successRedirect%3Dhttp%253A%252F%252Fmlb.mlb.com%252Fshared'\
+            '%252Faccount%252Fv2%252Flogin_success.jsp%25253Fcallback%25253Dl' +\
+            callback + '%26callback%3Dl' + callback + '%26stylesheet%3D%252Fstyle'\
+            '%252Faccount_management%252FmyAccountMini.css%26submitImage%3D%252F'\
+            'shared%252Fcomponents%252Fgameday%252Fv4%252Fimages%252Fbtn-login.gif'\
+            '%26errorRedirect%3Dhttp%3A//mlb.mlb.com/account/quick_login_hdr.jsp'\
+            '%253Ferror%253Dtrue%2526successRedirect%253Dhttp%25253A%25252F%25252F'\
+            'mlb.mlb.com%25252Fshared%25252Faccount%25252Fv2%25252Flogin_success.jsp'\
+            '%2525253Fcallback%2525253Dl' + callback + '%2526callback%253Dl' +\
+            callback + '%2526stylesheet%253D%25252Fstyle%25252Faccount_management'\
+            '%25252FmyAccountMini.css%2526submitImage%253D%25252Fshared%25252F'\
+            'components%25252Fgameday%25252Fv4%25252Fimages%25252Fbtn-login.gif'
         txheaders = {'User-agent' : USERAGENT}
         data = None
         req = urllib2.Request(login_url,data,txheaders)
@@ -1070,22 +1029,25 @@ class GameStream:
             self.log.write('Did we receive a cookie from the wizard?\n')
             for index, cookie in enumerate(self.session_cookies):
                 print >> self.log, index, ' : ' , cookie
-        self.session_cookies.save(COOKIEFILE)
+        self.session_cookies.save(COOKIEFILE,ignore_discard=True)
+
+        rdata = handle.read()
 
         # now authenticate
-        auth_url = 'https://secure.mlb.com/authenticate.do'
-        txheaders = {'User-agent' : USERAGENT,
-                     'Referer' : 'https://secure.mlb.com/enterworkflow.do?flowId=registration.wizard&c_id=mlb'}
-        auth_values = {'uri' : '/account/login_register.jsp',
-                       'registrationAction' : 'identify',
-                       'emailAddress' : self.email,
+        auth_values = {'emailAddress' : self.email,
                        'password' : self.passwd,
-                       'submit.x' : 0,
-                       'submit.y' : 0}
+                       'submit.x' : 25,
+                       'submit.y' : 7}
+        g = re.search('name="successRedirect" value="(?P<successRedirect>[^"]+)"', rdata)
+        auth_values['successRedirect'] = g.group('successRedirect')
+        g = re.search('name="errorRedirect" value="(?P<errorRedirect>[^"]+)"', rdata)
+        auth_values['errorRedirect'] = g.group('errorRedirect')
         auth_data = urllib.urlencode(auth_values)
+        auth_url = 'https://secure.mlb.com/account/topNavLogin.jsp'
         req = urllib2.Request(auth_url,auth_data,txheaders)
         try:
             handle = urllib2.urlopen(req)
+            self.session_cookies.save(COOKIEFILE,ignore_discard=True)
             self.extract_cookies(handle)
         except:
             self.error_str = 'Error occurred in HTTP request to auth page'
@@ -1095,27 +1057,22 @@ class GameStream:
             self.log.write('Did we receive a cookie from authenticate?\n')
             for index, cookie in enumerate(self.session_cookies):
                 print >> self.log, index, ' : ' , cookie
-        self.session_cookies.save(COOKIEFILE)
-
-        pattern = re.compile(r'Welcome to your personal (MLB|mlb).com account.')
-        if not re.search(pattern,auth_page):
-           self.error_str = "Login was unsuccessful."
-           # begin patch for maintenance operations
-           maint_pat = re.compile(r'We are currently performing maintenance operations')
-           if re.search(maint_pat,auth_page):
-               self.error_str += "\n\nSite is performing maintenance operations"
-           # end patch for maintenance operations
-           self.log.write(auth_page)
-           raise MLBAuthError, self.error_str
-        else:
+        self.session_cookies.save(COOKIEFILE,ignore_discard=True)
+        try:
+           loggedin = re.search('login_success', handle.geturl()).groups()
            self.log.write('Logged in successfully!\n')
            self.logged_in = True
+        except:
+           self.error_str = 'Login was unsuccessful.'
+           self.log.write(auth_page)
+           os.remove(COOKIEFILE)
+           raise MLBAuthError, self.error_str
         if self.debug:
            self.log.write("DEBUG>>> writing login page")
            self.log.write(auth_page)
         # END login()
  
-    def workflow(self,use_soap=False):
+    def workflow(self,use_soap=True):
         # This is the workhorse routine.
         # 1. Login
         # 2. Get the url from the workflow page
@@ -1124,39 +1081,31 @@ class GameStream:
         # The hope is that this sequence will always be the same and leave
         # it to url() to determine if an error occurs.  This way, hopefully, 
         # error or no, we'll always log out.
-        if not self.use_soap:
-            self.log.write('Querying enterworkflow.do for { \'gameid\' : ' + self.gameid + ', \'streamid\' : ' + self.id + ', \'streamtype\' : ' + self.streamtype + ', login: ' + str(self.auth) + '}\n')
         if self.session_cookies is None:
             if self.auth and self.logged_in is None:
-                self.login()
+                login_count = 0
+                while not self.logged_in:
+                    try:    
+                        self.login()
+                    except:
+                        if login_count < 3:
+                            login_count += 1
+                            time.sleep(1)
+                        else:
+                            raise
+                            #raise Exception,self.error_str
+                # clear any login unsuccessful messages from previous failures
+                if login_count > 0:
+                    self.error_str = "What happened here?\nPlease enable debug with the d key and try your request again."
         
         wf_url = "http://www.mlb.com/enterworkflow.do?" +\
             "flowId=media.media"
-        if not self.use_soap:
-            wf_url += "&keepWfParams=true&mediaId=" + str(self.id)
-
-            # The workflow urls for audio and video have slightly
-            # different endings.
-            if self.streamtype == 'audio':
-                wf_url += "&catCode=mlb_ga&av=a"
-            else:
-                wf_url += "&catCode=mlb_lg&av=v"
 
         # Open the workflow url...
-        # Referer should look something like this but we'll need to pull
-        # more info from listings for this:
-        """ http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=200804102514514&w_id=643428&w=reflector%3A19440&pid=mlb_lg&gid=2008/04/12/tormlb-texmlb-1&fid=mlb_lg400&cid=mlb&v=3 """
-        try:
-            referer_str = "http://mlb.mlb.com/media/player/mp_tpl_3_1.jsp?mid=" +\
-            self.stream['mid'] + '&w_id=' + self.stream['w_id'] + '&w=' + self.stream['w'] +\
-            '&pid=' + self.stream['pid'] + '&fid=' + self.stream['fid'] +\
-            '&cid=mlb&v=' + self.stream['v']
-        except (KeyError,TypeError):
-            referer_str = ''
+        # Get the session key morsel
+        referer_str = ''
         txheaders = {'User-agent' : USERAGENT,
                      'Referer'    : referer_str }
-        #wf_data = None
-        #req = urllib2.Request(wf_url,wf_data,txheaders)
         req = urllib2.Request(url=wf_url,headers=txheaders,data=None)
         try:
             handle = urllib2.urlopen(req)
@@ -1171,13 +1120,10 @@ class GameStream:
                 for index, cookie in enumerate(self.session_cookies):
                     print >> self.log, index, ' : ' , cookie
         if self.auth:
-            self.session_cookies.save(COOKIEFILE)
-        #handle.close()
+            self.session_cookies.save(COOKIEFILE,ignore_discard=True)
         if self.debug:
            self.log.write("DEBUG>>> writing workflow page")
            self.log.write(url_data)
-        #if self.auth:
-        #    self.logout()
         return url_data
 
     def logout(self): 
@@ -1209,6 +1155,118 @@ class GameStream:
         self.session_cookies = None
         # END logout
 
+    def parse_media_request(self,reply):
+        # Abort if the status is not "1"
+        status_code = str(reply.getElementsByTagName('status-code')[0].childNodes[0].data)
+        if status_code != "1":
+            self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response event_id = " + str(self.event_id) + "\n")
+            df = open('/tmp/unsuccessful.xml','w')
+            reply.writexml(df)
+            df.close()
+            df = open('/tmp/unsuccessful.xml')
+            msg = df.read()
+            df.close()
+            self.log.write(msg + '\n')
+            self.error_str = SOAPCODES[status_code]
+            raise Exception,self.error_str
+
+        ### TEST CODE BLOCK - COMMENT AFTER TESTING
+        #blackout_status = reply.getElementsByTagName('blackout-status')[0]
+        #success_status = blackout_status.getElementsByTagName('successStatus')
+        #raise Exception,repr(success_status)
+        ### END TEST CODE BLOCK - COMMENT AFTER TESTING
+
+        ### TEST CODE BLOCK - COMMENT AFTER TESTING
+        #bf = open(BLACKFILE, 'w')
+        #reply.writexml(bf)
+        #bf.close()
+        ### END TEST CODE BLOCK - COMMENT AFTER TESTING
+
+        try:
+            blackout_status = reply.getElementsByTagName('blackout')[0].childNodes[0].data
+	    #raise Exception,repr(blackout_status)
+        except:
+            blackout_status = reply.getElementsByTagName('blackout-status')[0]
+            try:
+                success_status = blackout_status.getElementsByTagName('successStatus')
+                blackout_status = None
+            except:
+                try:
+                    location_status = blackout_status.getElementsByTagName('locationCannotBeDeterminedStatus')
+                except:
+                    blackout_status = 'LOCATION CANNOT BE DETERMINED.'
+
+        media_type = reply.getElementsByTagName('type')[0].childNodes[0].data
+        media_state = reply.getElementsByTagName('state')[0].childNodes[0].data
+        if blackout_status is not None and self.streamtype == 'video':
+            inmarket_pat = re.compile(r'INMARKET')
+            if re.search(inmarket_pat,blackout_status) is not None:
+                pass
+            elif media_state == 'MEDIA_ON':
+                self.error_str = 'BLACKOUT: ' + str(blackout_status)
+                bf = open(BLACKFILE, 'w')
+                reply.writexml(bf)
+                bf.close()
+                raise Exception,self.error_str
+
+        content_list = []
+        for content in reply.getElementsByTagName('user-verified-content'):
+            type = content.getElementsByTagName('type')[0].childNodes[0].data
+            if type != self.streamtype:
+               continue
+            content_id = content.getElementsByTagName('content-id')[0].childNodes[0].data
+            if content_id != self.content_id:
+                continue
+            # First, collect all the domain-attributes
+            dict = {}
+            for node in content.getElementsByTagName('domain-attribute'):
+                name = str(node.getAttribute('name'))
+                value = node.childNodes[0].data
+                dict[name] = value
+            # There are a series of checks to trim the content list
+            # 1. Trim out 'in-market' listings like Yankees On Yes
+            if dict.has_key('coverage_type'):
+                if 'in-market' in dict['coverage_type']:
+                    continue
+            # 2. Trim out all non-English language broadcasts
+            if dict.has_key('language'):
+                if dict['language'] != 'EN':
+                    continue
+            # 3. For post-season, trim out multi-angle listings
+            if self.postseason:
+                if dict['in_epg'] != 'mlb_multiangle_epg':
+                    continue
+            else:
+                if dict['in_epg'] == 'mlb_multiangle_epg':
+                    continue
+            # 4. Get coverage association and call_letters
+            try:
+                cov_pat = re.compile(r'([0-9][0-9]*)')
+                coverage = re.search(cov_pat, dict['coverage_association']).groups()[0]
+            except:
+                 coverage = None
+            try:
+                call_letters = dict['call_letters']
+            except:
+                if self.postseason == False:
+                    raise Exception,repr(dict)
+                else:
+                    call_letters = 'MLB'
+            #raise Exception,repr(dict)
+            #try:
+            #    letters_pat = re.compile(r'"(.*)"')
+            #    call_letters = re.search(letters_pat, call_letters).groups()[0]
+            #except:
+            #    raise Exception,repr(call_letters)
+            for media in content.getElementsByTagName('user-verified-media-item'):
+                state = media.getElementsByTagName('state')[0].childNodes[0].data
+                scenario = media.getElementsByTagName('playback-scenario')[0].childNodes[0].data
+                if scenario == self.scenario and \
+                    state in ('MEDIA_ARCHIVE', 'MEDIA_ON', 'MEDIA_OFF'):
+                    content_list.append( ( call_letters, coverage, content_id, self.event_id ) )
+        return content_list
+                    
+
     def parse_soap_content(self,reply):
         # iterate over all the media items
         content_list = []
@@ -1229,7 +1287,6 @@ class GameStream:
                 if 'in-market' in str(dict['coverage_type']):
                     continue
                 if dict.has_key('language'):
-                    #raise Exception,repr(dict['language']['value'])
                     if dict['language']['value'] != 'EN':
                         continue
                 try:
@@ -1256,15 +1313,46 @@ class GameStream:
                         content_list.append( ( call_letters, coverage, stream['content-id'] , self.event_id ) )
         return content_list
 
+    def getCondensedVideo(self):
+        condensed = ''
+        url = 'http://mlb.mlb.com/gen/multimedia/detail/'
+        url += self.content_id[-3] + '/' + self.content_id[-2] + '/' + self.content_id[-1]
+        url += '/' + self.content_id + '.xml'
+        try:
+            req = urllib2.Request(url)
+            rsp = urllib2.urlopen(req)
+        except Exception,detail:
+            self.error_str = 'Error while locating condensed game:'
+            self.error_str = '\n\n' + str(detail)
+            raise
+        try:
+            media = parse(rsp)
+        except Exception,detail:
+            self.error_str = 'Error parsing condensed game location'
+            self.error_str += '\n\n' + str(detail)
+            raise
+        #raise Exception,url
+        for url in media.getElementsByTagName('url'):
+            if url.getAttribute('playback_scenario') == 'FLASH_1200K_640X360':
 
-    def soapurl(self):
+                condensed = str(url.childNodes[0].data)
+        return condensed
+
+
+    def url(self):
+        # Overload url to handle condensed games now that condensed games
+        # use FMS.
+        if self.condensed:
+            game_url = self.getCondensedVideo()
+            return self.flash_url(game_url)
+
         # return of workflow is useless for here, but it still calls all the 
         # necessary steps to login and get cookies
         if self.stream is None:
              self.error_str = "No event-id to locate media streams."
              raise
         # (re-)initialize some variables to make retries possible
-        self.content_id = None
+        #self.content_id = None
         self.play_path  = None
         self.sub_path   = None
         self.app        = None
@@ -1272,21 +1360,28 @@ class GameStream:
         # call the workhorse
         self.workflow()
 
-        # now some soapy fun
-        wsdl_file = os.path.join(os.environ['HOME'], AUTHDIR, 'MediaService.wsdl')
-        soap_url = 'file://' + str(wsdl_file)
-        client = Client(soap_url)
-        soapd = {'event-id':str(self.event_id), 'subject':self.subject}
-        reply = client.service.find(**soapd)
-        # if the reply is unsuccessful, log it and raise an exception
-        if reply['status-code'] != "1":
-            self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response event_id = " + str(self.event_id) + "\n")
-            self.log.write(repr(reply) + '\n')
-            self.error_str = SOAPCODES[reply['status-code']]
-            raise Exception,self.error_str
-        # moving all the soap reply parsing to a routine that returns a list of valid streams
-        # based on streamtype
-        content_list = self.parse_soap_content(reply)
+        # July 28, 2010 - SOAP services stopped working.
+        # SOAP being replaced with a GET url, response should be nearly
+        # identical, but different strategy for request/parse now.
+        base_url = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.3?'
+        try:
+            sessionKey = urllib.unquote(self.cookies['ftmu'])
+        except:
+            sessionKey = None
+        query_values = {
+            'eventId': self.event_id,
+            'sessionKey': sessionKey,
+            'fingerprint': urllib.unquote(self.cookies['fprt']),
+            'identityPointId': self.cookies['ipid'],
+            'subject': self.subject
+        }
+        url = base_url + urllib.urlencode(query_values)
+        req = urllib2.Request(url)
+        response = urllib2.urlopen(req)
+        reply = parse(response)
+
+        content_list = self.parse_media_request(reply)
+
         # now iterate over the content_list with the following rules:
         # 1. if coverage association is zero, use it (likely a national broadcast)
         # 2. if preferred coverage is available use it
@@ -1323,43 +1418,48 @@ class GameStream:
         if self.debug:
             self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
             self.log.write("DEBUG>> soap content-id:" + str(self.content_id) + '\n')
-        ip = client.factory.create('ns0:IdentityPoint')
-        ip.__setitem__('identity-point-id', self.cookies['ipid'])
-        ip.__setitem__('fingerprint', urllib.unquote(self.cookies['fprt']))
         try:
-            self.session_key = urllib.unquote(self.cookies['ftmu'])
-            self.write_session_key(self.session_key)
+            sessionkey = urllib.unquote(self.cookies['ftmu'])
         except:
-            self.session_key = None
+            sessionkey = None
+        query_values = {
+            'subject': self.subject,
+            'sessionKey': sessionkey,
+            'identityPointId': self.cookies['ipid'],
+            'contentId': self.content_id,
+            'playbackScenario': self.scenario,
+            'eventId': self.event_id,
+            'fingerprint': urllib.unquote(self.cookies['fprt'])
+        }
+        url = base_url + urllib.urlencode(query_values)
+        req = urllib2.Request(url)
+        response = urllib2.urlopen(req)
+        reply = parse(response)
 
-        soapd = {'event-id':self.event_id, 
-                 'subject':self.subject,
-                 'playback-scenario': self.scenario,
-                 'content-id':self.content_id, 
-                 'fingerprint-identity-point':ip , 
-                 'session-key':self.session_key}
-        try:
-            reply = client.service.find(**soapd)
-        except WebFault,e:
-            self.error_str = str(e)
-            raise
-        if self.debug:
-            self.log.write("DEBUG>> writing soap response\n")
-            self.log.write(repr(reply))
-        if reply['status-code'] != "1":
-            self.log.write("DEBUG (SOAPCODES!=1)>> writing soap response\n")
-            self.log.write(repr(reply))
-            self.error_str = SOAPCODES[reply['status-code']]
+        status_code = str(reply.getElementsByTagName('status-code')[0].childNodes[0].data)
+        if status_code != "1":
+            self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response event_id = " + str(self.event_id) + " contend-id = " + self.content_id + "\n")
+            df = open('/tmp/unsuccessful.xml','w')
+            reply.writexml(df)
+            df.close()
+            df = open('/tmp/unsuccessful.xml')
+            msg = df.read()
+            df.close()
+            self.error_str = SOAPCODES[status_code]
             raise Exception,self.error_str
         try:
             self.session_key = reply['session-key']
             self.write_session_key(self.session_key)
         except:
             self.session_key = None
-        game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url'][0]
+        try:
+            game_url = reply.getElementsByTagName('url')[0].childNodes[0].data
+        except:
+            self.error_str = "Stream URL not found in reply.  Stream may not be available yet."
+            raise Exception,self.error_str
         if self.use_nexdef:
             #raise Exception,self.nexdef_url(game_url)
-            return self.nexdef_url(game_url)
+            return self.nexdef_flash_url(self.nexdef_url(game_url))
         else:
             return self.flash_url(game_url)
 
@@ -1398,23 +1498,6 @@ class GameStream:
             self.error_str = "Could not parse NexDef stream list.  Try alternate coverage."
             self.error_str += "\n\n" + str(text)
             raise Exception,self.error_str
-        """ BEGIN PAIN IN THE ASS CODE
-        for time in xp.getElementsByTagName('streamHead'):
-            timestamp = time.getAttribute('timeStamp')
-        try:
-            (hrs, min, sec) = timestamp.split(':')
-            milliseconds = 1000 * ( int(hrs) * 3600 + int(min) * 60 + int(sec) )
-            # nexdef plugin appears to be off by an hour
-            milliseconds += 3600*1000
-        except:
-            self.start_time = None
-        # return the media url with the correct timestamp
-        self.nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps) 
-        if self.start_time is not None:
-            self.nexdef_media_url += '&start_time=' + str(milliseconds) + '&v=0'
-        else:
-            self.nexdef_media_url += '&v=0'
-        END PAIN IN THE ASS CODE """
         
         return self.nexdef_media_url
 
@@ -1435,16 +1518,16 @@ class GameStream:
         url = url.replace('base64:','control/base64:')
         if action == 'select' and encoding is not None:
             url += '&encoding_group=' + str(encoding[0])
-            url += '&height=' + str(encoding[3])
-            url += '&width=' + str(encoding[2])
+            #url += '&height=' + str(encoding[3])
+            #url += '&width=' + str(encoding[2])
         if strict:
             url += '&strict=true'
         # not sure what their random algorithm is but we'll just cat the
         # seconds with the microseconds of the current time.
-        rand  = str(datetime.datetime.now().second)
-        rand += str(datetime.datetime.now().microsecond)
+        #rand  = str(datetime.datetime.now().second)
+        #rand += str(datetime.datetime.now().microsecond)
         #url += '&rand=' + rand + '&v=0'
-        url += '&v=0'
+        #url += '&v=0'
         try:
             req = urllib2.Request(url)
             rsp = urllib2.urlopen(req)
@@ -1466,36 +1549,28 @@ class GameStream:
         selected = (None, 0, 0, 0)
         for time in xp.getElementsByTagName('streamHead'):
             timestamp = time.getAttribute('timeStamp')
-            milliseconds = time.getAttribute('timeStamp')
-        try:
-            (hrs, min, sec) = timestamp.split(':')
-            milliseconds = 1000 * ( int(hrs) * 3600 + int(min) * 60 + int(sec) )
-            # nexdef plugin appears to be off by an hour
+            milliseconds = int(time.getAttribute('timeStamp'))
             milliseconds += 3600*1000
-            # if we actually get a non-zero start_time from init, use it
+            milliseconds -= (int(milliseconds))%5000
+            # if we get a non-zero, non-null start_time from init, use it
             if self.start_time is not None and self.start_time > 0:
                 milliseconds = self.start_time
-        except:
-            #self.start_time = None
-            self.start_time = int(milliseconds)
         # return the media url with the correct timestamp
-        self.nexdef_media_url = nexdef_use + game_url + '&max_bps=' + str(self.max_bps)
+        self.nexdef_media_url = 'base64:' + game_url + '?max_bps=' + str(self.max_bps)
+        if self.strict:
+            self.nexdef_media_url += '&strict=true'
+        # start_time = 0 is the same as "look it up" 
+        # whereas start_time = None means "don't include start_time at all"
         if self.start_time is not None:
-            self.nexdef_media_url += '&start_time=' + str(milliseconds) + '&v=0'
-        else:
-            self.nexdef_media_url += '&v=0'
+            self.nexdef_media_url += '&start_time=' + str(milliseconds) 
+        
 
         self.encodings = {}
         for enc in xp.getElementsByTagName('encoding'):
             id  = str(enc.getAttribute('id'))
             bps = int(enc.getAttribute('bps'))
-            #width = int(enc.getAttribute('width'))
-            #height = int(enc.getAttribute('height'))
             if bps <= int(self.max_bps):
-                #self.encodings[bps] = ( id , bps , width, height )
                 self.encodings[bps] = ( id , bps )
-                #self.encodings.append( selected )
-        #raise Exception,repr(self.encodings)
         return self.nexdef_media_url
 
  
@@ -1509,17 +1584,27 @@ class GameStream:
         for enc_group in xp.getElementsByTagName('encodingGroup'):
             for enc in enc_group.getElementsByTagName('encoding'):
                 id = str(enc.getAttribute('id'))
-                bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K')
+                bps_pat = re.compile(r'([1-9][0-9]*)_complete')
                 bps = re.search(bps_pat, id).groups()[0]
                 self.encoding_group[bps] = id
         for pos in xp.getElementsByTagName('currentPosition'):
             msec = pos.getAttribute('millis')
         for current in xp.getElementsByTagName('currentEncoding'):
             id = str(current.getAttribute('id'))
-            bps_pat = re.compile(r'FLASH_([1-9][0-9]*)K')
+            bps_pat = re.compile(r'([1-9][0-9]*)_complete')
             bps = re.search(bps_pat, id).groups()[0]
             self.current_encoding = ( id, bps, msec )
         
+    def nexdef_flash_url(self,game_url):
+        self.play_path = self.nexdef_media_url
+        self.rtmp_path = 'rtmp://127.0.0.1:1935/live/' + self.play_path
+        self.app = 'live'
+        self.rtmp_host = '127.0.0.1'
+        self.rtmp_port = '1935'
+        recorder = DEFAULT_F_RECORD
+        self.filename = '-'
+        self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,self.rtmp_path)
+        return self.rec_cmd_str
 
     def flash_url(self,game_url):
         try:
@@ -1566,7 +1651,11 @@ class GameStream:
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream play path: ' + str(detail)
                         raise Exception,self.error_str
-                    self.app = 'live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6'
+                    sec_pat = re.compile(r'mlbsecurelive')
+                    if re.search(sec_pat,game_url) is not None:
+                        self.app = 'mlbsecurelive-live'
+                    else:
+                        self.app = 'live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6'
             if self.debug:
                 self.log.write("DEBUG>> sub_path = " + str(self.sub_path) + "\n")
                 self.log.write("DEBUG>> play_path = " + str(self.play_path) + "\n")
@@ -1587,58 +1676,7 @@ class GameStream:
             self.filename += '.mp4'
         recorder = DEFAULT_F_RECORD
         self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,game_url)
-        ''' NOT NEEDED
-        outlog = open('/tmp/rtmpdump.log','w')
-        errlog = open('/tmp/rtmpdump-error.log','w')
-        self.rec_process = MLBprocess(self.rec_cmd_str,retries=5,
-                                      stdout=outlog,errlog=errlog)
-        NOT NEEDED '''
         return self.rec_cmd_str
-
-
-    def url(self):
-        # url_pattern
-        game_info = self.workflow()
-        # The urls for audio and video have different protocols
-        if self.streamtype == 'audio':
-            pattern = re.compile(r'(url:.*\")(http:\/\/[^ ]*)(".*)')
-        else:
-            # also match http: urls for 2007 season
-            pattern = re.compile(r'(url:.*\")((mms:|http:)\/\/[^ ]*)(".*)')
-        try:
-           game_url = re.search(pattern, game_info).groups()[1]
-        except Exception,detail:
-           pattern = re.compile(r'(url:.*\")(null:(.*))')
-           null_match = re.search(pattern,game_info)
-           pattern = re.compile(r'Customers are not permitted concurrent use of a single subscription.')
-           concur_match = re.search(pattern,game_info)
-           pattern = re.compile(r'you are blacked out')
-           blackout_match = re.search(pattern,game_info)
-           if null_match:
-               self.error_str = "Received a null: url, stream not available?"
-           elif concur_match:
-               self.error_str = "Receiving concurrent use error. :-("
-           elif blackout_match:
-               self.error_str = "You are blacked out from watching this game."
-           else:
-               self.error_str = "Unknown error in GameStream(): Check " +\
-                   LOGFILE + " for details"
-           self.log.write(self.error_str + '\n')
-           if self.debug:
-               self.log.write(game_info)
-           self.log.write('Try the gameid script with streamid = ' + self.id +'\n')
-           self.error_str += ':' + str(detail)
-           raise Exception, self.error_str 
-        else:
-           if self.streamtype == 'video':
-               oldstyle = 'http:'
-               match = re.match(oldstyle,game_url)
-               if match:
-                   mms_pat = re.compile(r'arl=(.*)')
-                   game_url = re.search(mms_pat, game_url).groups()[0]
-                   game_url = urllib.unquote(game_url)
-        self.log.write('\nURL received:\n' + game_url + '\n\n')
-        return game_url
 
     def prepare_rec_str(self,rec_cmd_str,filename,streamurl):
         # remove short files
@@ -1666,8 +1704,13 @@ class GameStream:
             rec_cmd_str += ' -t "' + self.tc_url + '"'
         if self.sub_path is not None:
             rec_cmd_str += ' -d ' + str(self.sub_path) + ' -v'
-        if self.start_time is not None:
-            rec_cmd_str += ' -A ' + str(self.start_time)
+        if self.rtmp_host is not None:
+            rec_cmd_str += ' -n ' + str(self.rtmp_host)
+        if self.rtmp_port is not None:
+            rec_cmd_str += ' -c ' + str(self.rtmp_port)
+        if self.start_time is not None and self.streamtype != 'audio':
+            if self.use_nexdef == False:
+                rec_cmd_str += ' -A ' + str(self.start_time)
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         return rec_cmd_str
         

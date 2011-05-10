@@ -11,12 +11,14 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
-from suds.client import Client
-from suds import WebFault
+#from suds.client import Client
+#from suds import WebFault
+
+import xml.etree.ElementTree
 
 url = 'file://'
 url += os.path.join(os.environ['HOME'], '.mlb', 'MediaService.wsdl')
-client = Client(url)
+#client = Client(url)
 
 SESSIONKEY = os.path.join(os.environ['HOME'], '.mlb', 'sessionkey')
 
@@ -46,12 +48,15 @@ except:
     EVENT = '164-251362-2009-03-16'
 
 try:
-    SCENARIO = sys.argv[2]
+    SCENARIO = sys.argv[3]
 except:
-    SCENARIO = "FLASH_800K_400X448"
+    #SCENARIO = "MLB_FLASH_800K_STREAM"
+    SCENARIO = "AUDIO_FMS_32K"
+    #SCENARIO = "FLASH_1200K_800X448"
+    #SCENARIO = "FLASH_1800K_800X448"
 
 try:
-    content_id = sys.argv[3]
+    content_id = sys.argv[2]
 except:
     content_id = None
 
@@ -79,6 +84,10 @@ if session is None:
         print "no sessionkey file found."
 
 COOKIEFILE = 'mlbcookie.lwp'
+try:
+    os.remove(COOKIEFILE)
+except:
+    pass
 
 AUTHFILE = os.path.join(os.environ['HOME'],'.mlb/config')
  
@@ -239,28 +248,42 @@ except:
     #session = None
 
 event_id = EVENT
-pd = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE' }
-reply = client.service.find(**pd)
-print reply
+#pd = {'event-id':event_id, 'subject':'MLBCOM_GAMEDAY_AUDIO' }
+#reply = client.service.find(**pd)
+values = {
+    'eventId': event_id, 
+    'sessionKey': session,
+    'fingerprint': urllib.unquote(cookies['fprt']),
+    'identityPointId': cookies['ipid'],
+    'subject':'MLBCOM_GAMEDAY_AUDIO'
+}
+theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.1?' +\
+    urllib.urlencode(values)
+req = urllib2.Request(theUrl, None, txheaders);
+response = urllib2.urlopen(req).read()
+el = xml.etree.ElementTree.XML(response)
+utag = re.search('(\{.*\}).*', el.tag).group(1)
+status = el.find(utag + 'status-code').text
+
 try:
-    session = reply['session-key']
+    session = el.find(utag + ['session-key']).text
     sk = open(SESSIONKEY,"w")
     sk.write(session_key)
 except:
     print "no session-key found in reply"
-if reply['status-code'] != "1":
-    error_str = SOAPCODES[reply['status-code']]
+if status != "1":
+    error_str = SOAPCODES[status]
     raise Exception,error_str
     
 if content_id is None:
-    for stream in reply[0][0]['user-verified-content']:
-        type = stream['type']
+    for stream in el.findall('*/' + utag + 'user-verified-content'):
+        type = stream.find(utag + 'type').text
         if type == 'video':
-            content_id = stream['content-id']
+            content_id = stream.find(utag + 'content-id').text
 else:
     print "Using content_id from arguments: " + content_id
-for i in range(len(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'])): 
-    print str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i]._name) + " = " + str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i])
+#for i in range(len(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'])): 
+#    print str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i]._name) + " = " + str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i])
 
 #content_id = reply[0][0]['user-verified-content'][1]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
@@ -268,27 +291,48 @@ print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
 #cmd_str = 'rm -rf /tmp/suds'
 #subprocess.Popen(cmd_str,shell=True).wait()
 
-ip = client.factory.create('ns0:IdentityPoint')
-ip.__setitem__('identity-point-id', cookies['ipid'])
-ip.__setitem__('fingerprint', urllib.unquote(cookies['fprt']))
+#ip = client.factory.create('ns0:IdentityPoint')
+#ip.__setitem__('identity-point-id', cookies['ipid'])
+#ip.__setitem__('fingerprint', urllib.unquote(cookies['fprt']))
 
-pe = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE', 'playback-scenario':SCENARIO, 'content-id':content_id, 'fingerprint-identity-point':ip , 'session-key':session}
+#pe = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE', 'playback-scenario':SCENARIO, 'content-id':content_id, 'fingerprint-identity-point':ip , 'session-key':session}
 
-try:
-    reply = client.service.find(**pe)
-except WebFault ,e:
-    print "WebFault received from content request:"
-    print e
-    sys.exit(1)
 
-print reply
-if reply['status-code'] != "1":
-    error_str = SOAPCODES[reply['status-code']]
+#try:
+#    reply = client.service.find(**pe)
+#except WebFault ,e:
+#    print "WebFault received from content request:"
+#    print e
+#    sys.exit(1)
+
+values = {
+    'subject':'MLBCOM_GAMEDAY_AUDIO',
+    'sessionKey': session,
+    'identityPointId': cookies['ipid'],
+    'contentId': content_id,
+    'playbackScenario': SCENARIO,
+    'eventId': event_id, 
+    'fingerprint': urllib.unquote(cookies['fprt']),
+}
+theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.1?' +\
+    urllib.urlencode(values)
+req = urllib2.Request(theUrl, None, txheaders);
+response = urllib2.urlopen(req).read()
+print response
+#sys.exit()
+el = xml.etree.ElementTree.XML(response)
+utag = re.search('(\{.*\}).*', el.tag).group(1)
+status = el.find(utag + 'status-code').text
+
+if status != "1":
+    error_str = SOAPCODES[status]
     raise Exception,error_str
-    
 
 #print reply[0][0]['user-verified-content'][0]['content-id']
-game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url']
+#game_url = reply[0][0]['user-verified-content'][0]['user-verified-media-item'][0]['url'][0]
+game_url = el.find('%suser-verified-event/%suser-verified-content/%suser-verified-media-item/%surl' %\
+    (utag, utag, utag, utag)).text
+
 try:
     if play_path is None:
         #play_path_pat = re.compile(r'ondemand\/(.*)\?')
@@ -407,13 +451,12 @@ cmd_str = recorder.replace('%s', '"' + game_url + '"')
 if play_path is not None:
     cmd_str += ' -y "' + play_path + '"'
 if bSubscribe:
-    cmd_str += ' -d ' + sub_path
-    cmd_str += ' -v'
+    cmd_str += ' -v -d ' + sub_path
 if app is not None:
     cmd_str += ' -a "' + app + '"'
 cmd_str += ' -o - '
 cmd_str = cmd_str.replace('%e', event_id)
-cmd_str += ' | mplayer -autosync 30 -really-quiet -cache 8196 -fs -'
+cmd_str += ' | mplayer -really-quiet -cache 128 -'
 try:
     print "\nplay_path = " + play_path
     print "\nsub_path  = " + sub_path
@@ -421,6 +464,7 @@ try:
 except:
     pass
 print cmd_str + '\n'
+#sys.exit()
 playprocess = subprocess.Popen(cmd_str,shell=True)
 playprocess.wait()
 
