@@ -9,18 +9,12 @@ import subprocess
 
 import logging
 logging.basicConfig(level=logging.INFO)
-logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
 from xml.dom.minidom import parse
 
-#from suds.client import Client
-#from suds import WebFault
 
 import xml.etree.ElementTree
 
-url = 'file://'
-url += os.path.join(os.environ['HOME'], '.mlb', 'MediaService.wsdl')
-#client = Client(url)
 
 SESSIONKEY = os.path.join(os.environ['HOME'], '.mlb', 'sessionkey')
 
@@ -288,22 +282,9 @@ else:
 #content_id = reply[0][0]['user-verified-content'][1]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
 #sys.exit()
-#cmd_str = 'rm -rf /tmp/suds'
-#subprocess.Popen(cmd_str,shell=True).wait()
-
-#ip = client.factory.create('ns0:IdentityPoint')
-#ip.__setitem__('identity-point-id', cookies['ipid'])
-#ip.__setitem__('fingerprint', urllib.unquote(cookies['fprt']))
-
-#pe = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE', 'playback-scenario':SCENARIO, 'content-id':content_id, 'fingerprint-identity-point':ip , 'session-key':session}
 
 
-#try:
-#    reply = client.service.find(**pe)
-#except WebFault ,e:
-#    print "WebFault received from content request:"
-#    print e
-#    sys.exit(1)
+
 
 values = {
     'subject':'LIVE_EVENT_COVERAGE',
@@ -361,5 +342,10 @@ except:
 
 print "url = " + str(game_url)
 #print "play_path = " + str(play_path)
+
+print '\n\nNexdef support is not yet available for 2011 season in mlbviewer.\n'
+print 'This script is largely for debug purposes at the moment and is not ready'
+print '\nfor playback yet.'
+
 
 sys.exit()
