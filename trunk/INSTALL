@@ -27,6 +27,12 @@ For local use:
 For system install:
     python setup.py install
 
+Note: Because MLB.TV has changed their service dramatically over the years, 
+mlbviewer no longer attempts backwards compatibility.  If it is desired to 
+play a previous year's games, please ask in the LQ forum (see README file) to
+find out what the last stable release was for that season and instructions
+on how to check it out from SVN.
+
 For help, wait for the listings to load and press the 'h' key.
 
 For more information, including configuration file settings, read the README.
