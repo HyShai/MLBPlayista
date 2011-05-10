@@ -27,7 +27,7 @@ import copy
 DEFAULT_V_PLAYER = 'mplayer -cache 2048 -really-quiet'
 DEFAULT_A_PLAYER = 'mplayer -cache 64 -really-quiet'
 DEFAULT_SPEED = '800'
-STREAM_SPEEDS = ( '164', '400', '600', '800', '1200', '1800', '2200', '3000' )
+STREAM_SPEEDS = ( '128', '500', '800', '1200', '1800', '2200', '3000' )
 
 DEFAULT_FLASH_BROWSER='firefox %s'
 
@@ -133,7 +133,7 @@ def mainloop(myscr,cfg):
     # Toggle the speed to 400k for top plays.  
     # Initialize the value here in case 'l' selected before 't'
     RESTORE_SPEED = cfg['speed']
-    cfg['use_nexdef'] = False
+    #cfg['use_nexdef'] = False
 
     if cfg['x_display']:
         os.environ['DISPLAY'] = cfg['x_display']
@@ -247,6 +247,7 @@ def mainloop(myscr,cfg):
 
     while True:
         # some initialization
+        condensed = False
         start_time = None
 
         myscr.clear()
@@ -266,6 +267,12 @@ def mainloop(myscr,cfg):
                 str(mysched.month) + '/' +\
                 str(mysched.day) + '/' +\
                 str(mysched.year) + ')' 
+        elif 'PostSeason' in CURRENT_SCREEN:
+            home = available[current_cursor][0]['home']
+            away = available[current_cursor][0]['away']
+            titlestr = 'AVAILABLE CAMERA ANGLES FOR ' +\
+                ' '.join(TEAMCODES[home][1:]).strip() + ' at ' +\
+                ' '.join(TEAMCODES[away][1:]).strip()
         elif 'bookmarks' in CURRENT_SCREEN:
             titlestr = "BOOKMARKS (Displaying " + str(len(available)) + ' of ' + str(len(bookmarks)) + ')'
         else:
@@ -294,21 +301,19 @@ def mainloop(myscr,cfg):
             if n < len(available):
                 if 'topPlays' in CURRENT_SCREEN:
                     s = available[n][1]
+                elif 'PostSeason' in CURRENT_SCREEN:
+                    s = available[n][2][0]
                 elif 'bookmarks' in CURRENT_SCREEN:
-                    s = available[n][0]['home']
+                    s = available[n][0]['title']
+                    home = str(available[n][0]['home'])
+                    away = str(available[n][0]['away'])
                 else:
-                    home = available[n][0]['home']
-                    away = available[n][0]['away']
-                    #s = available[n][0] + ':' + available[n][1]
-                    #s = ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
-                    #    ' '.join(TEAMCODES[home][1:]).strip() + ': ' +\
-                    #    available[n][1].strftime('%l:%M %p')
+                    home = str(available[n][0]['home'])
+                    away = str(available[n][0]['away'])
                     s = available[n][1].strftime('%l:%M %p') + ': ' +\
                         ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
                         ' '.join(TEAMCODES[home][1:]).strip()
-                    if available[n][4] in ('F', 'CG'):
-                        s+= ' (Archived)'
-                    elif use_xml and available[n][6] == 'media_archive':
+                    if available[n][7] == 'media_archive':
                         s+= ' (Archived)'
 
                 padding = curses.COLS - (len(s) + 1)
@@ -320,62 +325,124 @@ def mainloop(myscr,cfg):
             # Only draw the screen if there are any games
             if available:
                 if n == current_cursor:
-                    if available[n][4] == 'I':
+                    if available[n][5] == 'I':
                         cursesflags = curses.A_REVERSE|curses.A_BOLD
                     else:
                         cursesflags = curses.A_REVERSE
                     if 'topPlays' in CURRENT_SCREEN:
                         status_str = 'Press L to return to listings...'
+                    elif 'PostSeason' in CURRENT_SCREEN:
+                        status_str = 'Press L to return to listings...'
                     else:
-                        status_str = statusline.get(available[n][4],"Unknown Flag = "+available[n][4])
+                        status_str = statusline.get(available[n][5],"Unknown Flag = "+available[n][5])
 			if len(available[n][2]) + len(available[n][3]) == 0:
                             status_str += ' (No media)'
                         elif len(available[n][2]) == 0:
                             status_str += ' (No video)'
                         elif len(available[n][3]) == 0:
                             status_str += ' (No audio)'
-                        # Is the preferred coverage in HD?
-                        # First see if home or away is in video_follow
-                        try:
-                            if home in cfg['video_follow']:
-                                mycoverage = TEAMCODES[home][0]
-                            elif away in cfg['video_follow']:
-                                mycoverage = TEAMCODES[away][0]
+
+                        # Do some pre-processing
+                        # home and away we got much earlier
+                        # also get the codes
+                        # build a media dictionary for audio and video
+                        homecode = TEAMCODES[home][0]
+                        awaycode = TEAMCODES[away][0]
+                        media = {}
+                        media['video'] = {}
+                        media['audio'] = {}
+                        # first the video
+                        for elem in available[n][2]:
+                            if homecode in elem[1]:
+                                media['video']['home'] = elem 
+                            elif awaycode in elem[1]:
+                                media['video']['away'] = elem
                             else:
-                                mycoverage = TEAMCODES[available[n][0][cfg['coverage']]][0]
-                            #use_xml = True
-                        except:
-                            call_letters = ""
-                            myteam = 0
-                            use_xml = False
-                        # Next if 'HD' is in the call letters, light up the HD 
-                        # indicator
-                        hd_pat = re.compile(r'HD')
-                        if use_xml:
-                            for myteam in range(len(available[n][2])):
-                                try:
-                                    if available[n][2][myteam][1] == mycoverage:
-                                        ( call_letters, 
-                                          team_id, 
-                                          content_id , 
-                                          event_id ) = available[n][2][myteam]
-                                except:
-                                    raise Exception,repr(available[n][2])
+                                # handle game of the week
+                                media['video']['home'] = elem
+                                media['video']['away'] = elem
+                        # same for audio
+                        for elem in available[n][3]:
+                            if homecode in elem[1]:
+                                media['audio']['home'] = elem 
+                            elif awaycode in elem[1]:
+                                media['audio']['away'] = elem
+                            else:
+                                # handle game of the week
+                                media['audio']['home'] = elem
+                                media['audio']['away'] = elem
+                        
+                        # build a dictionary of preferred media based on 
+                        # *_follow and coverage setting ('s' key)
+                        prefer = {}
+                        if home in cfg['video_follow']:
+                            try:
+                                 prefer['video'] = media['video']['home']
+                            except:
+                                 if media['video'].has_key('away'):
+                                     prefer['video'] = media['video']['away']
+                                 else:
+                                     prefer['video'] = None
+                        elif away in cfg['video_follow']:
+                            try:
+                                prefer['video'] = media['video']['away']
+                            except:
+                                 if media['video'].has_key('home'):
+                                     prefer['video'] = media['video']['home']
+                                 else:
+                                     prefer['video'] = None
                         else:
-			    hd_available = False
+                            try:
+                                prefer['video'] = media['video'][cfg['coverage']]
+                            except:
+                                try:
+                                    prefer['video'] = available[n][2][0]
+                                except:
+                                    prefer['video'] = None
+                        # next determine preferred coverage for audio
+                        if home in cfg['audio_follow']:
+                            try:
+                                 prefer['audio'] = media['audio']['home']
+                            except:
+                                 if media['audio'].has_key('away'):
+                                     prefer['audio'] = media['audio']['away']
+                                 else:
+                                     prefer['audio'] = None
+                        elif away in cfg['audio_follow']:
+                            try:
+                                 prefer['audio'] = media['audio']['away']
+                            except:
+                                 if media['audio'].has_key('home'):
+                                     prefer['audio'] = media['audio']['home']
+                                 else:
+                                     prefer['audio'] = None
+                        else:
+                            try:
+                                prefer['audio'] = media['audio'][cfg['coverage']]
+                            except:
+                                try:
+                                    prefer['audio'] = available[n][3][0]
+                                except:
+                                    prefer['audio'] = None
+                        
+                        # Is the preferred coverage in HD?
+                        # If 'HD' is in the call letters, light up the HD 
+                        # indicator if nexdef enabled (that check comes later)
+                        hd_pat = re.compile(r'HD')
                         try:
-                            call_letters
+                            ( call_letters, 
+                              team_id, 
+                              content_id , 
+                              event_id ) = prefer['video']
                         except:
-                            #raise KeyError,available[n][2]
                             call_letters = ""
-                            myteam = 0
                         if re.search(hd_pat,call_letters) is not None:
                             hd_available = True
                         else:
                             hd_available = False
                 else:
                     if n < len(available):
-                        if available[n][4] == 'I':
+                        if available[n][5] == 'I':
                             cursesflags = curses.A_BOLD
                         else:
                             cursesflags = 0
@@ -394,6 +461,8 @@ def mainloop(myscr,cfg):
             else:
                 if 'topPlays' in CURRENT_SCREEN:
                     status_str = 'Press L to return to listings...'
+                elif 'PostSeason' in CURRENT_SCREEN:
+                    status_str = 'Press L to return to listings...'
                 elif 'bookmarks' in CURRENT_SCREEN:
                     status_str = 'Press B to refresh bookmarks...'
                 else:
@@ -410,12 +479,8 @@ def mainloop(myscr,cfg):
             debug_str = '[DEBUG]'
         else:
             debug_str = ''
-        if str(mysched.year) == '2007' and cfg['speed'] == '800':
-            speedstr = '[700K]'
-        elif str(mysched.year) == '2009' and cfg['speed'] == '400':
-            speedstr = '[600K]'
-        else:
-            speedstr = speedtoggle.get(cfg['speed'])
+        # Next get the speed display string and whether nexdef is in use
+        speedstr = speedtoggle.get(cfg['speed'])
         if cfg['use_nexdef']:
             speedstr = '[NEXDF]'
             hdstr = hdtoggle.get(hd_available)
@@ -436,7 +501,10 @@ def mainloop(myscr,cfg):
         try:
             statuswin.addstr(0,0,status_str,curses.A_BOLD)
         except:
-            raise Exception,status_str
+            rows = curses.LINES
+            cols = curses.COLS
+            slen = len(status_str)
+            raise Exception,'(' + str(slen) + '/' + str(cols) + ',' + str(n) + '/' + str(rows) + ') ' + status_str
 
         # And refresh
         myscr.refresh() 
@@ -453,11 +521,13 @@ def mainloop(myscr,cfg):
             if irc_socket in inputs:
                 c = irc_conn.next_code()
 
-        if c in ('InningsRaw', ord('x')):
+        if c in ('InningsRaw', ord('y')):
             innings = []
+            tmp_id = available[current_cursor][2][0][3]
             try:
-                innings = mysched.parse_innings_xml(event_id)
+                innings = mysched.parse_innings_xml(tmp_id, cfg['use_nexdef'])
             except:
+                raise
                 innings = mysched.error_str
             myscr.clear()
             myscr.addstr(0,0,repr(innings))
@@ -465,13 +535,32 @@ def mainloop(myscr,cfg):
             myscr.getch()
             continue
 
+        if c in ('PostSeason', ord('P')):
+            if 'topPlays' in CURRENT_SCREEN:
+                continue
+            if 'bookmarks' in CURRENT_SCREEN:
+                continue
+            if 'PostSeason' in CURRENT_SCREEN:
+                continue
+            event_id = available[current_cursor][2][0][3]
+            available = mysched.getMultiAngleListing(event_id)
+            DISABLED_FEATURES = ['Jump', ord('j'), \
+                                 'Left', curses.KEY_LEFT, \
+                                 'Right', curses.KEY_RIGHT, \
+                                 'Speed', ord('p'),
+                                 'Condensed', ord('c'),
+                                 'Audio', ord('a')]
+            CURRENT_SCREEN = 'PostSeason'
+            current_cursor = 0
+
+
         if c in ('Highlights', ord('t')):
             if 'topPlays' in CURRENT_SCREEN:
                 continue
             if 'bookmarks' in CURRENT_SCREEN:
                 continue
             try:
-                GAMEID = available[current_cursor][5]
+                GAMEID = available[current_cursor][6]
             except IndexError:
                 continue
             DISABLED_FEATURES = ['Jump', ord('j'), \
@@ -481,7 +570,7 @@ def mainloop(myscr,cfg):
                                  'Condensed', ord('c'),
                                  'Audio', ord('a')]
             RESTORE_SPEED = cfg['speed']
-            # Switch to 400 for highlights since all highlights are 400k
+            # Switch to 800 for highlights since all highlights are 800k
             # This is really just to toggle the indicator
             cfg['speed'] = '800'
             available = mysched.getTopPlays(GAMEID)
@@ -532,6 +621,9 @@ def mainloop(myscr,cfg):
 
 
         if c in ('Bookmarks', ord('b')):
+            mycoverage = 'unk'
+            home = 'unk'
+            away = 'unk'
             if 'topPlays' in CURRENT_SCREEN:
                 cfg['speed'] = str(RESTORE_SPEED)
             try:
@@ -601,13 +693,7 @@ def mainloop(myscr,cfg):
             if cfg['use_nexdef']:
                 cfg['use_nexdef'] = False
             else:
-                #cfg['use_nexdef'] = True
-                cfg['use_dexdef'] = False
-                statuswin.clear()
-                statuswin.addstr(0,0,'Nexdef is not supported in 2010 yet.')
-                statuswin.refresh()
-                time.sleep(1)
-            #statuswin.clear()
+                cfg['use_nexdef'] = True
 
         # coveragetoggle ('c' is taken by condensed games, 's' was
         # reserved for scores but I don't think I'll implement that.
@@ -666,8 +752,6 @@ def mainloop(myscr,cfg):
         if c in ('Left', curses.KEY_LEFT, ord('?')):
             # subtract a day:
             t = datetime.datetime(mysched.year, mysched.month, mysched.day)
-            opening = datetime.datetime(2008,3,31)
-            #if (t-opening).days > 0:
             dif = datetime.timedelta(1)
             t -= dif
             mysched = MLBSchedule((t.year, t.month, t.day))
@@ -800,13 +884,15 @@ def mainloop(myscr,cfg):
             if 'topPlays' in CURRENT_SCREEN:
                 gameid = available[current_cursor][4]
             else:
-                gameid = available[current_cursor][5]
+                gameid = available[current_cursor][6]
             titlewin.clear()
             titlewin.addstr(0,0,'LISTINGS DEBUG FOR ' + gameid)
             titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
             myscr.clear()
             myscr.addstr(2,0,'getListings() for current_cursor:')
             myscr.addstr(3,0,repr(available[current_cursor]))
+            myscr.addstr(10,0,'preferred media for current cursor:')
+            myscr.addstr(11,0,repr(prefer))
             statuswin.clear()
             statuswin.addstr(0,0,'Press a key to continue...')
             myscr.refresh()
@@ -865,26 +951,25 @@ def mainloop(myscr,cfg):
                     try:
                         i = bookmarks.index(mark)
                         bookmarks[i] = mark
-                        mark[0]['home'] = title
-                        available[current_cursor][0]['home'] = title
+                        mark[0]['title'] = title
+                        available[current_cursor][0]['title'] = title
                     except IndexError:
                         #raise Exception,repr(mark)
                         continue
                     s = 'Bookmark edited: '
                 else:
-                    mark[0]['home'] = title
+                    mark[0]['title'] = title
                     bookmarks.append(mark)
                     s= 'Bookmark added: '
                 bk = open(BOOKMARK_FILE, 'w')
                 pickle.dump(bookmarks,bk)
                 bk.close()
                 statuswin.clear()
-                statuswin.addstr(0,0, s + title, curses.A_BOLD)
+                statuswin.addstr(0,0, (s + title)[:curses.COLS-2], curses.A_BOLD)
                 statuswin.refresh()
                 time.sleep(1)
 
         if c in ('Flash', ord('f')):
-            #flash_url = 'http://mlb.mlb.com/flash/mediaplayer/v4/RC11/MP4.jsp?calendar_event_id='
             flash_url = 'http://mlb.mlb.com/media/player/entry.jsp?calendar_event_id='
             flash_url += event_id
             try:
@@ -902,19 +987,23 @@ def mainloop(myscr,cfg):
 
         if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c'),
                  'Innings', ord('i')):
+            streamtype = 'video'
             if c in ('Audio', ord('a')):
                 audio = True
+                streamtype = 'audio'
                 player = cfg['audio_player']
             elif c in ('Condensed', ord('c')):
                 audio = False
+                streamtype = 'condensed'
                 if cfg['top_plays_player']:
                     player = cfg['top_plays_player']
                 else:
                     player = cfg['video_player']
             elif c in ('Innings', ord('i')):
+                streamtype = 'video'
                 if cfg['use_nexdef'] or \
-                   available[current_cursor][4] in ('F', 'CG') or \
-                   use_xml and available[current_cursor][6] == 'media_archive':
+                   available[current_cursor][5] in ('F', 'CG') or \
+                   use_xml and available[current_cursor][7] == 'media_archive':
                     pass
                 else:
                     statuswin.clear()
@@ -939,6 +1028,7 @@ def mainloop(myscr,cfg):
                     myscr.addstr(0,0,'Could not parse innings: ')
                     myscr.addstr(1,0,str(detail))
                     myscr.refresh()
+                    myscr.getch()
                     time.sleep(3)
                     continue
                 for inning in range(len(myinnings)):
@@ -951,14 +1041,10 @@ def mainloop(myscr,cfg):
                 # print header first:
                 myscr.clear()
                 title_str = 'JUMP TO HALF INNINGS: ' 
-                title_str += str(available[current_cursor][5])
+                title_str += str(available[current_cursor][6])
                 myscr.addstr(0,0,title_str)
                 myscr.hline(1,0,curses.ACS_HLINE,curses.COLS-1)
                 # skip a line
-                #myscr.addstr(2,0,'Use number keys to select top half innings.')
-                #myscr.addstr(3,0,'Use Shift+number for bottom half innings.')
-                #myscr.addstr(4,0,'Use zero or shift+zero for extra-innings.')
-                #myscr.addstr(2,0,'Enter a half inning to jump to.')
                 myscr.addstr(2,0,'Enter T or B for top or bottom plus inning to jump to.')
                 myscr.addstr(3,0,'Example: T6 to jump to Top of 6th inning.')
                 myscr.addstr(4,0,'Enter E for Extra Innings.')
@@ -1009,7 +1095,7 @@ def mainloop(myscr,cfg):
                 latest_str = 'Last available half inning is: '
                 if latest == 0:
                     latest_str += 'None'
-                elif available[current_cursor][4] in ('F','CG','GO'):
+                elif available[current_cursor][5] in ('F','CG','GO'):
                     # remove spoiler of home victories
                     latest_str += 'Game Completed'
                 elif latest < 10:
@@ -1071,6 +1157,7 @@ def mainloop(myscr,cfg):
                 # END INNINGS SCREEN
             else:
                 audio = False
+                streamtype = 'video'
                 player = cfg['video_player']
                 # if top_plays_player defined, let's use it
                 if 'topPlays' in CURRENT_SCREEN:
@@ -1078,39 +1165,38 @@ def mainloop(myscr,cfg):
                         player = cfg['top_plays_player']
                     # hate doing this here, but for new highlights, 
                     # it doesn't need coverage or GameStream object
-                    if use_xml:
-                        u = str(available[current_cursor][2])
-                        if '%s' in player:
-                            cmd_str = player.replace('%s', u)
-                        else:
-                            cmd_str = player + " '" + u + "'"
-                        myscr.clear()
-                        if cfg['debug']:
-                            myscr.addstr(0,0,'Url received:')
-                            myscr.addstr(1,0,u)
-                            #myscr.getch()
-                        else:
-                            myscr.addstr(0,0,cmd_str)
-                        myscr.refresh()
-                        if cfg['debug']:
-                            time.sleep(2)
-                            continue
-                        try:
-                            play_process=subprocess.Popen(cmd_str,shell=True)
-                            play_process.wait()
-                            # I want to see mplayer errors before returning to 
-                            # listings screen
-                            if ['show_player_command']:
-                                time.sleep(3)
-                        except Exception,detail:
-                            myscr.clear()
-                            myscr.addstr(0,0,'Error occurred in player process:')
-                            myscr.addstr(1,0,detail)
-                            myscr.refresh()
-                            time.sleep(2)
-                        # end the xml handling of top plays
+                    u = str(available[current_cursor][2])
+                    if '%s' in player:
+                        cmd_str = player.replace('%s', u)
+                    else:
+                        cmd_str = player + " '" + u + "'"
+                    myscr.clear()
+                    if cfg['debug']:
+                        myscr.addstr(0,0,'Url received:')
+                        myscr.addstr(1,0,u)
+                        #myscr.getch()
+                    else:
+                        myscr.addstr(0,0,cmd_str)
+                    myscr.refresh()
+                    if cfg['debug']:
+                        time.sleep(2)
                         continue
-                         
+                    try:
+                        play_process=subprocess.Popen(cmd_str,shell=True)
+                        play_process.wait()
+                        # I want to see mplayer errors before returning to 
+                        # listings screen
+                        if ['show_player_command']:
+                            time.sleep(3)
+                    except Exception,detail:
+                        myscr.clear()
+                        myscr.addstr(0,0,'Error occurred in player process:')
+                        myscr.addstr(1,0,detail)
+                        myscr.refresh()
+                        time.sleep(2)
+                    # end the xml handling of top plays
+                    continue
+                     
             try:
                 # Turn off socket
                 if LIRC:
@@ -1124,58 +1210,29 @@ def mainloop(myscr,cfg):
                 dbg.write('DEBUG>> home coverage = ' + home + ' away coverage = ' + away + '\n')
                 dbg.write('DEBUG>> checking for audio_follow = ' + repr(cfg['audio_follow']) + '\n')
                 dbg.write('DEBUG>> checking for video_follow = ' + repr(cfg['video_follow']) + '\n')
+                dbg.write('DEBUG>> prefer[''video''] = ' + repr(prefer['video']) + '\n')
+                dbg.write('DEBUG>> prefer[''audio''] = ' + repr(prefer['audio']) + '\n')
                 dbg.flush()
                 
 
                 if audio:
-                    stream = available[current_cursor][3][myteam]
+                    stream = prefer['audio']
+                    try:
+                        coverage = prefer['audio'][1]
+                    except:
+                        coverage = '0'
 
-                    if use_xml:
-                        if away in cfg['audio_follow']:
-                            coverage = TEAMCODES[away][0]
-                        elif home in cfg['video_follow']:
-                            coverage = TEAMCODES[home][0]
-                        else:
-                            coverage = TEAMCODES[defaultcoverage][0]
-
-                        g = GameStream(stream, cfg['user'], cfg['pass'],
-                                   cfg['debug'], streamtype='audio',
-                                   use_soap=True, use_nexdef=False,
-                                   coverage=coverage)
-                    else:
-                        g = GameStream(stream, cfg['user'], cfg['pass'],
-                                   cfg['debug'], streamtype='audio')
+                    g = GameStream(stream, cfg['user'], cfg['pass'],
+                               cfg['debug'], streamtype='audio',
+                               use_soap=True, use_nexdef=False,
+                               coverage=coverage)
 
                 else:
                     if c in ('Condensed', ord('c')):
-                        if available[current_cursor][4] in ('CG'):
-                            gameid = available[current_cursor][5]
-                            stream = mysched.getCondensedVideo(gameid)
-                            # Again, we have to do 2009 code separate from
-                            # regular audio and video for now.
-                            if use_xml:
-                                if '%s' in player:
-                                    cmd_str = player.replace('%s', stream)
-                                else:
-                                    cmd_str = player + ' ' + stream
-                                try:
-                                    myscr.clear()
-                                    myscr.addstr(0,0,cmd_str)
-                                    myscr.refresh()
-                                    if cfg['debug']:
-                                        statuswin.clear()
-                                        statuswin.addstr('Debug set, showing URL but not playing it...')
-                                        statuswin.refresh()
-                                        time.sleep(2)
-                                        continue
-                                    myscr.refresh()
-                                    player_process = subprocess.Popen(cmd_str,
-                                                                   shell=True)
-                                    player_process.wait()
-                                except:
-                                    raise
-                                time.sleep(2)
-                                continue
+                        if available[current_cursor][5] in ('CG'):
+                            condensed = True
+                            streamtype = 'condensed'
+                            stream = available[current_cursor][4][0]
                         else:
                             statuswin.clear()
                             statuswin.addstr(0,0,'Condensed Game Not Yet Available')
@@ -1184,42 +1241,52 @@ def mainloop(myscr,cfg):
                             time.sleep(2)
                             continue
                     else:
-                        if use_xml:
-                            try:
-                                stream = available[current_cursor][2][myteam]
-                            except:
-                                statuswin.clear()
-                                statuswin.addstr(0,0,'ERROR: Stream not found!')
-                                statuswin.refresh()
-                                time.sleep(2)
-                                continue
-                        else:
-                            stream = available[current_cursor][2]
-                    if use_xml:
-                        if away in cfg['video_follow']:
-                            coverage = TEAMCODES[away][0]
-                        elif home in cfg['video_follow']:
-                            coverage = TEAMCODES[home][0]
-                        else:
-                            coverage = TEAMCODES[defaultcoverage][0]
-
-                        if str(available[current_cursor][4]) in ('I', 'D'):
-                            if cfg['live_from_start']:
-                                start_time=0
-                        else:
-                            if start_time is None:
-                                start_time=0
-
-
-                        g = GameStream(stream, cfg['user'], cfg['pass'],
-                                   cfg['debug'],use_soap=True,
-                                   use_nexdef=cfg['use_nexdef'],
-                                   speed=cfg['speed'],
-                                   coverage=coverage,
-                                   max_bps=cfg['max_bps'],start_time=start_time)
+                        try:
+                            stream = prefer['video']
+                        except:
+                            statuswin.clear()
+                            statuswin.addstr(0,0,'ERROR: Stream not found!')
+                            statuswin.refresh()
+                            time.sleep(2)
+                            continue
+                    try:
+                        coverage = prefer['video'][1]
+                    except:
+                        coverage = '0'
+                    if 'PostSeason' in CURRENT_SCREEN: 
+                        stream = ( 'MLB', 
+                                   0,  
+                                   available[current_cursor][2][2],
+                                   available[current_cursor][2][3])
+                        #raise Exception,stream
+                        postseason=True
                     else:
-                        g = GameStream(stream, cfg['user'], cfg['pass'],
-                                   cfg['debug'])
+                        postseason=False
+
+                    # This next block is non-intuitive
+                    # if live game (I or D) and live_from_start = False
+                    # look up the start_time from the describe (start_time=0)
+                    # else, don't include start_time (start_time=None)
+                    if str(available[current_cursor][5]) in ('I', 'D') and start_time == None:
+                        if cfg['live_from_start']:
+                            start_time=0
+                        else:
+                            start_time=None
+                    else:
+                        # archive games should always look up start_time if 
+                        # we didn't get it from innings
+                        if start_time is None:
+                            start_time=0
+
+                    g = GameStream(stream, cfg['user'], cfg['pass'],
+                               cfg['debug'],use_soap=True,
+                               use_nexdef=cfg['use_nexdef'],
+                               speed=cfg['speed'],
+                               strict=cfg['strict_stream'],
+                               coverage=coverage,
+                               condensed=condensed,
+                               postseason=postseason,
+                               max_bps=cfg['max_bps'],start_time=start_time)
                 
                 # print a "Trying..." message so we don't look frozen
                 statuswin.clear()
@@ -1233,10 +1300,7 @@ def mainloop(myscr,cfg):
                     statuswin.refresh()
                     myscr.refresh()
                 try:
-                    if g.use_soap:
-                        u = g.soapurl()
-                    else:
-                        u = g.url()
+                    u = g.url()
                 except:
                     # Debugging should make errors fatal in case there is a
                     # logic, coding, or other uncaught error being hidden by
@@ -1248,6 +1312,7 @@ def mainloop(myscr,cfg):
                     myscr.addstr(0,0,'An error occurred in locating the game stream:')
                     myscr.addstr(2,0,g.error_str)
                     myscr.refresh()
+                    #myscr.getch()
                     time.sleep(3)
                     continue
                 try:
@@ -1260,7 +1325,10 @@ def mainloop(myscr,cfg):
                     myscr.clear()
                     titlewin.clear()
                     myscr.addstr(0,0,'Url received:')
-                    myscr.addstr(1,0,u)
+                    try:
+                        myscr.addstr(1,0,u)
+                    except:
+                        raise Exception,u
                     myscr.refresh()
                     #myscr.getch()
                     time.sleep(3)
@@ -1271,18 +1339,12 @@ def mainloop(myscr,cfg):
                     continue
                 try:
                     if '%s' in player:
-                        if ( cfg['use_nexdef'] and not audio ) or not use_xml:
-                            cmd_str = player.replace('%s', '"' + u + '"')
-                        else:
-                            cmd_str = player.replace('%s', '-')
-                            cmd_str  = u + ' | ' + cmd_str
+                        cmd_str = player.replace('%s', '-')
+                        cmd_str  = u + ' | ' + cmd_str
                     else:
-                        if ( cfg['use_nexdef'] and not audio ) or not use_xml:
-                            cmd_str = player + ' "' + u + '" '
-                        else:
-                            cmd_str = u + ' | ' + player + ' - '
+                        cmd_str = u + ' | ' + player + ' - '
                     if '%f' in player:
-                        gameid = available[current_cursor][5].replace('/','-')
+                        gameid = available[current_cursor][6].replace('/','-')
                         if audio:
                             suf = '.mp3'
                         else:
@@ -1291,7 +1353,8 @@ def mainloop(myscr,cfg):
                     if cfg['show_player_command']:
                         myscr.clear()
                         titlewin.clear()
-                        myscr.addstr(0,0,cmd_str)
+                        charlmt = curses.COLS * ( curses.LINES-2 )
+                        myscr.addstr(0,0,cmd_str[:charlmt])
                         myscr.refresh()
                         time.sleep(3)
 		    else:
@@ -1363,6 +1426,7 @@ def mainloop(myscr,cfg):
                             if audio:
                                 continue
                         except:
+                            #raise
                             pass
                         try:
                             if audio:
@@ -1378,7 +1442,9 @@ def mainloop(myscr,cfg):
                                     padding = 4 - len(kspeed)
                                     if g.encodings.has_key(int(speed)):
                                         speed_str = '[' + ' '*padding + kspeed + 'K] '
-                                        myscr.addstr(e,0,str(e-1) + ' ) ' + speed_str + g.encodings[int(speed)][0])
+                                        stream_str = g.encodings[int(speed)][0].split('/')[-2] + '/' + g.encodings[int(speed)][0].split('/')[-1]
+                                        #myscr.addstr(e,0,str(e-1) + ' ) ' + speed_str + g.encodings[int(speed)][0])
+                                        myscr.addstr(e,0,str(e-1) + ' ) ' + speed_str + stream_str)
                                     e += 1
                             try:
                                 ( stream, kbps, millis ) = g.current_encoding
@@ -1402,7 +1468,9 @@ def mainloop(myscr,cfg):
                                     ms = '00' + ms
                                 elif len(ms) < 3:
                                     ms = '0' + ms
-                                status_str =  'STREAM: ' + stream
+                                stream_str =  stream.split('/')[-2] + '/'
+                                stream_str += stream.split('/')[-1]
+                                status_str =  'STREAM: ' + stream_str
                                 status_str += '\nKBPS  : ' + kbps
                                 status_str += '\nMS    : ' + millis
                                 status_str += '\nTIME  : ' + hrs + ':' +\
@@ -1493,7 +1561,7 @@ if __name__ == "__main__":
                   'max_bps': 800000,
                   'live_from_start': 0,
                   'use_nexdef': 0,
-                  'strict_stream': 1,
+                  'strict_stream': 0,
                   'coverage' : 'home',
                   'show_inning_frames': 1,
                   'flash_browser': DEFAULT_FLASH_BROWSER}

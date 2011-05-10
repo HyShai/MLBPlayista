@@ -131,9 +131,9 @@ for n in range(len(available)):
        ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
        ' '.join(TEAMCODES[home][1:]).strip()
     #print str(s)
-    c = padstr(available[n][4],2) + ": " +\
+    c = padstr(available[n][5],2) + ": " +\
         available[n][1].strftime('%l:%M %p') + ': ' +\
-        available[n][5] 
+        available[n][6] 
     try:
         c += ' E:' + padstr(str(available[n][3][0][3]),21)
     except (TypeError, IndexError):

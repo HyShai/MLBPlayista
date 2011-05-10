@@ -1,38 +1,16 @@
 For system requirements and installation instructions, see INSTALL file.
 
-VERY IMPORTANT - WHAT DOESN'T WORK YET
+NEW FOR 2010 SEASON
 
-Non-premium subcribers will not be able to watch Live games yet.  There
-is an open issue with Mplayer support of the live streams.  There are two
-options for watching live games if you are a non-premium subscriber.
-
-OPTION 1: Flash plugin hotkey
-
-Use the 'f' key to open the highlighted game in the Flash player.
-
-OPTION 2: Applian FLV Player (using Wine)
-
-Applian FLV Player works halfway decently on Linux using wine.  Using wine
-and setting up FLV Player is beyond the scope of this document.  However,
-assuming you have both working, you can use mlblistings.py to locate 
-the event id (a number like 14-234455-2009-05-01) and the soapevent.py 
-script in the test directory.
-
-$ test/soapevent.py 14-234455-2009-05-01
-
-And open the file in progress with FLV Player:
-
-wine "C:\Program Files\FLV Player\FLVPlayer.exe" 14-234455-2009-05-01.mp4
-
-You will likely not get full-screen performance out of this, but it should be
-good enough to watch until the Mplayer fix is available.
-
-
-Archived video, live and archived audio, and NexDef live and archived 
-should work with the latest svn source of Mplayer (see the 
-REQUIREMENTS-2009.txt) file for more details.  Rtmpdump requires a patch
-(included in rtmpdump-patches directory) for live audio streams.
-
+NexDef operation has changed yet again this season.  Rather than operating as 
+a web proxy, the video comes directly off an embedded RTMP server.  This makes
+operation between NexDef and non-NexDef mode very similar.  But we lose some 
+functionality from last year.  So far, stream switching is not working yet.  Or
+at least, user selectable stream switching is not working.  The autobahn.jar
+itself can do its own stream switching based on network conditions.  I'm 
+still investigating how to fix the stream on a single selection.  In the 
+meantime, use the max_bps configuration setting to tell the plugin how high
+you'll allow the stream to connect.
 
 NEW FOR 2009 SEASON
 
@@ -140,7 +118,7 @@ to listen to)
 
 video_follow = x (same as audio follow except for video)
 
-Note that blackout and audio_follow use the following team codes:
+Note that blackout and video_follow/audio_follow use the following team codes:
      'ana', 'ari', 'atl', 'bal', 'bos', 'chc', 'cin', 'cle', 'col',
      'cws', 'det', 'fla', 'hou', 'kc', 'la', 'mil', 'min', 'nym',
      'nyy', 'oak', 'phi', 'pit', 'sd', 'sea', 'sf', 'stl', 'tb',
@@ -163,11 +141,10 @@ prefer a quality up to, but not over this setting.  The quality bars in the
 Flash player roughly equate to:
 
 164
-400
-600
+500
 800
 1200
-1500
+1800
 2200
 3000
 
@@ -199,7 +176,7 @@ favorite_color is optional, and highlighting will default to cyan.
 
 NEXDEF USERS
 
-First, you'll need the NexDef plugin.  See the REQUIREMENTS-2009.txt file
+First, you'll need the NexDef plugin.  See the REQUIREMENTS-2010.txt file
 for acquiring and running the NexDef plugin.
 
 To run the NexDef plugin:

@@ -1,13 +1,12 @@
 Requirements
 
-See REQUIREMENTS-2009.txt file for 2009 requirements.  This file is largely
-out of date for the 2009 changes.
+See REQUIREMENTS-2010.txt file for 2010 requirements.  This file is largely
+out of date for the 2010 changes.
 ------------
 
 For Linux and other *nixes:
 
 python
-python-simplejson  (http://www.undefined.org/python/)
 win32-codecs  (http://www.mplayerhq.hu/design7/dload.html#binary_codecs)
 mplayer, xine, vlc or any media player capable of playing Windows Media 
 streaming audio or video
@@ -17,7 +16,6 @@ For Windows:
 
 cygwin (http://www.cygwin.com)
 python
-python-simplejson
 mplayer or Windows Media Player
 
 Installation
