@@ -353,9 +353,9 @@ def mainloop(myscr,cfg):
                         media['audio'] = {}
                         # first the video
                         for elem in available[n][2]:
-                            if homecode in elem[1]:
+                            if homecode and homecode in elem[1]:
                                 media['video']['home'] = elem 
-                            elif awaycode in elem[1]:
+                            elif awaycode and awaycode in elem[1]:
                                 media['video']['away'] = elem
                             else:
                                 # handle game of the week
@@ -363,9 +363,9 @@ def mainloop(myscr,cfg):
                                 media['video']['away'] = elem
                         # same for audio
                         for elem in available[n][3]:
-                            if homecode in elem[1]:
+                            if homecode and homecode in elem[1]:
                                 media['audio']['home'] = elem 
-                            elif awaycode in elem[1]:
+                            elif awaycode and awaycode in elem[1]:
                                 media['audio']['away'] = elem
                             else:
                                 # handle game of the week
