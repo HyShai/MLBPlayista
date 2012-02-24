@@ -193,6 +193,7 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
         '2009': (datetime.datetime(2009,3,8),datetime.datetime(2009,11,1)),
         '2010': (datetime.datetime(2010,3,14),datetime.datetime(2010,11,7)),
         '2011': (datetime.datetime(2011,3,13),datetime.datetime(2011,11,6)),
+        '2012': (datetime.datetime(2012,3,11),datetime.datetime(2012,11,4)),
                }
     now = datetime.datetime.now()            
     if (now >= DAYLIGHT[str(now.year)][0]) \
