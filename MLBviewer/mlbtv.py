@@ -41,7 +41,12 @@ except:
 #DEBUG = None
 #from __init__ import AUTHDIR
 
+# Change this line if you want to use flvstreamer instead
 DEFAULT_F_RECORD = 'rtmpdump -f \"LNX 10,0,22,87\" -o %f -r %s'
+
+# Change the next two settings to tweak mlbhd behavior
+DEFAULT_HD_PLAYER = 'mlbhls -B %B -b %P'
+HD_ARCHIVE_OFFSET = '48'
 
 AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
@@ -102,6 +107,7 @@ TEAMCODES = {
     'det': ('116', 'Detroit Tigers', ''),
     'fla': ('146', 'Florida Marlins', ''),
     'flo': ('146', 'Florida Marlins', ''),
+    'mia': ('146', 'Miami Marlins', ''),
     'hou': ('117', 'Houston Astros', ''),
     'kc':  ('118', 'Kansas City Royals', ''),
     'kca': ('118', 'Kansas City Royals', ''),
@@ -170,11 +176,11 @@ TEAMCODES = {
     't2330': ('T3330', 'Georgetown University'),
     't2291': ('T2291', 'St. Louis University'),
     't2292': ('T2292', 'University of Southern Florida'),
+    't2510': ('T2510', 'Team Canada'),
     'uga' : ('UGA',  'University of Georgia'),
     'mcc' : ('MCC', 'Manatee Community College'),
     'fso' : ('FSO', 'Florida Southern College'),
     'fsu' : ('FSU', 'Florida State University'),
-    'mia' : ('MIA', 'University of Miami'),
     'neu' : ('NEU',  'Northeastern University'),
     'bc' : ('BC',  'Boston', 'College', ''),
     }
@@ -193,7 +199,7 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
         '2009': (datetime.datetime(2009,3,8),datetime.datetime(2009,11,1)),
         '2010': (datetime.datetime(2010,3,14),datetime.datetime(2010,11,7)),
         '2011': (datetime.datetime(2011,3,13),datetime.datetime(2011,11,6)),
-        '2012': (datetime.datetime(2012,3,11),datetime.datetime(2012,11,4)),
+	'2012': (datetime.datetime(2012,3,11),datetime.datetime(2012,11,4)),
                }
     now = datetime.datetime.now()            
     if (now >= DAYLIGHT[str(now.year)][0]) \
@@ -364,8 +370,11 @@ class MLBSchedule:
                 if platform != 'WEB_MEDIAPLAYER':
                     continue 
                 cdict['content_id'] = media.getAttribute('content_id')
+                if cdict['name'] == '':
+                    cdict['name'] = 'Unknown Camera Angle'
                 camerainfo[id]['angles'].append(cdict)
             out.append(camerainfo[id])
+        #raise Exception,repr(out)
         return out
 
     def getMultiAngleListing(self,event_id):
@@ -380,6 +389,7 @@ class MLBSchedule:
         teams['away'] = raw['away_file_code']
         for angle in raw['angles']:
             out.append((teams, 0, (angle['name'], 0, angle['content_id'], event_id), null, null, 'NB', event_id, 0))
+        #raise Exception,repr(out)
         return out
 
     def __scheduleFromXml(self):
@@ -414,11 +424,11 @@ class MLBSchedule:
         content = {}
         content['audio'] = []
         content['video'] = {}
-        content['video']['128'] = []
+        content['video']['300'] = []
         content['video']['500'] = []
-        content['video']['800'] = []
         content['video']['1200'] = []
         content['video']['1800'] = []
+        content['video']['2400'] = []
         content['video']['swarm'] = []
         content['condensed'] = []
         event_id = str(xp.getAttribute('calendar_event_id'))
@@ -443,9 +453,7 @@ class MLBSchedule:
                    content['audio'].append(out)
            elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
                if tmp['playback_scenario'] in \
-                     ('FLASH_128K_256X144', 'FLASH_500K_400X224',
-                      'FLASH_800K_400X448', 'FLASH_1200K_800X448', 
-                      'FLASH_1800K_800X448'):
+                     ( 'HTTP_CLOUD_WIRED', 'FMS_CLOUD'):
                    try:
                        tmp['blackout']
                    except:
@@ -465,16 +473,9 @@ class MLBSchedule:
                    #print 'Found video: ' + repr(out) + tmp['playback_scenario']
                    if tmp['playback_scenario'] == 'HTTP_CLOUD_WIRED':
                        content['video']['swarm'].append(out)
-                   elif tmp['playback_scenario'] == 'FLASH_128K_256X144':
-                       content['video']['128'].append(out)
-                   elif tmp['playback_scenario'] == 'FLASH_500K_400X224':
-                       content['video']['500'].append(out)
-                   elif tmp['playback_scenario'] == 'FLASH_800K_400X448':
-                       content['video']['800'].append(out)
-                   elif tmp['playback_scenario'] == 'FLASH_1200K_800X448':
-                       content['video']['1200'].append(out)
-                   elif tmp['playback_scenario'] == 'FLASH_1800K_800X448':
-                       content['video']['1800'].append(out)
+                   elif tmp['playback_scenario'] == 'FMS_CLOUD':
+                       for s in ('300', '500', '1200', '1800', '2400'):
+                           content['video'][s].append(out)
                    else:
                        continue
            elif tmp['type'] == 'condensed_game':
@@ -563,7 +564,7 @@ class MLBSchedule:
             dct['video']['swarm'] = []
             dct['condensed'] = []
             #raise Exception,repr(game['content']['video'])
-            for key in ('128', '500', '800', '1200', '1800', 'swarm'):
+            for key in ('300', '500', '1200', '1800', '2400', 'swarm'):
                 try:
                     dct['video'][key] = game['content']['video'][key]
                 except KeyError:
@@ -880,10 +881,13 @@ class GameStream:
     def __init__(self,stream, email, passwd, debug=None,
                  auth=True, streamtype='video',use_soap=True,speed=800,
                  coverage=None,use_nexdef=False,max_bps=800000,start_time=0,
-                 strict=False,condensed=False,postseason=False,camera=0):
+                 strict=False,condensed=False,postseason=False,camera=0,
+                 use_librtmp=False,use_mlbhd=False):
         self.strict = strict
         self.condensed = condensed
         self.postseason = postseason
+        self.use_librtmp = use_librtmp
+        self.use_mlbhd = use_mlbhd
         self.auth = auth
         self.camera = camera
         self.this_camera = 0
@@ -930,18 +934,8 @@ class GameStream:
         else:
             if self.use_nexdef:
                 self.scenario = 'HTTP_CLOUD_WIRED'
-            elif str(self.speed) == '128':
-                self.scenario = "FLASH_128K_256X144"
-            elif str(self.speed) == '500':
-                self.scenario = "FLASH_500K_400X224"
-            elif str(self.speed) == '800':
-                self.scenario = "FLASH_800K_400X448"
-            elif str(self.speed) == '1200':
-                self.scenario = "FLASH_1200K_800X448"
-            elif str(self.speed) == '1800':
-                self.scenario = "FLASH_1800K_800X448"
             else:
-                self.scenario = "FLASH_800K_400X448"
+                self.scenario = 'FMS_CLOUD'
             self.subject  = "LIVE_EVENT_COVERAGE"
         self.cookies = {}
         #self.content_id = None
@@ -1199,11 +1193,12 @@ class GameStream:
 
         media_type = reply.getElementsByTagName('type')[0].childNodes[0].data
         media_state = reply.getElementsByTagName('state')[0].childNodes[0].data
+        self.media_state = media_state
         if blackout_status is not None and self.streamtype == 'video':
             inmarket_pat = re.compile(r'INMARKET')
             if re.search(inmarket_pat,blackout_status) is not None:
                 pass
-            elif media_state == 'MEDIA_ON':
+            elif media_state == 'MEDIA_ON' and not self.postseason:
                 self.error_str = 'BLACKOUT: ' + str(blackout_status)
                 bf = open(BLACKFILE, 'w')
                 reply.writexml(bf)
@@ -1267,6 +1262,19 @@ class GameStream:
                     content_list.append( ( call_letters, coverage, content_id, self.event_id ) )
         return content_list
                     
+
+    def parse_fms_cloud_response(self,url):
+        out = ''
+        req = urllib2.Request(url)
+        handle = urllib2.urlopen(req)
+        rsp = parse(handle)
+        rtmp_base = rsp.getElementsByTagName('meta')[0].getAttribute('base')
+        for elem in rsp.getElementsByTagName('video'):
+            speed = int(elem.getAttribute('system-bitrate'))/1000
+            if int(self.speed) == int(speed):
+               src = elem.getAttribute('src').replace('mp4:','/')
+               out = rtmp_base + src
+        return out
 
     def parse_soap_content(self,reply):
         # iterate over all the media items
@@ -1458,14 +1466,21 @@ class GameStream:
         except:
             self.error_str = "Stream URL not found in reply.  Stream may not be available yet."
             raise Exception,self.error_str
+        self.log.write("DEBUG>> URL received: " + game_url + '\n')
         if self.use_nexdef:
             #raise Exception,self.nexdef_url(game_url)
-            return self.nexdef_flash_url(self.nexdef_url(game_url))
+            if self.use_mlbhd:
+                return self.prepare_hd_str(game_url)
+            else:
+                return self.nexdef_flash_url(self.nexdef_url(game_url))
         else:
+            if self.streamtype == 'video':
+                game_url = self.parse_fms_cloud_response(game_url)
             return self.flash_url(game_url)
 
 
     def nexdef_url(self,game_url):
+        self.nexdef_url = game_url
         self.nexdef_media_url = None
         nexdef_base = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/'
         # build the first url for stream descriptions
@@ -1604,7 +1619,10 @@ class GameStream:
         self.rtmp_port = '1935'
         recorder = DEFAULT_F_RECORD
         self.filename = '-'
-        self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,self.rtmp_path)
+        if self.use_librtmp:
+            self.rec_cmd_str = self.prepare_mplayer_str(recorder,self.filename,self.rtmp_path)
+        else:
+            self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,self.rtmp_path)
         return self.rec_cmd_str
 
     def flash_url(self,game_url):
@@ -1676,8 +1694,21 @@ class GameStream:
         else:
             self.filename += '.mp4'
         recorder = DEFAULT_F_RECORD
-        self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,game_url)
+        if self.use_librtmp:
+            self.rec_cmd_str = self.prepare_mplayer_str(recorder,self.filename,game_url)
+        else:
+            self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,game_url)
         return self.rec_cmd_str
+
+    def prepare_hd_str(self,streamUrl):
+        self.hd_str = DEFAULT_HD_PLAYER
+        self.hd_str = self.hd_str.replace('%B', streamUrl)
+        self.hd_str = self.hd_str.replace('%P', self.max_bps)
+        if self.media_state != 'MEDIA_ON':
+            self.hd_str += ' -f ' + str(HD_ARCHIVE_OFFSET)
+        self.hd_str += ' -o -'
+        return self.hd_str
+        
 
     def prepare_rec_str(self,rec_cmd_str,filename,streamurl):
         # remove short files
@@ -1714,6 +1745,20 @@ class GameStream:
                 rec_cmd_str += ' -A ' + str(self.start_time)
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         return rec_cmd_str
+
+    def prepare_mplayer_str(self,rec_cmd_str,filename,streamurl):
+        mplayer_str = '"' + streamurl
+        if self.play_path is not None:
+            mplayer_str += ' playpath=' + self.play_path
+        if self.app is not None:
+            if self.sub_path is not None:
+                mplayer_str += ' app=' + self.app
+                mplayer_str += ' subscribe=' + self.sub_path + ' live=1'
+            else:
+                mplayer_str += ' app=' + self.app
+        mplayer_str += '"'
+        self.log.write("\nDEBUG>> mplayer_str" + '\n' + mplayer_str + '\n\n')
+        return mplayer_str
         
     def prepare_play_str(self,play_cmd_str,filename,resume=None,elapsed=0):
         play_cmd_str = play_cmd_str.replace('%s', filename)
