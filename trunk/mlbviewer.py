@@ -26,8 +26,8 @@ import copy
 
 DEFAULT_V_PLAYER = 'mplayer -cache 2048 -really-quiet'
 DEFAULT_A_PLAYER = 'mplayer -cache 64 -really-quiet'
-DEFAULT_SPEED = '800'
-STREAM_SPEEDS = ( '128', '500', '800', '1200', '1800', '2200', '3000' )
+DEFAULT_SPEED = '1200'
+STREAM_SPEEDS = ( '300', '500', '1200', '1800', '2400' )
 
 DEFAULT_FLASH_BROWSER='firefox %s'
 
@@ -230,11 +230,11 @@ def mainloop(myscr,cfg):
         "LB": "Status: Local Blackout"}
 
     speedtoggle = {
-        "128"  : "[ 128K]",
+        "300"  : "[ 300K]",
         "500"  : "[ 500K]",
-        "800"  : "[ 800K]",
         "1200" : "[1200K]",
-        "1800" : "[1800K]"}
+        "1800" : "[1800K]",
+        "2400" : "[2400K]"}
 
     coveragetoggle = {
         "away" : "[AWAY]",
@@ -1225,7 +1225,8 @@ def mainloop(myscr,cfg):
                     g = GameStream(stream, cfg['user'], cfg['pass'],
                                cfg['debug'], streamtype='audio',
                                use_soap=True, use_nexdef=False,
-                               coverage=coverage)
+                               coverage=coverage,
+                               use_librtmp=cfg['use_librtmp'])
 
                 else:
                     if c in ('Condensed', ord('c')):
@@ -1261,7 +1262,8 @@ def mainloop(myscr,cfg):
                         #raise Exception,stream
                         postseason=True
                     else:
-                        postseason=False
+			# postseason=False
+                        postseason=cfg['postseason']
 
                     # This next block is non-intuitive
                     # if live game (I or D) and live_from_start = False
@@ -1286,6 +1288,8 @@ def mainloop(myscr,cfg):
                                coverage=coverage,
                                condensed=condensed,
                                postseason=postseason,
+                               use_librtmp=cfg['use_librtmp'],
+                               use_mlbhd=cfg['use_mlbhd'],
                                max_bps=cfg['max_bps'],start_time=start_time)
                 
                 # print a "Trying..." message so we don't look frozen
@@ -1339,10 +1343,16 @@ def mainloop(myscr,cfg):
                     continue
                 try:
                     if '%s' in player:
-                        cmd_str = player.replace('%s', '-')
-                        cmd_str  = u + ' | ' + cmd_str
+                        if cfg['use_librtmp']:
+                            cmd_str = player.replace('%s', u)
+                        else:
+                            cmd_str = player.replace('%s', '-')
+                            cmd_str  = u + ' | ' + cmd_str
                     else:
-                        cmd_str = u + ' | ' + player + ' - '
+                        if cfg['use_librtmp']:
+                            cmd_str = player + ' ' + u
+                        else:
+                            cmd_str = u + ' | ' + player + ' - '
                     if '%f' in player:
                         gameid = available[current_cursor][6].replace('/','-')
                         if audio:
@@ -1564,6 +1574,9 @@ if __name__ == "__main__":
                   'strict_stream': 0,
                   'coverage' : 'home',
                   'show_inning_frames': 1,
+                  'use_librtmp': 0,
+                  'use_mlbhd': 0,
+                  'postseason': 0,
                   'flash_browser': DEFAULT_FLASH_BROWSER}
 
     # Auto-install of default configuration file
