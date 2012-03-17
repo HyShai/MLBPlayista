@@ -346,13 +346,14 @@ except:
     play_path = None
 try:
     if play_path is None:
-        live_sub_pat = re.compile(r'live\/mlb_c(.*)\?')
+        live_sub_pat = re.compile(r'live\/mlb_audio(.*)\?(.*)')
         sub_path = re.search(live_sub_pat,game_url).groups()[0]
-        sub_path = 'mlb_c' + sub_path
-        live_play_pat = re.compile(r'live\/mlb_c(.*)$')
+        sub_path = 'mlb_audio' + sub_path
+        auth_chunk = re.search(live_sub_pat,game_url).groups()[1]
+        live_play_pat = re.compile(r'live\/mlb_audio(.*)$')
         play_path = re.search(live_play_pat,game_url).groups()[0]
-        play_path = 'mlb_c' + play_path
-        app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
+        play_path = 'mlb_audio' + play_path
+        app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6&" + auth_chunk
         bSubscribe = True
         
 except:
@@ -366,69 +367,6 @@ print "play_path = " + str(play_path)
 #sys.exit()
 # End MORSEL extraction
 
-""" BEGIN COMMENT OLD CODE
-wfurl = "http://www.mlb.com/enterworkflow.do?" +\
-   "flowId=media.media&keepWfParams=true&mediaId=" +\
-   sys.argv[1] + "&catCode=mlb_lg&av=v"
-data = None
-
-#http://www.mlb.com/enterworkflow.do?flowId=media.media&keepWfParams=true&mediaId=643342&catCode=mlb_lg&av=v
-
-try:
-   req = urllib2.Request(wfurl,data,txheaders)
-   response = urllib2.urlopen(req)
-   game_info = response.read()
-   response.close()
-except IOError, e:
-   print 'We failed to open "%s".' % wfurl
-   if hasattr(e, 'code'):
-       print 'We failed with error code - %s.' % e.code
-   elif hasattr(e, 'reason'):
-       print "The error object has the following 'reason' attribute :", e.reason
-       print "This usually means the server doesn't exist, is down, or we don't have an internet connection."
-       sys.exit()
-
-vid_pattern = re.compile(r'(url:.*\")(mms:\/\/[^ ]*)(".*)')
-aud_pattern = re.compile(r'(url:.*\")(http:\/\/[^ ]*)(".*)')
-
-
-# handle http urls for audio and older video
-try:
-   game_url = re.search(vid_pattern, game_info).groups()[1]
-   player = datadct['video_player']
-   recorder = datadct['video_recorder']
-except:
-   try:
-       game_url = re.search(aud_pattern, game_info).groups()[1]
-       player = datadct['audio_player']
-   except:
-       raise Exception, game_info
-
-print
-if cj == None:
-    print "We don't have a cookie library available - sorry."
-    print "I can't show you any cookies."
-else:
-    print 'These are the cookies we have received so far :'
-    for index, cookie in enumerate(cj):
-        print index, '  :  ', cookie        
-    cj.save(COOKIEFILE,ignore_discard=True) 
-
-logout_url = 'https://secure.mlb.com/enterworkflow.do?flowId=registration.logout&c_id=mlb'
-txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
-             'Referer' : 'http://mlb.mlb.com/index.jsp'}
-data = None
-req = urllib2.Request(logout_url,data,txheaders)
-response = urllib2.urlopen(req)
-logout_info = response.read()
-response.close()
-
-print logout_info
-
-print 'The game url parsed is: '
-print game_url
-#sys.exit()
-END COMMENT OLD CODE"""
 
 theurl = 'http://cp65670.edgefcs.net/fcs/ident'
 txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
@@ -438,12 +376,6 @@ response = urllib2.urlopen(req)
 print response.read()
 #sys.exit()
 
-#theurl = 'https://cp65670.edgefcs.net/crossdomain.xml'
-#txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
-#data = None
-#req = urllib2.Request(theurl,data,txheaders)
-#response = urllib2.urlopen(req)
-#print response.read()
 
 #cmd_str = player + ' "' + game_url + '"'
 recorder = datadct['video_recorder']

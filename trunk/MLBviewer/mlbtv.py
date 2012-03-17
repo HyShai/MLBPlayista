@@ -939,6 +939,7 @@ class GameStream:
             self.subject  = "LIVE_EVENT_COVERAGE"
         self.cookies = {}
         #self.content_id = None
+        self.auth_chunk = None
         self.play_path = None
         self.tc_url = None
         self.app = None
@@ -1264,6 +1265,8 @@ class GameStream:
                     
 
     def parse_fms_cloud_response(self,url):
+        auth_pat = re.compile(r'auth=(.*)')
+        self.auth_chunk = '?auth=' + re.search(auth_pat,url).groups()[0]
         out = ''
         req = urllib2.Request(url)
         handle = urllib2.urlopen(req)
@@ -1272,8 +1275,8 @@ class GameStream:
         for elem in rsp.getElementsByTagName('video'):
             speed = int(elem.getAttribute('system-bitrate'))/1000
             if int(self.speed) == int(speed):
-               src = elem.getAttribute('src').replace('mp4:','/')
-               out = rtmp_base + src
+               vid_src = elem.getAttribute('src').replace('mp4:','/')
+               out = rtmp_base + vid_src
         return out
 
     def parse_soap_content(self,reply):
@@ -1648,25 +1651,28 @@ class GameStream:
             live_pat = re.compile(r'live\/mlb')
             if re.search(live_pat,game_url):
                 if self.streamtype == 'audio':
-                    live_sub_pat = re.compile(r'live\/mlb_ga(.*)\?')
+                    auth_pat = re.compile(r'auth=(.*)')
+                    self.auth_chunk = '?auth=' + re.search(auth_pat,game_url).groups()[0]
+                    live_sub_pat = re.compile(r'live\/mlb_audio(.*)\?')
                     self.sub_path = re.search(live_sub_pat,game_url).groups()[0]
-                    self.sub_path = 'mlb_ga' + self.sub_path
-                    live_play_pat = re.compile(r'live\/mlb_ga(.*)$')
+                    self.sub_path = 'mlb_audio' + self.sub_path
+                    live_play_pat = re.compile(r'live\/mlb_audio(.*)$')
                     self.play_path = re.search(live_play_pat,game_url).groups()[0]
-                    self.play_path = 'mlb_ga' + self.play_path
-                    self.app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
+                    self.play_path = 'mlb_audio' + self.play_path
+                    app_auth = self.auth_chunk.replace('?','&')
+                    self.app = "live?_fcs_vhost=cp153281.live.edgefcs.net&akmfv=1.6&aifp=v0006" + app_auth
                 else:
                     try:
-                        live_sub_pat = re.compile(r'live\/mlb_c(.*)\?')
+                        live_sub_pat = re.compile(r'live\/mlb_c(.*)')
                         self.sub_path = re.search(live_sub_pat,game_url).groups()[0]
-                        self.sub_path = 'mlb_c' + self.sub_path
+                        self.sub_path = 'mlb_c' + self.sub_path + self.auth_chunk
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream subscribe path: ' + str(detail)
                         raise Exception,self.error_str
                     try:
                         live_path_pat = re.compile(r'live\/mlb_c(.*)$')
                         self.play_path = re.search(live_path_pat,game_url).groups()[0]
-                        self.play_path = 'mlb_c' + self.play_path
+                        self.play_path = 'mlb_c' + self.play_path + self.auth_chunk
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream play path: ' + str(detail)
                         raise Exception,self.error_str
@@ -1682,6 +1688,7 @@ class GameStream:
         except Exception,e:
             self.error_str = str(e)
             raise Exception,e
+            #raise Exception,game_url
             self.app = None
         if self.debug:
             self.log.write("DEBUG>> soap url = \n" + str(game_url) + '\n')
@@ -1735,7 +1742,7 @@ class GameStream:
         if self.tc_url is not None:
             rec_cmd_str += ' -t "' + self.tc_url + '"'
         if self.sub_path is not None:
-            rec_cmd_str += ' -d ' + str(self.sub_path) + ' -v'
+            rec_cmd_str += ' -d "' + str(self.sub_path) + '" -v'
         if self.rtmp_host is not None:
             rec_cmd_str += ' -n ' + str(self.rtmp_host)
         if self.rtmp_port is not None:

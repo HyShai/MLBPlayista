@@ -23,7 +23,7 @@ import copy
 
 DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
 DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
-DEFAULT_SPEED = '400'
+DEFAULT_SPEED = '1200'
 
 def padstr(s,num):
     if len(str(s)) < num:
