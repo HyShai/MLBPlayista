@@ -572,7 +572,7 @@ def mainloop(myscr,cfg):
             RESTORE_SPEED = cfg['speed']
             # Switch to 800 for highlights since all highlights are 800k
             # This is really just to toggle the indicator
-            cfg['speed'] = '800'
+            cfg['speed'] = '1200'
             available = mysched.getTopPlays(GAMEID)
             CURRENT_SCREEN = 'topPlays'
             current_cursor = 0
@@ -1334,6 +1334,7 @@ def mainloop(myscr,cfg):
                     except:
                         raise Exception,u
                     myscr.refresh()
+                    #GMARK - help me find where to enable debug getch()
                     #myscr.getch()
                     time.sleep(3)
                 # I'd rather leave an error on the screen but you'll need
