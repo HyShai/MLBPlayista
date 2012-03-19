@@ -1,10 +1,24 @@
-REQUIREMENTS FOR MLBVIEWER 2011 SEASON
+REQUIREMENTS FOR MLBVIEWER 2012 SEASON
 
-Quite a bit has changed between last season and next.  While every attempt has
-been made to minimize changes to the requirements and the features supported 
-last year, some things are just out of my control.
+FOR 2011 USERS:
 
-To get going for the 2011 season, you will need the following packages:
+If you used mlbviewer in 2011, not much has changed (yet.)
+
+1. Download mlbhls (if you plan to use nexdef), build it, install it.
+
+svn co https://mlbtv-hls-nexdef.googlecode.com/svn/branches/experimental mlbhls
+cd mlbhls
+make
+sudo cp mlbhls /usr/bin
+
+2. If you were using speed=800 in $HOME/.mlb/config, change that to 1200. The
+800 stream may not be supported in 2012.
+
+Other than that, you shouldn't have to do anything different for 2012.
+
+NEW USERS:
+
+To get going for the 2012 season, you will need the following packages:
 
 OPTIONAL (but very helpful, especially for Linux beginners!):
 
@@ -89,7 +103,7 @@ Step 5: (as root), run 'make install'
 
 $ make install
 
-READ THE README FOR MORE HELP ON USING MLBVIEWER 2011.
+READ THE README FOR MORE HELP ON USING MLBVIEWER 2012.
 
 Also, you can post any support questions either to the Sourceforge forum at:
 
