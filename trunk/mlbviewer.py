@@ -211,7 +211,6 @@ def mainloop(myscr,cfg):
         statuswin.refresh()
         time.sleep(2)
 
-    use_xml = mysched.use_xml
 
     statusline = {
         "E" : "Status: Completed Early",
@@ -525,7 +524,7 @@ def mainloop(myscr,cfg):
             innings = []
             tmp_id = available[current_cursor][2][0][3]
             try:
-                innings = mysched.parse_innings_xml(tmp_id, cfg['use_nexdef'])
+                innings = mysched.parseInningsXml(tmp_id, cfg['use_nexdef'])
             except:
                 raise
                 innings = mysched.error_str
@@ -755,7 +754,6 @@ def mainloop(myscr,cfg):
             dif = datetime.timedelta(1)
             t -= dif
             mysched = MLBSchedule((t.year, t.month, t.day))
-            use_xml = mysched.use_xml
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
@@ -782,7 +780,6 @@ def mainloop(myscr,cfg):
             dif = datetime.timedelta(1)
             t += dif
             mysched = MLBSchedule((t.year, t.month, t.day))
-            use_xml = mysched.use_xml
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
@@ -817,7 +814,6 @@ def mainloop(myscr,cfg):
                 time.sleep(1)
 
                 mysched = MLBSchedule((today_year, today_month, today_day))
-                use_xml = mysched.use_xml
                 statuswin.clear()
                 statuswin.addstr(0,0,'Refreshing listings...')
                 statuswin.refresh()
@@ -855,7 +851,6 @@ def mainloop(myscr,cfg):
                                 
 
                     newsched = MLBSchedule((myyear, mymonth, myday))
-                    use_xml = newsched.use_xml
                     try:
                         available = newsched.getListings(cfg['speed'],
                                                          cfg['blackout'],
@@ -1003,7 +998,7 @@ def mainloop(myscr,cfg):
                 streamtype = 'video'
                 if cfg['use_nexdef'] or \
                    available[current_cursor][5] in ('F', 'CG') or \
-                   use_xml and available[current_cursor][7] == 'media_archive':
+                   available[current_cursor][7] == 'media_archive':
                     pass
                 else:
                     statuswin.clear()
@@ -1022,7 +1017,7 @@ def mainloop(myscr,cfg):
                         this_event = available[current_cursor][2][0][3]
                     except:
                         raise Exception,'Innings list is not available for this game'
-                    myinnings = mysched.parse_innings_xml(this_event, cfg['use_nexdef'])
+                    myinnings = mysched.parseInningsXml(this_event, cfg['use_nexdef'])
                 except Exception,detail:
                     myscr.clear()
                     myscr.addstr(0,0,'Could not parse innings: ')
@@ -1385,8 +1380,6 @@ def mainloop(myscr,cfg):
                     # non-blocking getch(), ten second timeout
                     myscr.timeout(10000)
                     while play_process.poll() is None:
-                        if not use_xml:
-                            continue
                         try:
                             c = myscr.getch()
                         except KeyboardInterrupt:
