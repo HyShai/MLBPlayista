@@ -290,11 +290,7 @@ class MLBSchedule:
                 return '0' + str(num)
             else:
                 return str(num)
-        self.url = "http://mlb.mlb.com/components/game/year_"\
-            + padstr(self.year)\
-            + "/month_" + padstr(self.month)\
-            + "/day_" + padstr(self.day) + "/gamesbydate.jsp"
-        self.epg = "http://gdx.mlb.com/components/game/mlb/year_"\
+        self.grid = "http://gdx.mlb.com/components/game/mlb/year_"\
             + padstr(self.year)\
             + "/month_" + padstr(self.month)\
             + "/day_" + padstr(self.day) + "/grid.xml"
@@ -304,39 +300,21 @@ class MLBSchedule:
             + "/day_" + padstr(self.day) + "/multi_angle_epg.xml"
         # For BETA testing, use my own xml
         # For BETA testing, use my own xml
-        #self.epg = "http://eds.org/~straycat/wbc_epg.xml"
-        self.xmltime = datetime.datetime(2009, 3, 30)
+        #self.grid = "http://eds.org/~straycat/wbc_epg.xml"
         mytime = datetime.datetime(self.year, self.month, self.day)
-        if mytime >= self.xmltime:
-            self.use_xml = True
-        else:
-            self.use_xml = False
         self.log = MLBLog(LOGFILE)
         self.data = []
 
     def __getSchedule(self):
         txheaders = {'User-agent' : USERAGENT}
         data = None
-        p404_pat = re.compile(r'no longer exists')
-        p404_pat_epg = re.compile(r'404 Not Found')
         # 2009 marks the end of the jsp page, so use epg page instead
-        if self.use_xml:
-            req = urllib2.Request(self.epg,data,txheaders)
-        else:
-            req = urllib2.Request(self.url,data,txheaders)
+        req = urllib2.Request(self.grid,data,txheaders)
         try:
             fp = urllib2.urlopen(req)
-            if self.use_xml:
-                return fp
+            return fp
         except urllib2.HTTPError:
             raise MLBUrlError
-        out = fp.read()
-        if re.search(p404_pat_epg,out):
-            raise MLBUrlError
-        if re.search(p404_pat,out):
-            raise MLBUrlError
-        fp.close()
-        return out
 
     def getMultiAngleFromXml(self,event_id):
         out = []
@@ -414,13 +392,13 @@ class MLBSchedule:
                 gameinfo[id]['ampm'] = gameinfo[id]['event_time'].split()[1]
             home = node.getAttribute('home_team_id')
             away = node.getAttribute('away_team_id')
-            gameinfo[id]['content'] = self.parse_media_grid(node,away,home)
+            gameinfo[id]['content'] = self.parseMediaGrid(node,away,home)
             #raise Exception,repr(gameinfo[id]['content'])
             out.append(gameinfo[id])
         #raise Exception,repr(out)
         return out
 
-    def parse_media_grid(self,xp,away,home):
+    def parseMediaGrid(self,xp,away,home):
         content = {}
         content['audio'] = []
         content['video'] = {}
@@ -449,7 +427,6 @@ class MLBSchedule:
                    elif tmp['type'] == 'home_audio':
                        coverage = home
                    out = (tmp['display'], coverage, tmp['id'], event_id)
-                   #print 'Found audio: ' + repr(out)
                    content['audio'].append(out)
            elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
                if tmp['playback_scenario'] in \
@@ -470,7 +447,6 @@ class MLBSchedule:
                    else:
                        coverage = home
                    out = (tmp['display'], coverage, tmp['id'], event_id)
-                   #print 'Found video: ' + repr(out) + tmp['playback_scenario']
                    if tmp['playback_scenario'] == 'HTTP_CLOUD_WIRED':
                        content['video']['swarm'].append(out)
                    elif tmp['playback_scenario'] == 'FMS_CLOUD':
@@ -480,7 +456,6 @@ class MLBSchedule:
                        continue
            elif tmp['type'] == 'condensed_game':
                out = ('CG',0,tmp['id'], event_id)
-               #print 'Found condensed: ' + repr(out)
                content['condensed'].append(out)
         return content
     
@@ -587,139 +562,8 @@ class MLBSchedule:
         return out
 
  
-
-    def trimList(self,blackout=()):
-        # This offers only the useful information for watching tv from
-        # the getData step.
-        if not self.data:
-            raise MLBJsonError
-        else:
-            out = []
-            for elem in self.data:
-                # All contingent on it having a tv broadcast.
-                if elem['gameid']:
-                    dct = {}
-                    # I'm parsing the time by hand because strptime
-                    # doesn't work on windows and only works on
-                    # python>=2.5. The time format is always going to
-                    # be the same, so might as well just take care of
-                    # it ourselves.
-                    time_string = elem['event_time'].strip()
-                    ampm = time_string[-2:].lower()
-                    hrs, mins = time_string[:-2].split(':')
-                    hrs = int(hrs) % 12
-                    mins = int(mins)
-                    if ampm == 'pm':
-                        hrs += 12
-                    # So that gives us the raw time, i.e., on the East
-                    # Coast. Not knowing about DST or anything else.
-                    raw_time = datetime.datetime(self.year, 
-                                                 self.month, 
-                                                 self.day, 
-                                                 hrs,
-                                                 mins)
-                    # And now we convert that to the user's local, or
-                    # chosen time zone.
-                    dct['event_time'] = gameTimeConvert(raw_time, self.shift)
-                    # The game status comes straight out of the dictionary.
-                    dct['home'] = [team['code'] for team in elem['teams'] if
-                                   team['isHome']][0]
-                    if dct['home'] is None:
-                        dct['home'] = 'tbd'
-                    dct['away'] = [team['code'] for team in elem['teams'] if not
-                                   team['isHome']][0]
-                    if dct['away'] is None:
-                        dct['away'] = 'tbd'
-                    dct['status'] = (elem['status'],"LB")[\
-                        (dct['home'] in blackout or
-                         dct['away'] in blackout)\
-                         and elem['status'] in ('I','W','P','IP')]
-                    # A messy but effective way to join the team name
-                    # together. Damn Angels making everything more
-                    # difficult.
-                    try:
-                        text = ' '.join(TEAMCODES[dct['away']][1:]).strip()
-                    except KeyError:
-			t = (dct['away'],)
-                        TEAMCODES[dct['away']] = TEAMCODES['unk'] + t
-                        text =  ' '.join(TEAMCODES[dct['away']][1:]).strip()
-                    text += ' at '
-                    try:
-                        text += ' '.join(TEAMCODES[dct['home']][1:]).strip()
-                    except KeyError:
-			t = (dct['home'],)
-                        TEAMCODES[dct['home']] = TEAMCODES['unk'] + t
-                        text =  ' '.join(TEAMCODES[dct['home']][1:]).strip()
-                    dct['text'] = text
-                    dct['teams'] = {}
-                    dct['teams']['home'] = dct['home']
-                    dct['teams']['away'] = dct['away']
-                    dct['video'] = {}
-                    try:
-                        for url in elem['mlbtv']['urls']:
-                            # Wtf!? Why is WBC 600?  Why not 400 or 800?
-                            if str(self.year) == '2009' and url['speed'] == '600':
-                                dct['video']['400'] = url['url']
-                                dct['video']['800'] = url['url']
-                                
-                            dct['video'][url['speed']] = url['url']
-                            # national blackout
-                            try:
-                                if (url['blackout'] == 'national') and \
-                                    elem['status'] in ('I','W','P','IP'):
-                                    dct['status'] = 'NB'
-                            except:
-                                pass
-                    except TypeError:
-                        dct['video']['400'] = None
-                        dct['video']['800'] = None
-                    if dct['video'].has_key('800'):
-                        if dct['video'].has_key('1200') == False:
-                            # don't let a black sheep ruin it for everyone
-                            dct['video']['1200'] = deepcopy(dct['video']['800'])
-                    dct['audio'] = {}
-                    for audio_feed in ('home_audio', 'away_audio','alt_home_audio', 'alt_away_audio'):
-                        if elem[audio_feed]:
-                            dct['audio'][audio_feed] = elem[audio_feed]['urls'][0]['url']
-                        else:
-                            dct['audio'][audio_feed] = None
-                    # Top plays are indexed by the text since they are all 400k
-                    dct['top_plays'] = {}
-                    if elem['top_play_index']:
-                        for url in elem['top_play_index']:
-                             try:
-                                 text = url['text']
-                             except TypeError:
-                                 # there's an error in 4/1/2008 listing
-                                 continue
-                             text = text.replace('\"','\'')
-                             dct['top_plays']['game'] = dct['text']
-                             dct['top_plays'][text] = url['urls'][0]['url']
-                    try:
-                        if elem['game_wrapup']:
-                             text = elem['game_wrapup']['text']
-                             text = text.replace('\"','\'')
-                             dct['top_plays']['game'] = dct['text']
-                             dct['top_plays'][text] = elem['game_wrapup']['urls'][0]['url']
-                    except KeyError:
-                        pass
-                    try:
-                        dct['condensed'] = {}
-                        if elem['condensed_video']:
-                             dct['status'] = 'CG'
-                             dct['condensed'] = elem['condensed_video']['urls'][0]['url']
-                    except KeyError:
-                        pass
-                    out.append((elem['gameid'], dct))
-        return out
-
     def getCondensedVideo(self,gameid):
         listtime = datetime.datetime(self.year, self.month, self.day)
-        if listtime >= self.xmltime:
-            self.use_xml = True
-        else:
-            self.use_xml = False
-
         return self.getXmlCondensedVideo(gameid)
 
     def getXmlCondensedVideo(self,gameid):
@@ -756,7 +600,7 @@ class MLBSchedule:
         gid = gameid
         gid = gid.replace('/','_')
         gid = gid.replace('-','_')
-        url = self.epg.replace('grid.xml','gid_' + gid + '/media/highlights.xml')
+        url = self.grid.replace('grid.xml','gid_' + gid + '/media/highlights.xml')
         out = []
         try:
             req = urllib2.Request(url)
@@ -796,20 +640,10 @@ class MLBSchedule:
 
     def getTopPlays(self,gameid):
         listtime = datetime.datetime(self.year, self.month, self.day)
-        if listtime >= self.xmltime:
-            self.use_xml = True
-        else:
-            self.use_xml = False
-
         return self.getXmlTopPlays(gameid)
 
     def getListings(self, myspeed, blackout, audiofollow):
         listtime = datetime.datetime(self.year, self.month, self.day)
-        if listtime >= self.xmltime:
-            self.use_xml = True
-        else:
-            self.use_xml = False
-
         return self.getXmlListings(myspeed, blackout, audiofollow)
 
 
@@ -828,7 +662,7 @@ class MLBSchedule:
                          for elem in listings]
 
 
-    def parse_innings_xml(self,event_id,use_nexdef):
+    def parseInningsXml(self,event_id,use_nexdef):
 	gameid, year, month, day = event_id.split('-')[1:5]
         url = 'http://mlb.mlb.com/mlb/mmls%s/%s.xml' % (year, gameid)
         req = urllib2.Request(url)
