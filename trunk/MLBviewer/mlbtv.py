@@ -1511,7 +1511,7 @@ class GameStream:
         elif self.start_time is not None:
             # handle inning code here (if argument changes, here is where it
             # needs to be updated.
-            self.hd_str += ' -f ' + str(self.start_time)
+            self.hd_str += ' -F ' + str(self.start_time)
         self.hd_str += ' -o -'
         return self.hd_str
         
