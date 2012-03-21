@@ -206,12 +206,12 @@ if stream is not None:
     if streamtype == 'audio':
         g = GameStream(stream, cfg['user'], cfg['pass'],
                        cfg['debug'], streamtype='audio',
-                       use_soap=True, use_nexdef=False,
+                       use_nexdef=False,
                        use_librtmp=cfg['use_librtmp'],
                        coverage=stream[1])
     elif streamtype in ( 'video', 'condensed'):
         g = GameStream(stream, cfg['user'], cfg['pass'],
-                       cfg['debug'], use_soap=True,
+                       cfg['debug'], 
                        use_nexdef=cfg['use_nexdef'], speed=cfg['speed'],
                        strict=cfg['strict_stream'],
                        coverage=stream[1],condensed=cfg['condensed'],
