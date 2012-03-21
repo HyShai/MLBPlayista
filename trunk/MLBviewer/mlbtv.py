@@ -1506,8 +1506,12 @@ class GameStream:
         self.hd_str = DEFAULT_HD_PLAYER
         self.hd_str = self.hd_str.replace('%B', streamUrl)
         self.hd_str = self.hd_str.replace('%P', self.max_bps)
-        if self.media_state != 'MEDIA_ON':
+        if self.media_state != 'MEDIA_ON' and self.start_time is None:
             self.hd_str += ' -f ' + str(HD_ARCHIVE_OFFSET)
+        elif self.start_time is not None:
+            # handle inning code here (if argument changes, here is where it
+            # needs to be updated.
+            self.hd_str += ' -f ' + str(self.start_time)
         self.hd_str += ' -o -'
         return self.hd_str
         
