@@ -431,6 +431,8 @@ class MLBSchedule:
            elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
                if tmp['playback_scenario'] in \
                      ( 'HTTP_CLOUD_WIRED', 'FMS_CLOUD'):
+                   # candidate for new procedure: determine whether game is 
+                   # national blackout
                    try:
                        tmp['blackout']
                    except:
@@ -440,13 +442,21 @@ class MLBSchedule:
                        content['blackout'] = 'MLB_NATIONAL_BLACKOUT'
                    else:
                        content['blackout'] = None
+
+                   # candidate for new procedure: determine the coverage
                    if tmp['type'] == 'mlbtv_national':
                        coverage = '0'
                    elif tmp['type'] == 'mlbtv_away':
                        coverage = away
                    else:
                        coverage = home
+
+                   # each listing is a tuple of display, coverage, content id
+                   # and event-id
                    out = (tmp['display'], coverage, tmp['id'], event_id)
+
+                   # determine where to store this tuple - trimList will 
+                   # return only the listings for a given speed/stream type
                    if tmp['playback_scenario'] == 'HTTP_CLOUD_WIRED':
                        content['video']['swarm'].append(out)
                    elif tmp['playback_scenario'] == 'FMS_CLOUD':
@@ -684,6 +694,7 @@ class MLBSchedule:
                 type = inning_time.getAttribute('type')
                 if use_nexdef and type == 'SCAST':
                     time = inning_time.getAttribute('start')
+                    """ BEGIN: ALL OF THIS WILL BE UNNECESSARY WITH MLBHLS
                     try:
                         ( hrs, min, sec ) = time.split(':')
                     except:
@@ -705,7 +716,8 @@ class MLBSchedule:
                     out.append((number, is_top, msec))
                     #tc_str = '%s/%s/%s %s' % (year, month, day, time)
                     #timecode = urllib.quote(tc_str)
-                    #out.append((number, is_top, time))
+                    END: ALL OF THIS WILL BE UNNECESSARY WITH MLBHLS """
+                    out.append((number, is_top, time))
                 elif use_nexdef == False and type == "FMS":
                     out.append((number, is_top, inning_time.getAttribute('start')))
         return out
@@ -713,7 +725,7 @@ class MLBSchedule:
 
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,
-                 auth=True, streamtype='video',use_soap=True,speed=800,
+                 auth=True, streamtype='video',speed=1200,
                  coverage=None,use_nexdef=False,max_bps=800000,start_time=0,
                  strict=False,condensed=False,postseason=False,camera=0,
                  use_librtmp=False,use_mlbhd=False):
@@ -734,7 +746,6 @@ class GameStream:
         self.speed = speed
         self.log = MLBLog(LOGFILE)
         self.error_str = "What happened here?\nPlease enable debug with the d key and try your request again."
-        self.use_soap = use_soap
         try:
             ( self.call_letters, 
               self.team_id, 
@@ -743,12 +754,7 @@ class GameStream:
         except:
             self.error_str = "No stream available for selected game."
         else:
-            if use_soap:
-                self.auth = True
-            elif self.stream['login'] == 'Y':
-                self.auth = True
-            else:
-                self.auth = False
+            self.auth = True
         self.email = email
         self.passwd = passwd
         self.session_cookies = None
@@ -756,11 +762,9 @@ class GameStream:
         self.coverage = coverage
         self.log.write(str(datetime.datetime.now()) + '\n')
         try:
-            self.session_key = self.read_session_key()
+            self.session_key = self.readSessionKey()
         except:
             self.session_key = None
-        # Determine whether we need to login from the jsp itself
-        #self.auth = auth
         self.debug = debug
         if self.streamtype == 'audio':
             self.scenario = "AUDIO_FMS_32K"
@@ -784,19 +788,19 @@ class GameStream:
         self.logged_in = None
         self.current_encoding = None
 
-    def read_session_key(self):
+    def readSessionKey(self):
         sk = open(SESSIONKEY,"r")
         self.session_key = sk.read()
         sk.close()
         return session_key
 
-    def write_session_key(self,session_key):
+    def writeSessionKey(self,session_key):
         sk = open(SESSIONKEY,"w")
         sk.write(session_key)
         sk.close()
         return session_key
 
-    def extract_cookies(self,response):
+    def extractCookies(self,response):
         """ BEGIN Is any of this necessary?
         ns_headers = response.headers.getheaders("Set-Cookie")
         attrs_set = cookielib.parse_ns_headers(ns_headers)
@@ -852,7 +856,7 @@ class GameStream:
             self.error_str = 'Error occurred in HTTP request to login page'
             raise Exception, self.error_str
         try:
-            self.extract_cookies(handle)
+            self.extractCookies(handle)
         except Exception,detail:
             raise Exception,detail
         if self.debug:
@@ -878,7 +882,7 @@ class GameStream:
         try:
             handle = urllib2.urlopen(req)
             self.session_cookies.save(COOKIEFILE,ignore_discard=True)
-            self.extract_cookies(handle)
+            self.extractCookies(handle)
         except:
             self.error_str = 'Error occurred in HTTP request to auth page'
             raise Exception, self.error_str
@@ -902,7 +906,7 @@ class GameStream:
            self.log.write(auth_page)
         # END login()
  
-    def workflow(self,use_soap=True):
+    def workflow(self):
         # This is the workhorse routine.
         # 1. Login
         # 2. Get the url from the workflow page
@@ -939,7 +943,7 @@ class GameStream:
         req = urllib2.Request(url=wf_url,headers=txheaders,data=None)
         try:
             handle = urllib2.urlopen(req)
-            self.extract_cookies(handle)
+            self.extractCookies(handle)
         except Exception,detail:
             self.error_str = 'Error occurred in HTTP request to workflow page:' + str(detail)
             raise Exception, self.error_str
@@ -985,7 +989,7 @@ class GameStream:
         self.session_cookies = None
         # END logout
 
-    def parse_media_request(self,reply):
+    def parseMediaRequest(self,reply):
         # Abort if the status is not "1"
         status_code = str(reply.getElementsByTagName('status-code')[0].childNodes[0].data)
         if status_code != "1":
@@ -1012,6 +1016,7 @@ class GameStream:
         #bf.close()
         ### END TEST CODE BLOCK - COMMENT AFTER TESTING
 
+        # Begin by determining the blackout status
         try:
             blackout_status = reply.getElementsByTagName('blackout')[0].childNodes[0].data
 	    #raise Exception,repr(blackout_status)
@@ -1098,7 +1103,7 @@ class GameStream:
         return content_list
                     
 
-    def parse_fms_cloud_response(self,url):
+    def parseFmsCloudResponse(self,url):
         auth_pat = re.compile(r'auth=(.*)')
         self.auth_chunk = '?auth=' + re.search(auth_pat,url).groups()[0]
         out = ''
@@ -1113,51 +1118,6 @@ class GameStream:
                out = rtmp_base + vid_src
         return out
 
-    def parse_soap_content(self,reply):
-        # iterate over all the media items
-        content_list = []
-        for stream in reply[0][0]['user-verified-content']:
-            # for each media item, if it matches the streamtype, build a dictionary of domain-attributes
-            # for selection of coverage
-            dict = {}
-            if stream['type'] == self.streamtype:
-                for i in range(len(stream['domain-specific-attributes']['domain-attribute'])):
-                    domain_attr = stream['domain-specific-attributes']['domain-attribute'][i]
-                    dict[domain_attr._name] = domain_attr
-                if self.postseason == True:
-                    if 'mlb_mp4_epg' in str(dict['in_epg']):
-                        continue
-                else:
-                    if 'mlb_multiangle_epg' in str(dict['in_epg']):
-                        continue
-                if 'in-market' in str(dict['coverage_type']):
-                    continue
-                if dict.has_key('language'):
-                    if dict['language']['value'] != 'EN':
-                        continue
-                try:
-                    cov_pat = re.compile(r'([0-9][0-9]*)')
-                    coverage = re.search(cov_pat, str(dict['coverage_association'])).groups()[0]
-                except:
-                    coverage = None
-                call_letters = str(dict['call_letters'])
-                try:
-                    letters_pat = re.compile(r'"(.*)"')
-                    call_letters = re.search(letters_pat, call_letters).groups()[0]
-                except:
-                    raise Exception,repr(call_letters)
-                for media in stream['user-verified-media-item']:
-                    #raise Exception,repr(media['media-item']['state'])
-                    if self.postseason == True:
-                        if self.this_camera != self.camera:
-                            self.this_camera += 1
-                            continue
-                    state = media['media-item']['state']
-                    scenario = media['media-item']['playback-scenario']
-                    if scenario == self.scenario and\
-                                state in ( 'MEDIA_ARCHIVE', 'MEDIA_ON', 'MEDIA_OFF' ):
-                        content_list.append( ( call_letters, coverage, stream['content-id'] , self.event_id ) )
-        return content_list
 
     def getCondensedVideo(self):
         condensed = ''
@@ -1190,7 +1150,7 @@ class GameStream:
         # use FMS.
         if self.condensed:
             game_url = self.getCondensedVideo()
-            return self.flash_url(game_url)
+            return self.prepareFmsUrl(game_url)
 
         # return of workflow is useless for here, but it still calls all the 
         # necessary steps to login and get cookies
@@ -1226,7 +1186,7 @@ class GameStream:
         response = urllib2.urlopen(req)
         reply = parse(response)
 
-        content_list = self.parse_media_request(reply)
+        content_list = self.parseMediaRequest(reply)
 
         # now iterate over the content_list with the following rules:
         # 1. if coverage association is zero, use it (likely a national broadcast)
@@ -1284,6 +1244,8 @@ class GameStream:
 
         status_code = str(reply.getElementsByTagName('status-code')[0].childNodes[0].data)
         if status_code != "1":
+            # candidate for new procedure: this code block of writing
+            # unsuccessful xml responses is being repeated...
             self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response event_id = " + str(self.event_id) + " contend-id = " + self.content_id + "\n")
             df = open('/tmp/unsuccessful.xml','w')
             reply.writexml(df)
@@ -1295,7 +1257,7 @@ class GameStream:
             raise Exception,self.error_str
         try:
             self.session_key = reply['session-key']
-            self.write_session_key(self.session_key)
+            self.writeSessionKey(self.session_key)
         except:
             self.session_key = None
         try:
@@ -1305,18 +1267,18 @@ class GameStream:
             raise Exception,self.error_str
         self.log.write("DEBUG>> URL received: " + game_url + '\n')
         if self.use_nexdef:
-            #raise Exception,self.nexdef_url(game_url)
+            #raise Exception,self.getNexdefMediaUrl(game_url)
             if self.use_mlbhd:
-                return self.prepare_hd_str(game_url)
+                return self.prepareHlsCmd(game_url)
             else:
-                return self.nexdef_flash_url(self.nexdef_url(game_url))
+                return self.prepareNexdefFmsUrl(self.getNexdefMediaUrl(game_url))
         else:
             if self.streamtype == 'video':
-                game_url = self.parse_fms_cloud_response(game_url)
-            return self.flash_url(game_url)
+                game_url = self.parseFmsCloudResponse(game_url)
+            return self.prepareFmsUrl(game_url)
 
 
-    def nexdef_url(self,game_url):
+    def getNexdefMediaUrl(self,game_url):
         self.nexdef_url = game_url
         self.nexdef_media_url = None
         nexdef_base = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/'
@@ -1337,7 +1299,7 @@ class GameStream:
             raise Exception,self.error_str
         # parse the stream descriptions for time of head of stream
         try:
-            return self.parse_nexdef_describe_response(rsp,game_url)
+            return self.parseNexdefDescribeRsp(rsp,game_url)
         except:
             #raise
             try:
@@ -1356,17 +1318,17 @@ class GameStream:
 
     def control(self,action='ping',encoding=None,strict=False):
         if self.use_nexdef:
-            #self.log.write('DEBUG>> calling nexdef_control \n')
-            self.nexdef_control(action,encoding,strict)
+            #self.log.write('DEBUG>> calling nexdefControl \n')
+            self.nexdefControl(action,encoding,strict)
         else:
-            #self.log.write('DEBUG>> calling rtmpdump_control \n')
-            self.rtmpdump_control(action)
+            #self.log.write('DEBUG>> calling rtmpdumpControl \n')
+            self.rtmpdumpControl(action)
 
-    def rtmpdump_control(self,action='ping'):
+    def rtmpdumpControl(self,action='ping'):
         # todo: move the recording process monitor code to here
         return
 
-    def nexdef_control(self,action='ping',encoding=None, strict=False):
+    def nexdefControl(self,action='ping',encoding=None, strict=False):
         url = self.nexdef_media_url.split('&')[0]
         url = url.replace('base64:','control/base64:')
         if action == 'select' and encoding is not None:
@@ -1389,11 +1351,10 @@ class GameStream:
             self.error_str += ' Url = ' + str(url) + '\n'
             self.error_str += e.msg
             raise Exception,self.error_str
-        self.parse_nexdef_control_response(rsp)
+        self.parseNexdefControlRsp(rsp)
         
     
-    def parse_nexdef_describe_response(self,rsp,game_url):
-        nexdef_use  = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/base64:'
+    def parseNexdefDescribeRsp(self,rsp,game_url):
         try:
             xp = parse(rsp)
         except:
@@ -1427,7 +1388,7 @@ class GameStream:
         return self.nexdef_media_url
 
  
-    def parse_nexdef_control_response(self,rsp):
+    def parseNexdefControlRsp(self,rsp):
         try:
             xp = parse(rsp)
         except:
@@ -1448,7 +1409,7 @@ class GameStream:
             bps = re.search(bps_pat, id).groups()[0]
             self.current_encoding = ( id, bps, msec )
         
-    def nexdef_flash_url(self,game_url):
+    def prepareNexdefFmsUrl(self,game_url):
         self.play_path = self.nexdef_media_url
         self.rtmp_path = 'rtmp://127.0.0.1:1935/live/' + self.play_path
         self.app = 'live'
@@ -1457,12 +1418,12 @@ class GameStream:
         recorder = DEFAULT_F_RECORD
         self.filename = '-'
         if self.use_librtmp:
-            self.rec_cmd_str = self.prepare_mplayer_str(recorder,self.filename,self.rtmp_path)
+            self.rec_cmd_str = self.prepareMplayerCmd(recorder,self.filename,self.rtmp_path)
         else:
-            self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,self.rtmp_path)
+            self.rec_cmd_str = self.prepareRtmpdumpCmd(recorder,self.filename,self.rtmp_path)
         return self.rec_cmd_str
 
-    def flash_url(self,game_url):
+    def prepareFmsUrl(self,game_url):
         try:
             #play_path_pat = re.compile(r'ondemand\/(.*)\?')
             play_path_pat = re.compile(r'ondemand\/(.*)$')
@@ -1536,12 +1497,12 @@ class GameStream:
             self.filename += '.mp4'
         recorder = DEFAULT_F_RECORD
         if self.use_librtmp:
-            self.rec_cmd_str = self.prepare_mplayer_str(recorder,self.filename,game_url)
+            self.rec_cmd_str = self.prepareMplayerCmd(recorder,self.filename,game_url)
         else:
-            self.rec_cmd_str = self.prepare_rec_str(recorder,self.filename,game_url)
+            self.rec_cmd_str = self.prepareRtmpdumpCmd(recorder,self.filename,game_url)
         return self.rec_cmd_str
 
-    def prepare_hd_str(self,streamUrl):
+    def prepareHlsCmd(self,streamUrl):
         self.hd_str = DEFAULT_HD_PLAYER
         self.hd_str = self.hd_str.replace('%B', streamUrl)
         self.hd_str = self.hd_str.replace('%P', self.max_bps)
@@ -1551,7 +1512,7 @@ class GameStream:
         return self.hd_str
         
 
-    def prepare_rec_str(self,rec_cmd_str,filename,streamurl):
+    def prepareRtmpdumpCmd(self,rec_cmd_str,filename,streamurl):
         # remove short files
         try:
             filesize = long(os.path.getsize(filename))
@@ -1571,8 +1532,7 @@ class GameStream:
             rec_cmd_str += ' -y "' + str(self.play_path) + '"'
         if self.app is not None:
             rec_cmd_str += ' -a "' + str(self.app) + '"'
-        if self.use_soap:
-            rec_cmd_str += ' -s http://mlb.mlb.com/flash/mediaplayer/v4/RC91/MediaPlayer4.swf?v=4'
+        rec_cmd_str += ' -s http://mlb.mlb.com/flash/mediaplayer/v4/RC91/MediaPlayer4.swf?v=4'
         if self.tc_url is not None:
             rec_cmd_str += ' -t "' + self.tc_url + '"'
         if self.sub_path is not None:
@@ -1587,7 +1547,7 @@ class GameStream:
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         return rec_cmd_str
 
-    def prepare_mplayer_str(self,rec_cmd_str,filename,streamurl):
+    def prepareMplayerCmd(self,rec_cmd_str,filename,streamurl):
         mplayer_str = '"' + streamurl
         if self.play_path is not None:
             mplayer_str += ' playpath=' + self.play_path
@@ -1601,10 +1561,3 @@ class GameStream:
         self.log.write("\nDEBUG>> mplayer_str" + '\n' + mplayer_str + '\n\n')
         return mplayer_str
         
-    def prepare_play_str(self,play_cmd_str,filename,resume=None,elapsed=0):
-        play_cmd_str = play_cmd_str.replace('%s', filename)
-        if resume:
-            play_cmd_str += ' ' + str(resume) + ' ' + str(elapsed)
-        self.log.write("\nDEBUG>> play_cmd_str" + '\n' + play_cmd_str + '\n\n')
-        return play_cmd_str
-
