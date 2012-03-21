@@ -1219,7 +1219,7 @@ def mainloop(myscr,cfg):
 
                     g = GameStream(stream, cfg['user'], cfg['pass'],
                                cfg['debug'], streamtype='audio',
-                               use_soap=True, use_nexdef=False,
+                               use_nexdef=False,
                                coverage=coverage,
                                use_librtmp=cfg['use_librtmp'])
 
@@ -1276,8 +1276,7 @@ def mainloop(myscr,cfg):
                             start_time=0
 
                     g = GameStream(stream, cfg['user'], cfg['pass'],
-                               cfg['debug'],use_soap=True,
-                               use_nexdef=cfg['use_nexdef'],
+                               cfg['debug'], use_nexdef=cfg['use_nexdef'],
                                speed=cfg['speed'],
                                strict=cfg['strict_stream'],
                                coverage=coverage,
