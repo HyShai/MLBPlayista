@@ -36,6 +36,11 @@ def check_bool(userinput):
     if userinput in ('0', '1', 'True', 'False'):
         return eval(userinput)
 
+# This section prepares a dict of default settings and then loads 
+# the configuration file.  Any setting defined in the configuration file 
+# overwrites the defaults defined here.
+#
+# Note: AUTHDIR, AUTHFILE, etc are defined in MLBviewer/mlbtv.py
 myconfdir = os.path.join(os.environ['HOME'],AUTHDIR)
 myconf =  os.path.join(myconfdir,AUTHFILE)
 mydefaults = {'speed': DEFAULT_SPEED,
@@ -77,11 +82,12 @@ teamcodes_help = "\n" +\
 "     'tex', 'tor', 'was'\n" +\
 "\n"
 
-# check to see if the start date is specified on command-line
+# All options are name=value, loop through them all and take appropriate action
 if len(sys.argv) > 1:
     for n in range(len(sys.argv)):
         if n == 0:
             continue
+        # first make sure the argument is of name=value format
         pattern = re.compile(r'(.*)=(.*)')
         parsed = re.match(pattern,sys.argv[n])
         if not parsed:
@@ -89,6 +95,7 @@ if len(sys.argv) > 1:
             print "can't parse : " + sys.argv[n]
             sys.exit()
         split = parsed.groups()
+        # Condensed game:  c=<teamcode> 
         if split[0] in ( 'condensed', 'c'):
             streamtype='condensed'
             cfg['condensed'] = True
@@ -97,32 +104,40 @@ if len(sys.argv) > 1:
                 player = cfg['top_plays_player']
             else:
                 player = cfg['video_player']
+        # Audio: a=<teamcode>
         elif split[0] in ( 'audio', 'a' ):
             streamtype = 'audio'
             teamcode = split[1]
             player = cfg['audio_player']
+        # Video: v=<teamcode>
         elif split[0] in ( 'video', 'v' ):
             streamtype = 'video'
             teamcode = split[1]
             player = cfg['video_player']
+        # Speed: p=<speed> (Default: 1200)
         elif split[0] in ( 'speed', 'p' ):
             cfg['speed'] = split[1]
+        # Nexdef URL: nu=1
         elif split[0] in ( 'nexdefurl', 'nu' ):
             parsed = check_bool(split[1])
             if parsed != None:
                 cfg['nexdef_url'] = parsed
+        # Debug: d=1
         elif split[0] in ( 'debug', 'd' ):
             parsed = check_bool(split[1])
             if parsed != None:
                 cfg['debug'] = parsed
+        # Listing debug: z=1
         elif split[0] in ( 'zdebug', 'z' ):
             parsed = check_bool(split[1])
             if parsed != None:
                 cfg['zdebug'] = parsed
+        # Nexdef: n=1
         elif split[0] in ( 'nexdef', 'n' ):
             parsed = check_bool(split[1])
             if parsed != None:
                 cfg['use_nexdef'] = parsed
+        # Startdate: j=mm/dd/yy
         elif split[0] in ( 'startdate', 'j'):
             try:
                 sys.argv[n] = sys.argv[n].replace('j=', 'startdate=')
@@ -149,8 +164,10 @@ if startdate is None:
         now = now - dif
     startdate = (now.year, now.month, now.day)
 
+# First create a schedule object
 mysched = MLBSchedule(ymd_tuple=startdate,time_shift=cfg['time_offset'])
 
+# Now retrieve the listings for that day
 try:
     available = mysched.getListings(cfg['speed'],cfg['blackout'],
                                     cfg['audio_follow'])
@@ -162,6 +179,13 @@ except (KeyError, MLBJsonError), detail:
     print "There was a parser problem with the listings page"
     sys.exit()
 
+# Determine media tuple using teamcode e.g. if teamcode is in home or away, use
+# that media tuple.  A media tuple has the format: 
+#     ( call_letters, code, content-id, event-id )
+# The code is a numerical value that maps to a teamcode.  It is used
+# to identify a media stream as belonging to one team or the other.  A code
+# of zero is used for national broadcasts or a broadcast that isn't owned by
+# one team or the other.
 if teamcode is not None:
     if teamcode not in TEAMCODES.keys():
         print 'Invalid teamcode: ' + teamcode
@@ -181,6 +205,10 @@ if teamcode is not None:
             else:
                 media = available[n][3]
 
+# media assigned above will be a list of both home and away media tuples
+# This next section determines which media tuple to use (home or away)
+# and assign it to a stream tuple.
+
 if media is not None:
     stream = None
     for n in range(len(media)):
@@ -197,11 +225,14 @@ else:
     print 'Could not find media for teamcode: ' + teamcode
     sys.exit()
 
+# Similar behavior to the 'z' key in mlbviewer
 if cfg['zdebug']:
     print 'media = ' + repr(media)
     print 'prefer = ' + repr(stream)
     sys.exit()
 
+# Once the correct media tuple has been assigned to stream, create the 
+# GameStream object for the correct type of media
 if stream is not None:
     if streamtype == 'audio':
         g = GameStream(stream, cfg['user'], cfg['pass'],
@@ -229,6 +260,10 @@ else:
     print 'prefer = ' + repr(stream)
     sys.exit()
 
+# The url method in the GameStream class is a beast and does everything 
+# necessary to return a url used by the player.  In most cases, it even 
+# prepares most of the necessary command-line to interact with the 
+# player command (depending on the format of that command string.)
 try:
     url = g.url()
 except:
@@ -240,7 +275,7 @@ except:
         #sys.exit()
 
 if cfg['nexdef_url']:
-    print g.nexdef_url
+    print g.nexdef_media_url
     sys.exit()
 
 if cfg['debug']:

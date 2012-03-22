@@ -738,9 +738,9 @@ class GameStream:
         self.camera = camera
         self.this_camera = 0
         self.use_nexdef = use_nexdef
-        self.rec_process = None
         self.start_time = start_time
         self.max_bps = max_bps
+        self.nexdef_media_url = None
         self.stream = stream
         self.streamtype = streamtype
         self.speed = speed
@@ -786,7 +786,6 @@ class GameStream:
         self.rtmp_port = None
         self.sub_path = None
         self.logged_in = None
-        self.current_encoding = None
 
     def readSessionKey(self):
         sk = open(SESSIONKEY,"r")
@@ -1266,56 +1265,18 @@ class GameStream:
             self.error_str = "Stream URL not found in reply.  Stream may not be available yet."
             raise Exception,self.error_str
         self.log.write("DEBUG>> URL received: " + game_url + '\n')
+
+        # Nexdef has been simplified to make mlbhls mandatory
         if self.use_nexdef:
-            #raise Exception,self.getNexdefMediaUrl(game_url)
-            if self.use_mlbhd:
-                return self.prepareHlsCmd(game_url)
-            else:
-                return self.prepareNexdefFmsUrl(self.getNexdefMediaUrl(game_url))
+            self.nexdef_media_url = game_url
+            return self.prepareHlsCmd(game_url)
         else:
             if self.streamtype == 'video':
                 game_url = self.parseFmsCloudResponse(game_url)
             return self.prepareFmsUrl(game_url)
 
 
-    def getNexdefMediaUrl(self,game_url):
-        self.nexdef_url = game_url
-        self.nexdef_media_url = None
-        nexdef_base = 'http://local.swarmcast.net:8001/protected/content/adaptive-live/'
-        # build the first url for stream descriptions
-
-        url = nexdef_base + 'describe' + '/base64:' + game_url + '&refetch=true'
-        req = urllib2.Request(url)
-        try:
-            rsp = urllib2.urlopen(req)
-        except IOError,e:
-            try:
-                if hasattr(e, 'code') and e.code == 400:
-                    self.error_str = 'Nexdef reports that requested stream is not available.'
-                else:
-                    self.error_str = e.msg
-            except:
-                self.error_str = "Could not connect to NexDef.  Is autobahn.jar running?"
-            raise Exception,self.error_str
-        # parse the stream descriptions for time of head of stream
-        try:
-            return self.parseNexdefDescribeRsp(rsp,game_url)
-        except:
-            #raise
-            try:
-                req = urllib2.Request(url)
-                rsp = urllib2.urlopen(req)
-                text = rsp.read()
-            except:
-                self.error_str = "Could not retry request to NexDef for stream list."
-                self.error_str += str(text)
-                raise Exception,self.error_str
-            self.error_str = "Could not parse NexDef stream list.  Try alternate coverage."
-            self.error_str += "\n\n" + str(text)
-            raise Exception,self.error_str
-        
-        return self.nexdef_media_url
-
+    # These three "control" procedures are the next candidates for removal
     def control(self,action='ping',encoding=None,strict=False):
         if self.use_nexdef:
             #self.log.write('DEBUG>> calling nexdefControl \n')
@@ -1329,100 +1290,9 @@ class GameStream:
         return
 
     def nexdefControl(self,action='ping',encoding=None, strict=False):
-        url = self.nexdef_media_url.split('&')[0]
-        url = url.replace('base64:','control/base64:')
-        if action == 'select' and encoding is not None:
-            url += '&encoding_group=' + str(encoding[0])
-            #url += '&height=' + str(encoding[3])
-            #url += '&width=' + str(encoding[2])
-        if strict:
-            url += '&strict=true'
-        # not sure what their random algorithm is but we'll just cat the
-        # seconds with the microseconds of the current time.
-        #rand  = str(datetime.datetime.now().second)
-        #rand += str(datetime.datetime.now().microsecond)
-        #url += '&rand=' + rand + '&v=0'
-        #url += '&v=0'
-        try:
-            req = urllib2.Request(url)
-            rsp = urllib2.urlopen(req)
-        except IOError,e:
-            self.error_str = 'Error in making nexdef control request:\n'
-            self.error_str += ' Url = ' + str(url) + '\n'
-            self.error_str += e.msg
-            raise Exception,self.error_str
-        self.parseNexdefControlRsp(rsp)
-        
-    
-    def parseNexdefDescribeRsp(self,rsp,game_url):
-        try:
-            xp = parse(rsp)
-        except:
-            self.error_str = 'Could not parse NexDef stream list. Try alternate coverage.'
-            raise Exception,self.error_str
-        selected = (None, 0, 0, 0)
-        for time in xp.getElementsByTagName('streamHead'):
-            timestamp = time.getAttribute('timeStamp')
-            milliseconds = int(time.getAttribute('timeStamp'))
-            milliseconds += 3600*1000
-            milliseconds -= (int(milliseconds))%5000
-            # if we get a non-zero, non-null start_time from init, use it
-            if self.start_time is not None and self.start_time > 0:
-                milliseconds = self.start_time
-        # return the media url with the correct timestamp
-        self.nexdef_media_url = 'base64:' + game_url + '?max_bps=' + str(self.max_bps)
-        if self.strict:
-            self.nexdef_media_url += '&strict=true'
-        # start_time = 0 is the same as "look it up" 
-        # whereas start_time = None means "don't include start_time at all"
-        if self.start_time is not None:
-            self.nexdef_media_url += '&start_time=' + str(milliseconds) 
-        
+        return
 
-        self.encodings = {}
-        for enc in xp.getElementsByTagName('encoding'):
-            id  = str(enc.getAttribute('id'))
-            bps = int(enc.getAttribute('bps'))
-            if bps <= int(self.max_bps):
-                self.encodings[bps] = ( id , bps )
-        return self.nexdef_media_url
-
- 
-    def parseNexdefControlRsp(self,rsp):
-        try:
-            xp = parse(rsp)
-        except:
-            self.error_str = 'Could not parse nexdef control response.'
-            raise Exception,self.error_str
-        self.encoding_group = {}
-        for enc_group in xp.getElementsByTagName('encodingGroup'):
-            for enc in enc_group.getElementsByTagName('encoding'):
-                id = str(enc.getAttribute('id'))
-                bps_pat = re.compile(r'([1-9][0-9]*)_complete')
-                bps = re.search(bps_pat, id).groups()[0]
-                self.encoding_group[bps] = id
-        for pos in xp.getElementsByTagName('currentPosition'):
-            msec = pos.getAttribute('millis')
-        for current in xp.getElementsByTagName('currentEncoding'):
-            id = str(current.getAttribute('id'))
-            bps_pat = re.compile(r'([1-9][0-9]*)_complete')
-            bps = re.search(bps_pat, id).groups()[0]
-            self.current_encoding = ( id, bps, msec )
         
-    def prepareNexdefFmsUrl(self,game_url):
-        self.play_path = self.nexdef_media_url
-        self.rtmp_path = 'rtmp://127.0.0.1:1935/live/' + self.play_path
-        self.app = 'live'
-        self.rtmp_host = '127.0.0.1'
-        self.rtmp_port = '1935'
-        recorder = DEFAULT_F_RECORD
-        self.filename = '-'
-        if self.use_librtmp:
-            self.rec_cmd_str = self.prepareMplayerCmd(recorder,self.filename,self.rtmp_path)
-        else:
-            self.rec_cmd_str = self.prepareRtmpdumpCmd(recorder,self.filename,self.rtmp_path)
-        return self.rec_cmd_str
-
     def prepareFmsUrl(self,game_url):
         try:
             #play_path_pat = re.compile(r'ondemand\/(.*)\?')
