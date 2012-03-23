@@ -1274,7 +1274,16 @@ def mainloop(myscr,cfg):
                         # we didn't get it from innings
                         if start_time is None:
                             if cfg['use_nexdef']:
-                                start_time=available[current_cursor][8]
+                                try:
+                                    tmp_id = available[current_cursor][2][0][3]
+                                    innings = mysched.parseInningsXml(tmp_id, cfg['use_nexdef'])
+                                    for i in range(len(innings)):
+                                        if int(innings[i][0]) == 0:
+                                            start_time = innings[i][2]
+                                            continue
+                                except:
+                                    #raise
+                                    start_time=available[current_cursor][8]
                             else:
                                 start_time = 0
 
