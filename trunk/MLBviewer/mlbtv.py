@@ -45,7 +45,7 @@ except:
 DEFAULT_F_RECORD = 'rtmpdump -f \"LNX 10,0,22,87\" -o %f -r %s'
 
 # Change the next two settings to tweak mlbhd behavior
-DEFAULT_HD_PLAYER = 'mlbhls -B %B -b %P'
+DEFAULT_HD_PLAYER = 'mlbhls -B %B'
 HD_ARCHIVE_OFFSET = '48'
 
 AUTHDIR = '.mlb'
@@ -1363,10 +1363,12 @@ class GameStream:
     def prepareHlsCmd(self,streamUrl):
         self.hd_str = DEFAULT_HD_PLAYER
         self.hd_str = self.hd_str.replace('%B', streamUrl)
-        self.hd_str = self.hd_str.replace('%P', str(self.max_bps))
+        #self.hd_str = self.hd_str.replace('%P', str(self.max_bps))
         if self.strict:
             self.hd_str += ' -L'
+            self.hd_str += ' -s ' + str(self.max_bps)
         else:
+            self.hd_str += ' -b ' + str(self.max_bps)
        	    self.hd_str += ' -m ' + str(self.min_bps)
         if self.media_state != 'MEDIA_ON' and self.start_time is None:
             self.hd_str += ' -f ' + str(HD_ARCHIVE_OFFSET)
