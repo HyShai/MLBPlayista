@@ -39,14 +39,7 @@ Premium or MLB.TV Basic subscriber.
 
 PREMIUM USERS
 
-You will need the autobahn.jar file from the NexDef plugin.  You can find that
-file here:
-
-http://mlb.com/nexdef-jars/
-
-To run the NexDef plugin:
-
-$ java -jar autobahn.jar
+You will need mlbhls (see above) to access the higher bitrates.
 
 NON-PREMIUM USERS (and Gameday Audio subscribers)
 

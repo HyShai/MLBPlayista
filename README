@@ -1,5 +1,14 @@
 For system requirements and installation instructions, see INSTALL file.
 
+NEW FOR 2012 SEASON
+
+Higher bitrates for basic service and premium subscribers.  "Nexdef" support 
+has been replaced with mlbhls for accessing the higher bitrate streams.  Mlbhls
+supports both variable bitrates (adjusting the stream rate when it encounters
+buffering delays) and fixed bitrates.  Everything else should work as it did 
+last season.  See the REQUIREMENTS-2012 file for any specific actions necessary
+to transition from 2011 to 2012 use.
+
 NEW FOR 2011 SEASON
 
 Not much.  See the section below for 2010 season.  Nexdef support in mlbviewer
