@@ -1274,6 +1274,7 @@ def mainloop(myscr,cfg):
                         # we didn't get it from innings
                         if start_time is None:
                             if cfg['use_nexdef']:
+                                # first try the start timecode in innings.xml
                                 try:
                                     tmp_id = available[current_cursor][2][0][3]
                                     innings = mysched.parseInningsXml(tmp_id, cfg['use_nexdef'])
@@ -1282,6 +1283,7 @@ def mainloop(myscr,cfg):
                                             start_time = innings[i][2]
                                             continue
                                 except:
+                                    # fallback to the start_time in listings.
                                     #raise
                                     start_time=available[current_cursor][8]
                             else:
@@ -1296,7 +1298,8 @@ def mainloop(myscr,cfg):
                                postseason=postseason,
                                use_librtmp=cfg['use_librtmp'],
                                use_mlbhd=cfg['use_mlbhd'],
-                               max_bps=cfg['max_bps'],start_time=start_time)
+                               max_bps=cfg['max_bps'],min_bps=cfg['min_bps'],
+                               start_time=start_time)
                 
                 # print a "Trying..." message so we don't look frozen
                 statuswin.clear()
@@ -1488,6 +1491,7 @@ if __name__ == "__main__":
                   'top_plays_player': '',
                   'time_offset': '',
                   'max_bps': 1200000,
+                  'min_bps': 500000,
                   'live_from_start': 0,
                   'use_nexdef': 0,
                   'strict_stream': 0,

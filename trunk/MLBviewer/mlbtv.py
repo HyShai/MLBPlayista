@@ -712,7 +712,8 @@ class MLBSchedule:
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,
                  auth=True, streamtype='video',speed=1200,
-                 coverage=None,use_nexdef=False,max_bps=1200000,start_time=0,
+                 coverage=None, use_nexdef=False, max_bps=1200000,
+                 min_bps=500000, start_time=0,
                  strict=False,condensed=False,postseason=False,camera=0,
                  use_librtmp=False,use_mlbhd=False):
         self.strict = strict
@@ -726,6 +727,7 @@ class GameStream:
         self.use_nexdef = use_nexdef
         self.start_time = start_time
         self.max_bps = max_bps
+        self.min_bps = min_bps
         self.nexdef_media_url = None
         self.stream = stream
         self.streamtype = streamtype
@@ -1361,7 +1363,11 @@ class GameStream:
     def prepareHlsCmd(self,streamUrl):
         self.hd_str = DEFAULT_HD_PLAYER
         self.hd_str = self.hd_str.replace('%B', streamUrl)
-        self.hd_str = self.hd_str.replace('%P', self.max_bps)
+        self.hd_str = self.hd_str.replace('%P', str(self.max_bps))
+        if self.strict:
+            self.hd_str += ' -L'
+        else:
+       	    self.hd_str += ' -m ' + str(self.min_bps)
         if self.media_state != 'MEDIA_ON' and self.start_time is None:
             self.hd_str += ' -f ' + str(HD_ARCHIVE_OFFSET)
         elif self.start_time is not None:
