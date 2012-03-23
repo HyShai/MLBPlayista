@@ -1273,7 +1273,10 @@ def mainloop(myscr,cfg):
                         # archive games should always look up start_time if 
                         # we didn't get it from innings
                         if start_time is None:
-                            start_time=0
+                            if cfg['use_nexdef']:
+                                start_time=available[current_cursor][8]
+                            else:
+                                start_time = 0
 
                     g = GameStream(stream, cfg['user'], cfg['pass'],
                                cfg['debug'], use_nexdef=cfg['use_nexdef'],
@@ -1396,95 +1399,9 @@ def mainloop(myscr,cfg):
                             c = ''
                             time.sleep(3)
                             continue
-                        if c in ('Streams', ord('1'), ord('2'), ord('3'), 
-                                            ord('4'), ord('5'), ord('6'), 
-                                            ord('7'), ord('8'), ord('9')):
-                            if audio:
-                                continue
-                            if not cfg['use_nexdef']:
-                                continue
-                            try:
-                                # convert an ascii number to its numeral value
-                                # minus one to arrive at offset
-                                speed = STREAM_SPEEDS[int(c) - 49] + '000'
-                                encoding = g.encodings[int(speed)]
-                                g.control(action='select',encoding=encoding,
-                                          strict=cfg['strict_stream'])
-                                statuswin.clear()
-                                statuswin.addstr(0,0,'Attempting stream switch to ' + str(speed)[:-3] + 'K ...please wait...')
-                                statuswin.refresh()
-                                time.sleep(3)
-                            except KeyError:
-                                statuswin.clear()
-                                statuswin.addstr(0,0,'Requested stream out of range.  Not switching.')
-                                statuswin.refresh()
-                            except Exception,details:
-                                raise Exception,details
-                                sys.exit()
-                            continue
                         try:
                             g.control(action='ping')
-                            if not cfg['use_nexdef']:
-                                continue
-                            if audio:
-                                continue
                         except:
-                            #raise
-                            pass
-                        try:
-                            if audio:
-                                continue
-                            if g.current_encoding is not None:
-                                myscr.clear()
-                                myscr.addstr(0,0,'AVAILABLE STREAMS (Use number keys to select a stream)')
-                                myscr.hline(1,0,curses.ACS_HLINE, curses.COLS-1)
-                                e = 2
-                                for speed in STREAM_SPEEDS:
-                                    kspeed = speed
-                                    speed += '000'
-                                    padding = 4 - len(kspeed)
-                                    if g.encodings.has_key(int(speed)):
-                                        speed_str = '[' + ' '*padding + kspeed + 'K] '
-                                        stream_str = g.encodings[int(speed)][0].split('/')[-2] + '/' + g.encodings[int(speed)][0].split('/')[-1]
-                                        #myscr.addstr(e,0,str(e-1) + ' ) ' + speed_str + g.encodings[int(speed)][0])
-                                        myscr.addstr(e,0,str(e-1) + ' ) ' + speed_str + stream_str)
-                                    e += 1
-                            try:
-                                ( stream, kbps, millis ) = g.current_encoding
-                                sec = int(millis) / 1000
-                                hrs = sec / 3600
-                                min = ( sec % 3600 ) / 60
-                                sec = sec - ( hrs * 3600 + min * 60 )
-                                ms = int(millis) - ( hrs * 3600 + min * 60 + sec ) * 1000
-                                # now do some str formatting
-                                hrs = str(hrs)
-                                min = str(min)
-                                sec = str(sec)
-                                ms = str(ms)
-                                if len(hrs) < 2:
-                                    hrs = '0' + hrs
-                                if len(min) < 2:
-                                    min = '0' + min
-                                if len(sec) < 2:
-                                    sec = '0' + sec
-                                if len(ms) < 2:
-                                    ms = '00' + ms
-                                elif len(ms) < 3:
-                                    ms = '0' + ms
-                                stream_str =  stream.split('/')[-2] + '/'
-                                stream_str += stream.split('/')[-1]
-                                status_str =  'STREAM: ' + stream_str
-                                status_str += '\nKBPS  : ' + kbps
-                                status_str += '\nMS    : ' + millis
-                                status_str += '\nTIME  : ' + hrs + ':' +\
-                                               min + ':' + sec + '.'+\
-                                               ms + ' ET\n'
-                                myscr.addstr(curses.LINES-6,0,status_str)
-                                myscr.refresh()
-                            except:
-                                pass
-                        except:
-                            raise
                             pass
                              
                     play_process.wait()
@@ -1561,7 +1478,7 @@ if __name__ == "__main__":
                   'x_display': '',
                   'top_plays_player': '',
                   'time_offset': '',
-                  'max_bps': 800000,
+                  'max_bps': 1200000,
                   'live_from_start': 0,
                   'use_nexdef': 0,
                   'strict_stream': 0,

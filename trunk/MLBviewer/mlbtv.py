@@ -209,6 +209,7 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
         dif = datetime.timedelta(0,18000)
 
     utc_tuple = datetime_tuple + dif
+
     # We parse the explicit shift if there is one:
     if time_shift:
         pattern = re.compile(r'([+-]?)([0-9]{2})([0-9]{2})')
@@ -231,6 +232,7 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
             myzone = (time.timezone, time.altzone)[time.daylight]
     else:
         myzone = (time.timezone, time.altzone)[time.daylight]
+
     return utc_tuple - datetime.timedelta(0,myzone)
 
 class Error(Exception):
@@ -534,6 +536,7 @@ class MLBSchedule:
                                          mins)
             # And now we convert that to the user's local, or
             # chosen time zone.
+            dct['start_time'] = raw_time.strftime('%H:%M:%S')
             dct['event_time'] = gameTimeConvert(raw_time, self.shift)
             if not TEAMCODES.has_key(dct['away']):
                 TEAMCODES[dct['away']] = TEAMCODES['unk']
@@ -668,7 +671,8 @@ class MLBSchedule:
                      elem[1]['condensed'],
                      elem[1]['status'],
                      elem[0],
-                     elem[1]['media_state'])\
+                     elem[1]['media_state'],
+                     elem[1]['start_time'])\
                          for elem in listings]
 
 
@@ -687,6 +691,10 @@ class MLBSchedule:
             self.error_str = "Could not parse the innings xml."
             raise Exception,self.error_str
         out = []
+        game = iptr.getElementsByTagName('game')[0]
+        start_timecode = game.getAttribute('start_timecode')
+        if use_nexdef:
+            out.append((0,'true',start_timecode))
         for inning in iptr.getElementsByTagName('inningTimes'):
             number = inning.getAttribute('inning_number')
             is_top = inning.getAttribute('top')
@@ -694,39 +702,17 @@ class MLBSchedule:
                 type = inning_time.getAttribute('type')
                 if use_nexdef and type == 'SCAST':
                     time = inning_time.getAttribute('start')
-                    """ BEGIN: ALL OF THIS WILL BE UNNECESSARY WITH MLBHLS
-                    try:
-                        ( hrs, min, sec ) = time.split(':')
-                    except:
-                        self.error_str = "Could not parse time = " + time
-                        raise Exception, self.error_str
-                    msec = 1000 * ( 3600 * int(hrs) + 60 * int(min) + int(sec)) 
-                    # inning times seem to be off by one hour
-                    #msec += 3600 * 1000
-                    # don't know why this works, but this seems to be what mlb
-                    # does, rounding down to nearest 5 seconds
-                    msec -= (int(sec)%5) * 1000
-                    # one other correction needs to be made...
-                    # if the hrs is less than 8, this must be an extra innings
-                    # game that has gone into the next day.  add 24 hrs.
-                    # why 8?  there is never an 8am EST start time
-                    # nor an extra hours game that goes this late
-                    if int(hrs) <= 8:
-                        msec += 3600 * 24 * 1000
-                    out.append((number, is_top, msec))
-                    #tc_str = '%s/%s/%s %s' % (year, month, day, time)
-                    #timecode = urllib.quote(tc_str)
-                    END: ALL OF THIS WILL BE UNNECESSARY WITH MLBHLS """
                     out.append((number, is_top, time))
                 elif use_nexdef == False and type == "FMS":
-                    out.append((number, is_top, inning_time.getAttribute('start')))
+                    time = inning_time.getAttribute('start')
+                    out.append((number, is_top, time))
         return out
 
 
 class GameStream:
     def __init__(self,stream, email, passwd, debug=None,
                  auth=True, streamtype='video',speed=1200,
-                 coverage=None,use_nexdef=False,max_bps=800000,start_time=0,
+                 coverage=None,use_nexdef=False,max_bps=1200000,start_time=0,
                  strict=False,condensed=False,postseason=False,camera=0,
                  use_librtmp=False,use_mlbhd=False):
         self.strict = strict
