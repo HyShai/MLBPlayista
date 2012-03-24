@@ -244,7 +244,7 @@ if stream is not None:
         g = GameStream(stream, cfg['user'], cfg['pass'],
                        cfg['debug'], 
                        use_nexdef=cfg['use_nexdef'], speed=cfg['speed'],
-                       strict=cfg['strict_stream'],
+                       adaptive=cfg['adaptive_stream'],
                        coverage=stream[1],condensed=cfg['condensed'],
                        postseason=False,
                        use_librtmp=cfg['use_librtmp'],
