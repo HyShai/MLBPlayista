@@ -1366,6 +1366,7 @@ class GameStream:
         #self.hd_str = self.hd_str.replace('%P', str(self.max_bps))
         if self.adaptive:
             self.hd_str += ' -b ' + str(self.max_bps)
+       	    self.hd_str += ' -s ' + str(self.min_bps)
        	    self.hd_str += ' -m ' + str(self.min_bps)
         else:
             self.hd_str += ' -L'
