@@ -240,8 +240,8 @@ def mainloop(myscr,cfg):
         "home" : "[HOME]"}
 
     sstoggle = {
-        True  : "[ADAPTIVE]",
-        False : "[ STRICT ]"}
+        True  : "[>>]",
+        False : "[..]"}
 
 
     while True:
