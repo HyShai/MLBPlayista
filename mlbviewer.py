@@ -239,9 +239,9 @@ def mainloop(myscr,cfg):
         "away" : "[AWAY]",
         "home" : "[HOME]"}
 
-    hdtoggle = {
-        True  : "[HD]",
-        False : "[--]"}
+    sstoggle = {
+        True  : "[ADAPTIVE]",
+        False : "[ STRICT ]"}
 
 
     while True:
@@ -295,7 +295,7 @@ def mainloop(myscr,cfg):
         # Draw a line
         titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
 
-        hd_available = False
+        is_adaptive = False
         for n in range(curses.LINES-4):
             if n < len(available):
                 if 'topPlays' in CURRENT_SCREEN:
@@ -427,18 +427,10 @@ def mainloop(myscr,cfg):
                         # Is the preferred coverage in HD?
                         # If 'HD' is in the call letters, light up the HD 
                         # indicator if nexdef enabled (that check comes later)
-                        hd_pat = re.compile(r'HD')
-                        try:
-                            ( call_letters, 
-                              team_id, 
-                              content_id , 
-                              event_id ) = prefer['video']
-                        except:
-                            call_letters = ""
-                        if re.search(hd_pat,call_letters) is not None:
-                            hd_available = True
+                        if cfg['adaptive_stream']:
+                            is_adaptive = True
                         else:
-                            hd_available = False
+                            is_adaptive = False
                 else:
                     if n < len(available):
                         if available[n][5] == 'I':
@@ -469,7 +461,7 @@ def mainloop(myscr,cfg):
 
         # Add the speed toggle plus padding
         status_str_len = len(status_str) + len(speedtoggle.get(cfg['speed'])) +\
-                            + len(hdtoggle.get(hd_available)) +\
+                            + len(sstoggle.get(is_adaptive)) +\
                             + len(coveragetoggle.get(cfg['coverage'])) + 2
         if cfg['debug']:
             status_str_len += len('[DEBUG]')
@@ -482,9 +474,9 @@ def mainloop(myscr,cfg):
         speedstr = speedtoggle.get(cfg['speed'])
         if cfg['use_nexdef']:
             speedstr = '[NEXDF]'
-            hdstr = hdtoggle.get(hd_available)
+            hdstr = sstoggle.get(is_adaptive)
         else:
-            hdstr = hdtoggle.get(False)
+            hdstr = sstoggle.get(False)
         coveragestr = coveragetoggle.get(cfg['coverage'])
         
         status_str += ' '*padding + debug_str +  coveragestr + speedstr + hdstr
@@ -708,6 +700,12 @@ def mainloop(myscr,cfg):
         # speedtoggle
         if c in ('Speed', ord('p')):
             # there's got to be an easier way to do this
+            if cfg['use_nexdef']:
+                if cfg['adaptive_stream']:
+                    cfg['adaptive_stream'] = False
+                else:
+                    cfg['adaptive_stream'] = True
+                continue
             speeds = map(int, speedtoggle.keys())
             speeds.sort()
             newspeed = (speeds.index(int(cfg['speed']))+1) % len(speeds)
@@ -1292,7 +1290,7 @@ def mainloop(myscr,cfg):
                     g = GameStream(stream, cfg['user'], cfg['pass'],
                                cfg['debug'], use_nexdef=cfg['use_nexdef'],
                                speed=cfg['speed'],
-                               strict=cfg['strict_stream'],
+                               adaptive=cfg['adaptive_stream'],
                                coverage=coverage,
                                condensed=condensed,
                                postseason=postseason,
@@ -1494,7 +1492,7 @@ if __name__ == "__main__":
                   'min_bps': 500000,
                   'live_from_start': 0,
                   'use_nexdef': 0,
-                  'strict_stream': 0,
+                  'adaptive_stream': 0,
                   'coverage' : 'home',
                   'show_inning_frames': 1,
                   'use_librtmp': 0,
