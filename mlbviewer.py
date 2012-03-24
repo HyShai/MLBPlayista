@@ -241,7 +241,7 @@ def mainloop(myscr,cfg):
 
     sstoggle = {
         True  : "[>>]",
-        False : "[..]"}
+        False : "[--]"}
 
 
     while True:
