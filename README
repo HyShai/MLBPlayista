@@ -2,42 +2,20 @@ For system requirements and installation instructions, see INSTALL file.
 
 NEW FOR 2012 SEASON
 
-Higher bitrates for basic service and premium subscribers.  "Nexdef" support 
-has been replaced with mlbhls for accessing the higher bitrate streams.  Mlbhls
-supports both variable bitrates (adjusting the stream rate when it encounters
-buffering delays) and fixed bitrates.  Everything else should work as it did 
-last season.  See the REQUIREMENTS-2012 file for any specific actions necessary
-to transition from 2011 to 2012 use.
+Higher stream rates for both basic service subscribers and premium subscribers.
 
-NEW FOR 2011 SEASON
+Basic bitrates: 300K, 500K, 1200K, 1800K, 2400K
 
-Not much.  See the section below for 2010 season.  Nexdef support in mlbviewer
-is currently under development for 2011 service.  Everything else should work
-as it did last season.
+Premium bitrates: 200K, 500K, 800K, 1200K, 1800K, 2400K, 3000K, 4500K
 
-NEW FOR 2010 SEASON
+NexDef plugin support has been removed and replaced with mlbhls utility.
 
-NexDef operation has changed yet again this season.  Rather than operating as 
-a web proxy, the video comes directly off an embedded RTMP server.  This makes
-operation between NexDef and non-NexDef mode very similar.  But we lose some 
-functionality from last year.  So far, stream switching is not working yet.  Or
-at least, user selectable stream switching is not working.  The autobahn.jar
-itself can do its own stream switching based on network conditions.  I'm 
-still investigating how to fix the stream on a single selection.  In the 
-meantime, use the max_bps configuration setting to tell the plugin how high
-you'll allow the stream to connect.
+mlbhls offers adaptive streaming much like the official plugin.  
 
-NEW FOR 2009 SEASON
+mlbviewer offers support for both adapative streaming mode and fixed rate
+mode.
 
-In 2008, the speed selection was all that differed between premium and 
-non-premium users.  In 2009, Premium users have a lot more functionality 
-provided by the NexDef plugin.  See the REQUIREMENTS-2009.txt for getting
-the NexDef plugin for Linux (also called autobahn.jar interchangeably in
-mlbviewer documentation.)
-
-Most of the new features of mlbviewer 2009 are for NexDef users.  If you are 
-not a NexDef user/Premium subscriber, you should add "use_nexdef=False" to
-your configuration file.  See below for more details on the configuration file.
+See REQUIREMENTS-2012.txt for information on getting and building mlbhls.
 
 NexDef users should read the NexDef section below to learn about how to use
 the new features.
@@ -47,12 +25,14 @@ CONTROLS
 mlbviewer is hot key driven much like mplayer.  A later release will likely 
 include an on-screen menu.
 
-If you are a returning user from 2008, the new Hotkeys are:
+If you are a returning user from 2011, the new Hotkeys are:
 
-'f' (use flash player for highlighted game)
-'n' (toggle between nexdef and rtmpdump mode)
-'s' (toggle between home and away streams)
-'z' (show the listings debug screen)
+'p' (when in [NEXDEF] mode, this key toggles adaptive streaming mode)
+
+Since even basic service offers an HD stream (2400K), the [HD] indicator has 
+been repurposed for adaptive streaming.  When in [NEXDEF] mode, adaptive
+streaming enabled will show as [>>].  Non-adaptive (fixed rate) and basic
+service will show [--].
 
 HOTKEYS
 
@@ -78,21 +58,29 @@ z                   Helpful debug screen for viewing listings data
 
 CONFIGURATION FILE SETTINGS
 
-New settings for 2009
+New settings for 2012:
 
-If you are a returning user from 2008, the following settings are new:
+adaptive_stream=True/False (Default: True)
 
-use_nexdef=True/False (Default: True)
+min_bps=x (Default: 500000)
 
-live_from_start=True/False (Default: False)
+max_bps=x (Default: 1200000)
 
-max_bps=x (Default: 800000, use 3000000 to for HD)
+The combination of these three settings are used for NexDef operation only.
 
-flash_browser=x (Default: firefox %s &)
+If adaptive_stream=True, the streaming will start from min_bps.  Within
+the first minute of playback, it will try to achieve max_bps of playback.  If
+there are any problems achieving max_bps, the next stream down from max_bps
+(as long as it is greater than or equal to min_bps) will be used to keep
+the stream playing as smoothly as possible.  If no streaming problems occur
+at this reduced level, it will once again try to lock on to the max_bps stream.
+In normal operation, you shouldn't see any stream switches after the initial
+switch from min_bps to max_bps.
 
-video_follow=x (No default)
+If adaptive_stream=False, the streaming will start at max_bps and will not
+attempt to switch streams if any delays or other problems occur with this
+stream.
 
-See below for more details on these options.
 
 The options in the config file ~/.mlb/config are
 
@@ -104,7 +92,7 @@ NOTE: Top Plays don't require a login, but these parameters are still mandatory.
 You can include them as user= and pass= without values if you don't have an 
 mlb.com account and only intend to use Top Plays feature.
 
-speed =x (speed for streaming video, 800 or 400, non-NexDef only)
+speed =x (speed for streaming video for basic service, default: 1200)
 
 video_player = x (use %s for url, otherwise it will come at the end)
 
@@ -115,10 +103,7 @@ smaller cache size since these tend to be short streams anyway)
 
 audio_player = x (use %s for url, otherwise it will come at the end)
 
-IMPORTANT: 2008 and prior required -playlist for mplayer and audio streams.  
-2009 will not work with -playlist.
-
-blackout = x (local team that you can't watch)
+blackout = x (local team that you can't watch live)
 blackout = y (another, but at least you live in a happening place)
 
 show_player_command = True/False (displays the command line the program uses to
@@ -135,7 +120,7 @@ video_follow = x (same as audio follow except for video)
 
 Note that blackout and video_follow/audio_follow use the following team codes:
      'ana', 'ari', 'atl', 'bal', 'bos', 'chc', 'cin', 'cle', 'col',
-     'cws', 'det', 'fla', 'hou', 'kc', 'la', 'mil', 'min', 'nym',
+     'cws', 'det', 'mia', 'hou', 'kc', 'la', 'mil', 'min', 'nym',
      'nyy', 'oak', 'phi', 'pit', 'sd', 'sea', 'sf', 'stl', 'tb',
      'tex', 'tor', 'was'
 
@@ -149,23 +134,33 @@ Premium user.  This can also be changed with the 'n' key.)
 flash_browser = x ( browser command to launch the Flash player if you have
 problems with the rtmpdump or nexdef streams )
 
-max_bps = x ( Default: 800000 for an 800K stream.  For Premium users only, 
-setting this value to 3000000 - or 3 million - means you prefer to receive 
-the highest quality 3000K HD stream.  Setting it to lower values means you 
+max_bps = x ( Default: 1200000 for an 1200K stream.  For Premium users only, 
+setting this value to 4500000 - or 4.5 million - means you prefer to receive 
+the highest quality 4500K HD stream.  Setting it to lower values means you 
 prefer a quality up to, but not over this setting.  The quality bars in the 
 Flash player roughly equate to:
 
-164
+200
 500
 800
 1200
 1800
-2200
+2400
 3000
+4500
 
 Pick a quality above you believe your computer can handle and add three zeroes
 to arrive at the max_bps value.  Please read more on the NexDef operation
 after this section.)
+
+min_bps = x (Default: 500000 for a 500K stream.  In adaptive streaming mode,
+this is both the starting stream bitrate as well as the minimum acceptable
+rate if any streaming issues are encountered at higher rates)
+
+adaptive_stream = True/False (Default: True.  With adaptive streaming, the 
+stream will start at min_bps, try to achieve max_bps, and may switch streams
+if there are any problems maintaining max_bps.  Adaptive will not switch to
+a stream less than min_bps.)
 
 use_color = True/False (if this is set, either default colors, currently cyan
 on black, or colors of your choosing will highlight teams specified in favorite;
@@ -191,35 +186,54 @@ favorite_color is optional, and highlighting will default to cyan.
 
 NEXDEF USERS
 
-First, you'll need the NexDef plugin.  See the REQUIREMENTS-2010.txt file
-for acquiring and running the NexDef plugin.
+NexDef plugin support using autobahn.jar has been replaced with the mlbhls
+utility.
 
-To run the NexDef plugin:
+To download, build, and install mlbhls:
 
-$ java -jar autobahn.jar 
+svn co https://mlbtv-hls-nexdef.googlecode.com/svn/branches/experimental mlbhls
+cd mlbhls
+make
+sudo cp mlbhls /usr/bin
 
-You may or may not want to run this at startup or run it as a service.  
-Mlbviewer does not automatically detect whether you have autobahn.jar running.
+For nexdef operation, three settings are necessary in $HOME/.mlb/config file:
 
-New to 2009 for Premium subscribers are the following features and if/how
-mlbviewer implements them:
+adaptive_stream=True/False (Default: True)
+min_bps=x (Default:  500000)
+max_bps=x (Default: 1200000)
+
+If adaptive_stream is True, streaming will start from min_bps stream, and 
+switch to max_bps stream within the first 60 seconds of playback.  If there
+are any problems encountered in streaming the max_bps stream, streaming may
+switch to a lower bps stream (but greater than or equal to min_bps.)  If 
+no further problems are encountered at the lower speed, mlbhls will once
+again try to achieve max_bps streaming.
+
+If adaptive_stream is False, streaming will be fixed at max_bps.  No attempts
+will be made to correct for delays in streaming that may affect video playback.
+
+
+FEATURE COMPARISON WITH OFFICIAL WEB/FLASH PLAYER
+
+The following are features supported by the web/flash player (and whether 
+mlbviewer supports them.)
+
 
 + HD Quality Picture (Yes)
 
-Set your max_bps to 3000000 (3 million) in your configuration file to indicate
-a preference for the HD stream:
+Basic: 
 
-max_bps=3000000
+Set speed=2400 in config file or select the [2400K] stream with the 'p' key
+in mlbviewer.
 
-At this time, this is only a preference setting.  Mlbviewer does not turn 
-off auto-adjust quality so you may still get a lower quality stream depending
-on network conditions and HD availability.  You may also receive a lower quality
-stream but NexDef up-shifts you to the HD stream automatically.  Mlbviewer
-window will show you which stream you are receiving.  This window updates every
-ten seconds.  You can tell which games are available in HD with the HD 
-indicator in the status bar.  Streams available in HD will show up as [HD]
-in the indicator.  A stream that is not available in HD will show up as [--]
-in the status bar.
+Premium:
+
+Set max_bps to 2400000, 3000000, or 4500000.
+
++ Adaptive Streaming (Yes)
+
+Set adaptive_streaming=True in config file, or use 'p' key in [NEXDEF] mode
+to enable/disable adaptive streaming: [NEXDEF][>>] means adaptive is enabled.
 
 + Home/Away Video Streams (Yes)
 
@@ -228,23 +242,13 @@ preference will show up in the status bar as either [HOME] or [AWAY].  This
 can also be overridden with the video_follow configuration file option.  
 Specifying a team in video_follow means, "I don't care if the team is home 
 or away, I always want that team's stream."  Video_follow is always observed
-over the stream selection toggle.  Also, toggling the stream will update the
-HD indicator.  Some fans really want to see a game in HD no matter which
-broadcast team is covering it.  I would rather not listen to Hawk and Stone
-no matter what quality the other team's stream may be. ;-)
+over the stream selection toggle.  
 
-+ Live Game DVR
++ Live Game DVR (No)
 
 This is not very well supported at this time.  The streams are seekable however
 Mplayer is still kinda rough about supporting MLB.TV's streams.  Sometimes
 the seek works, and sometimes it freezes Mplayer.  Use at your own risk.
-
-Mlbviewer runs in two modes for 2009 season.  NexDef and non-NexDef mode.  
-The default is NexDef and this is indicated with [NEXD] in the status bar
-for the speed indicator.  You can turn off NexDef mode using the 'n' toggle
-key.  In this case, the [NEXD] indicator will change to [800K] or [600K]
-depending on your speed setting from last year (if you have speed=400, you
-will actually see [600K] for your speed setting.)
 
 + Jump To Innings (Yes)
 
@@ -260,18 +264,7 @@ type 'b9' in the Jump To Inning prompt.
 
 + Qualtiy Bars / Disable Auto-Adjust Quality (Yes)
 
-Mlbviewer has a stream selection screen that appears in the mlbviewer window
-after playback begins.  The streams available in this screen depends on the 
-max_bps configuration file option.  Only streams less than or equal to your 
-max_bps setting will appear as available in this screen.  Set max_bps to 3000000
-(3 million) to see all available streams.  You can then select a stream by the
-number given to the stream name.  The speed of the stream will appear in 
-brackets next to the number and name.  Selecting a stream in this screen 
-also turns off auto-adjust quality, though you may still get a downshift in 
-speed if the selected stream is unavailable (from the network side) or if 
-NexDef determines, based on network or system performance, that it can't 
-deliver that stream at that time.  These are usually temporary errors and 
-you can retry the stream selection at any time.
+See the many explanations of adaptive streaming in this file.
 
 + Live Game Highlights (Not yet - maybe planned?)
 

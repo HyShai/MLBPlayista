@@ -1295,7 +1295,6 @@ def mainloop(myscr,cfg):
                                condensed=condensed,
                                postseason=postseason,
                                use_librtmp=cfg['use_librtmp'],
-                               use_mlbhd=cfg['use_mlbhd'],
                                max_bps=cfg['max_bps'],min_bps=cfg['min_bps'],
                                start_time=start_time)
                 
@@ -1496,7 +1495,6 @@ if __name__ == "__main__":
                   'coverage' : 'home',
                   'show_inning_frames': 1,
                   'use_librtmp': 0,
-                  'use_mlbhd': 0,
                   'postseason': 0,
                   'flash_browser': DEFAULT_FLASH_BROWSER}
 

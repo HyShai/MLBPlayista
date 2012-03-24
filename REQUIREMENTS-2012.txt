@@ -12,7 +12,7 @@ make
 sudo cp mlbhls /usr/bin
 
 2. If you were using speed=800 in $HOME/.mlb/config, change that to 1200. The
-800 stream may not be supported in 2012.
+800 stream may not exist in 2012.
 
 Other than that, you shouldn't have to do anything different for 2012.
 
