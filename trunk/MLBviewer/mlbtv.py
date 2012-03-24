@@ -714,9 +714,9 @@ class GameStream:
                  auth=True, streamtype='video',speed=1200,
                  coverage=None, use_nexdef=False, max_bps=1200000,
                  min_bps=500000, start_time=0,
-                 strict=False,condensed=False,postseason=False,camera=0,
+                 adaptive=False,condensed=False,postseason=False,camera=0,
                  use_librtmp=False,use_mlbhd=False):
-        self.strict = strict
+        self.adaptive = adaptive
         self.condensed = condensed
         self.postseason = postseason
         self.use_librtmp = use_librtmp
@@ -1265,10 +1265,10 @@ class GameStream:
 
 
     # These three "control" procedures are the next candidates for removal
-    def control(self,action='ping',encoding=None,strict=False):
+    def control(self,action='ping',encoding=None,adaptive=False):
         if self.use_nexdef:
             #self.log.write('DEBUG>> calling nexdefControl \n')
-            self.nexdefControl(action,encoding,strict)
+            self.nexdefControl(action,encoding,adaptive)
         else:
             #self.log.write('DEBUG>> calling rtmpdumpControl \n')
             self.rtmpdumpControl(action)
@@ -1277,7 +1277,7 @@ class GameStream:
         # todo: move the recording process monitor code to here
         return
 
-    def nexdefControl(self,action='ping',encoding=None, strict=False):
+    def nexdefControl(self,action='ping',encoding=None, adaptive=False):
         return
 
         
@@ -1364,12 +1364,12 @@ class GameStream:
         self.hd_str = DEFAULT_HD_PLAYER
         self.hd_str = self.hd_str.replace('%B', streamUrl)
         #self.hd_str = self.hd_str.replace('%P', str(self.max_bps))
-        if self.strict:
-            self.hd_str += ' -L'
-            self.hd_str += ' -s ' + str(self.max_bps)
-        else:
+        if self.adaptive:
             self.hd_str += ' -b ' + str(self.max_bps)
        	    self.hd_str += ' -m ' + str(self.min_bps)
+        else:
+            self.hd_str += ' -L'
+            self.hd_str += ' -s ' + str(self.max_bps)
         if self.media_state != 'MEDIA_ON' and self.start_time is None:
             self.hd_str += ' -f ' + str(HD_ARCHIVE_OFFSET)
         elif self.start_time is not None:
