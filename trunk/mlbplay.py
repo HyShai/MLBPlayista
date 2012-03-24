@@ -59,7 +59,6 @@ mydefaults = {'speed': DEFAULT_SPEED,
               'top_plays_player': '',
               'use_librtmp': 0,
               'use_nexdef': 0,
-              'use_mlbhd': 0,
               'condensed' : 0,
               'nexdef_url': 0,
               'zdebug' : 0,
@@ -248,7 +247,6 @@ if stream is not None:
                        coverage=stream[1],condensed=cfg['condensed'],
                        postseason=False,
                        use_librtmp=cfg['use_librtmp'],
-                       use_mlbhd=cfg['use_mlbhd'],
                        max_bps=cfg['max_bps'],start_time=0)
     else:
         print 'Unknown streamtype: ' + repr(streamtype)

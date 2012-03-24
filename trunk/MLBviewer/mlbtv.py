@@ -715,12 +715,11 @@ class GameStream:
                  coverage=None, use_nexdef=False, max_bps=1200000,
                  min_bps=500000, start_time=0,
                  adaptive=False,condensed=False,postseason=False,camera=0,
-                 use_librtmp=False,use_mlbhd=False):
+                 use_librtmp=False):
         self.adaptive = adaptive
         self.condensed = condensed
         self.postseason = postseason
         self.use_librtmp = use_librtmp
-        self.use_mlbhd = use_mlbhd
         self.auth = auth
         self.camera = camera
         self.this_camera = 0
