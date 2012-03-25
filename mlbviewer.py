@@ -10,6 +10,7 @@ from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE, LOGFILE
 from MLBviewer import TEAMCODES
 from MLBviewer import MLBLog
 from MLBviewer import MLBprocess
+from MLBviewer import MLBSession
 import os
 import signal
 import sys
@@ -188,11 +189,25 @@ def mainloop(myscr,cfg):
     lines = ('mlbviewer', VERSION, URL)
     for i in xrange(len(lines)):
         myscr.addstr(curses.LINES/2+i, (curses.COLS-len(lines[i]))/2, lines[i])
-    statuswin.addstr(0,0,'Please wait for listings to load...')
-    statuswin.refresh()
     myscr.refresh()
+    statuswin.addstr(0,0,'Logging into mlb.com...')
+    statuswin.refresh()
     titlewin.refresh()
 
+
+    # new login code
+    session = MLBSession(user=cfg['user'],passwd=cfg['pass'])
+    # for now, we want errors here to be fatal since nothing else will
+    # work without session data like cookies and session key
+    session.getSessionData()
+  
+    # now populate necessary fields for later use
+    cfg['cookies'] = {}
+    cfg['cookies'] = session.cookies
+    #raise Exception,repr(cfg['cookies'])
+    
+
+    # Listings 
     mysched = MLBSchedule(ymd_tuple=startdate,time_shift=cfg['time_offset'])
     # We'll make a note of the date, to return to it later.
     today_year = mysched.year
@@ -1215,8 +1230,8 @@ def mainloop(myscr,cfg):
                     except:
                         coverage = '0'
 
-                    g = GameStream(stream, cfg['user'], cfg['pass'],
-                               cfg['debug'], streamtype='audio',
+                    g = GameStream(stream, cookies=cfg['cookies'],
+                               debug=cfg['debug'], streamtype='audio',
                                use_nexdef=False,
                                coverage=coverage,
                                use_librtmp=cfg['use_librtmp'])
@@ -1287,8 +1302,8 @@ def mainloop(myscr,cfg):
                             else:
                                 start_time = 0
 
-                    g = GameStream(stream, cfg['user'], cfg['pass'],
-                               cfg['debug'], use_nexdef=cfg['use_nexdef'],
+                    g = GameStream(stream, cookies=cfg['cookies'],
+                               debug=cfg['debug'], use_nexdef=cfg['use_nexdef'],
                                speed=cfg['speed'],
                                adaptive=cfg['adaptive_stream'],
                                coverage=coverage,
