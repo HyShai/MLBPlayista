@@ -33,7 +33,7 @@ try:
     from xml.dom.minidom import parse
 except:
     print "Missing python external dependencies."
-    print "Please read the REQUIREMENTS-2010.txt file."
+    print "Please read the REQUIREMENTS-2012.txt file."
     sys.exit()
 
 # Set this to True if you want to see all the html pages in the logfile
@@ -710,17 +710,18 @@ class MLBSchedule:
 
 
 class GameStream:
-    def __init__(self,stream, email, passwd, debug=None,
+    def __init__(self,stream, cookies, debug=None,
                  auth=True, streamtype='video',speed=1200,
                  coverage=None, use_nexdef=False, max_bps=1200000,
                  min_bps=500000, start_time=0,
                  adaptive=False,condensed=False,postseason=False,camera=0,
                  use_librtmp=False):
+        self.cookies = {}
+        self.cookies = deepcopy(cookies)
         self.adaptive = adaptive
         self.condensed = condensed
         self.postseason = postseason
         self.use_librtmp = use_librtmp
-        self.auth = auth
         self.camera = camera
         self.this_camera = 0
         self.use_nexdef = use_nexdef
@@ -740,18 +741,10 @@ class GameStream:
               self.event_id ) = self.stream
         except:
             self.error_str = "No stream available for selected game."
-        else:
-            self.auth = True
-        self.email = email
-        self.passwd = passwd
-        self.session_cookies = None
         self.streamtype = streamtype
         self.coverage = coverage
         self.log.write(str(datetime.datetime.now()) + '\n')
-        try:
-            self.session_key = self.readSessionKey()
-        except:
-            self.session_key = None
+        self.session_key = None
         self.debug = debug
         if self.streamtype == 'audio':
             self.scenario = "AUDIO_FMS_32K"
@@ -762,8 +755,6 @@ class GameStream:
             else:
                 self.scenario = 'FMS_CLOUD'
             self.subject  = "LIVE_EVENT_COVERAGE"
-        self.cookies = {}
-        #self.content_id = None
         self.auth_chunk = None
         self.play_path = None
         self.tc_url = None
@@ -772,208 +763,7 @@ class GameStream:
         self.rtmp_host = None
         self.rtmp_port = None
         self.sub_path = None
-        self.logged_in = None
 
-    def readSessionKey(self):
-        sk = open(SESSIONKEY,"r")
-        self.session_key = sk.read()
-        sk.close()
-        return session_key
-
-    def writeSessionKey(self,session_key):
-        sk = open(SESSIONKEY,"w")
-        sk.write(session_key)
-        sk.close()
-        return session_key
-
-    def extractCookies(self,response):
-        """ BEGIN Is any of this necessary?
-        ns_headers = response.headers.getheaders("Set-Cookie")
-        attrs_set = cookielib.parse_ns_headers(ns_headers)
-        cookie_tuples = cookielib.CookieJar()._normalized_cookie_tuples(attrs_set)
-        for tup in cookie_tuples:
-            name, value, standard, rest = tup
-            self.cookies[name] = value
-        END Is any of this necessary? """
-        # let's also try a different method
-        for c in self.session_cookies:
-            self.cookies[c.name] = c.value
-    
-    def login(self):
-        # BEGIN login()
-        # meant to be called by workflow()
-        self.session_cookies = cookielib.LWPCookieJar()
-        if self.session_cookies != None:
-           if os.path.isfile(COOKIEFILE):
-              #self.session_cookies.load(COOKIEFILE,ignore_discard=True)
-              os.remove(COOKIEFILE)
-        else:
-           self.error_str = "Couldn't open cookie jar"
-           raise Exception,self.error_str
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.session_cookies))
-        urllib2.install_opener(opener)
-
-        # First visit the login page and get the session cookie
-        callback = str(int(time.time() * 1000))
-        login_url = 'http://mlb.mlb.com/account/quick_login_hdr.jsp?'\
-            'successRedirect=http://mlb.mlb.com/shared/account/v2/login_success.jsp'\
-            '%3Fcallback%3Dl' + callback + '&callback=l' + callback + \
-            '&stylesheet=/style/account_management/myAccountMini.css&submitImage='\
-            '/shared/components/gameday/v4/images/btn-login.gif&'\
-            'errorRedirect=http://mlb.mlb.com/account/quick_login_hdr.jsp%3Ferror'\
-            '%3Dtrue%26successRedirect%3Dhttp%253A%252F%252Fmlb.mlb.com%252Fshared'\
-            '%252Faccount%252Fv2%252Flogin_success.jsp%25253Fcallback%25253Dl' +\
-            callback + '%26callback%3Dl' + callback + '%26stylesheet%3D%252Fstyle'\
-            '%252Faccount_management%252FmyAccountMini.css%26submitImage%3D%252F'\
-            'shared%252Fcomponents%252Fgameday%252Fv4%252Fimages%252Fbtn-login.gif'\
-            '%26errorRedirect%3Dhttp%3A//mlb.mlb.com/account/quick_login_hdr.jsp'\
-            '%253Ferror%253Dtrue%2526successRedirect%253Dhttp%25253A%25252F%25252F'\
-            'mlb.mlb.com%25252Fshared%25252Faccount%25252Fv2%25252Flogin_success.jsp'\
-            '%2525253Fcallback%2525253Dl' + callback + '%2526callback%253Dl' +\
-            callback + '%2526stylesheet%253D%25252Fstyle%25252Faccount_management'\
-            '%25252FmyAccountMini.css%2526submitImage%253D%25252Fshared%25252F'\
-            'components%25252Fgameday%25252Fv4%25252Fimages%25252Fbtn-login.gif'
-        txheaders = {'User-agent' : USERAGENT}
-        data = None
-        req = urllib2.Request(login_url,data,txheaders)
-        try:
-            handle = urllib2.urlopen(req)
-        except:
-            self.error_str = 'Error occurred in HTTP request to login page'
-            raise Exception, self.error_str
-        try:
-            self.extractCookies(handle)
-        except Exception,detail:
-            raise Exception,detail
-        if self.debug:
-            self.log.write('Did we receive a cookie from the wizard?\n')
-            for index, cookie in enumerate(self.session_cookies):
-                print >> self.log, index, ' : ' , cookie
-        self.session_cookies.save(COOKIEFILE,ignore_discard=True)
-
-        rdata = handle.read()
-
-        # now authenticate
-        auth_values = {'emailAddress' : self.email,
-                       'password' : self.passwd,
-                       'submit.x' : 25,
-                       'submit.y' : 7}
-        g = re.search('name="successRedirect" value="(?P<successRedirect>[^"]+)"', rdata)
-        auth_values['successRedirect'] = g.group('successRedirect')
-        g = re.search('name="errorRedirect" value="(?P<errorRedirect>[^"]+)"', rdata)
-        auth_values['errorRedirect'] = g.group('errorRedirect')
-        auth_data = urllib.urlencode(auth_values)
-        auth_url = 'https://secure.mlb.com/account/topNavLogin.jsp'
-        req = urllib2.Request(auth_url,auth_data,txheaders)
-        try:
-            handle = urllib2.urlopen(req)
-            self.session_cookies.save(COOKIEFILE,ignore_discard=True)
-            self.extractCookies(handle)
-        except:
-            self.error_str = 'Error occurred in HTTP request to auth page'
-            raise Exception, self.error_str
-        auth_page = handle.read()
-        if self.debug:
-            self.log.write('Did we receive a cookie from authenticate?\n')
-            for index, cookie in enumerate(self.session_cookies):
-                print >> self.log, index, ' : ' , cookie
-        self.session_cookies.save(COOKIEFILE,ignore_discard=True)
-        try:
-           loggedin = re.search('login_success', handle.geturl()).groups()
-           self.log.write('Logged in successfully!\n')
-           self.logged_in = True
-        except:
-           self.error_str = 'Login was unsuccessful.'
-           self.log.write(auth_page)
-           os.remove(COOKIEFILE)
-           raise MLBAuthError, self.error_str
-        if self.debug:
-           self.log.write("DEBUG>>> writing login page")
-           self.log.write(auth_page)
-        # END login()
- 
-    def workflow(self):
-        # This is the workhorse routine.
-        # 1. Login
-        # 2. Get the url from the workflow page
-        # 3. Logout
-        # 4. Return the raw workflow response page
-        # The hope is that this sequence will always be the same and leave
-        # it to url() to determine if an error occurs.  This way, hopefully, 
-        # error or no, we'll always log out.
-        if self.session_cookies is None:
-            if self.auth and self.logged_in is None:
-                login_count = 0
-                while not self.logged_in:
-                    try:    
-                        self.login()
-                    except:
-                        if login_count < 3:
-                            login_count += 1
-                            time.sleep(1)
-                        else:
-                            raise
-                            #raise Exception,self.error_str
-                # clear any login unsuccessful messages from previous failures
-                if login_count > 0:
-                    self.error_str = "What happened here?\nPlease enable debug with the d key and try your request again."
-        
-        wf_url = "http://www.mlb.com/enterworkflow.do?" +\
-            "flowId=media.media"
-
-        # Open the workflow url...
-        # Get the session key morsel
-        referer_str = ''
-        txheaders = {'User-agent' : USERAGENT,
-                     'Referer'    : referer_str }
-        req = urllib2.Request(url=wf_url,headers=txheaders,data=None)
-        try:
-            handle = urllib2.urlopen(req)
-            self.extractCookies(handle)
-        except Exception,detail:
-            self.error_str = 'Error occurred in HTTP request to workflow page:' + str(detail)
-            raise Exception, self.error_str
-        url_data = handle.read()
-        if self.debug:
-            if self.auth:
-                self.log.write('Did we receive a cookie from workflow?\n')
-                for index, cookie in enumerate(self.session_cookies):
-                    print >> self.log, index, ' : ' , cookie
-        if self.auth:
-            self.session_cookies.save(COOKIEFILE,ignore_discard=True)
-        if self.debug:
-           self.log.write("DEBUG>>> writing workflow page")
-           self.log.write(url_data)
-        return url_data
-
-    def logout(self): 
-        """Logs out from the mlb.com session. Meant to prevent
-        multiple login errors."""
-        LOGOUT_URL="https://secure.mlb.com/enterworkflow.do?flowId=registration.logout&c_id=mlb"
-        txheaders = {'User-agent' : USERAGENT,
-                     'Referer' : 'http://mlb.mlb.com/index.jsp'}
-        data = None
-        req = urllib2.Request(LOGOUT_URL,data,txheaders)
-        handle = urllib2.urlopen(req)
-        logout_info = handle.read()
-        handle.close()
-        pattern = re.compile(r'You are now logged out.')
-        if not re.search(pattern,logout_info):
-           self.error_str = "Logout was unsuccessful. Check " + LOGFILE
-           self.log.write(logout_info)
-           raise MLBAuthError, self.error_str
-        else:
-           self.log.write('Logged out successfully!\n')
-           self.logged_in = None
-        if self.debug:
-           self.log.write("DEBUG>>> writing logout page")
-           self.log.write(logout_info)
-        # clear session cookies since they're no longer valid
-        self.log.write('Clearing session cookies\n')
-        self.session_cookies.clear_session_cookies()
-        # session is bogus now - force a new login each time
-        self.session_cookies = None
-        # END logout
 
     def parseMediaRequest(self,reply):
         # Abort if the status is not "1"
@@ -1149,9 +939,6 @@ class GameStream:
         self.sub_path   = None
         self.app        = None
  
-        # call the workhorse
-        self.workflow()
-
         # July 28, 2010 - SOAP services stopped working.
         # SOAP being replaced with a GET url, response should be nearly
         # identical, but different strategy for request/parse now.
@@ -1243,7 +1030,6 @@ class GameStream:
             raise Exception,self.error_str
         try:
             self.session_key = reply['session-key']
-            self.writeSessionKey(self.session_key)
         except:
             self.session_key = None
         try:
