@@ -6,6 +6,7 @@ from MLBviewer import LircConnection
 from MLBviewer import MLBConfig
 from MLBviewer import MLBUrlError
 from MLBviewer import MLBJsonError
+from MLBviewer import MLBAuthError
 from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE, LOGFILE
 from MLBviewer import TEAMCODES
 from MLBviewer import MLBLog
@@ -196,10 +197,16 @@ def mainloop(myscr,cfg):
 
 
     # new login code
-    session = MLBSession(user=cfg['user'],passwd=cfg['pass'])
+    session = MLBSession(user=cfg['user'],passwd=cfg['pass'],debug=cfg['debug'])
     # for now, we want errors here to be fatal since nothing else will
     # work without session data like cookies and session key
-    session.getSessionData()
+    try:
+        session.getSessionData()
+    except MLBAuthError:
+        error_str = 'Login was unsuccessful.  Check user and pass in ' + myconf
+        sys.exit(error_str)
+    except Exception,detail:
+        raise Exception,detail
   
     # now populate necessary fields for later use
     cfg['cookies'] = {}
