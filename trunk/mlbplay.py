@@ -9,6 +9,7 @@ from MLBviewer import MLBJsonError
 from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE
 from MLBviewer import TEAMCODES
 from MLBviewer import MLBprocess
+from MLBviewer import MLBSession
 import os
 import sys
 import re
@@ -230,17 +231,24 @@ if cfg['zdebug']:
     print 'prefer = ' + repr(stream)
     sys.exit()
 
+# Before creating GameStream object, get session data from login
+session = MLBSession(user=cfg['user'],passwd=cfg['pass'],debug=cfg['debug'])
+session.getSessionData()
+# copy all the cookie data to pass to GameStream
+cfg['cookies'] = {}
+cfg['cookies'] = session.cookies
+
 # Once the correct media tuple has been assigned to stream, create the 
 # GameStream object for the correct type of media
 if stream is not None:
     if streamtype == 'audio':
-        g = GameStream(stream, cfg['user'], cfg['pass'],
+        g = GameStream(stream, cfg['cookies'],
                        cfg['debug'], streamtype='audio',
                        use_nexdef=False,
                        use_librtmp=cfg['use_librtmp'],
                        coverage=stream[1])
     elif streamtype in ( 'video', 'condensed'):
-        g = GameStream(stream, cfg['user'], cfg['pass'],
+        g = GameStream(stream, cfg['cookies'],
                        cfg['debug'], 
                        use_nexdef=cfg['use_nexdef'], speed=cfg['speed'],
                        adaptive=cfg['adaptive_stream'],
