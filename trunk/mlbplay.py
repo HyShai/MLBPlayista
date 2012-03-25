@@ -233,6 +233,7 @@ if cfg['zdebug']:
 
 # Before creating GameStream object, get session data from login
 session = MLBSession(user=cfg['user'],passwd=cfg['pass'],debug=cfg['debug'])
+print 'logging into mlb.com...'
 session.getSessionData()
 # copy all the cookie data to pass to GameStream
 cfg['cookies'] = {}
