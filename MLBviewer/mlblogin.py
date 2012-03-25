@@ -38,6 +38,9 @@ class Error(Exception):
 class MLBNoCookieFileError(Error):
     pass
 
+class MLBAuthError(Error):
+    pass
+
 class MLBSession:
 
     def __init__(self,user,passwd,debug=False):
@@ -158,7 +161,7 @@ class MLBSession:
                 print >> self.log, index, ' : ' , cookie
         self.session_cookies.save(COOKIEFILE,ignore_discard=True)
         try:
-           loggedin = re.search('login_success', handle.geturl()).groups()
+           loggedin = re.search('Login Success', auth_page).groups()
            self.log.write('Logged in successfully!\n')
            self.logged_in = True
         except:

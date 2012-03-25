@@ -3,7 +3,7 @@ __all__ = ["MLBSchedule", "Gamestream", "LircConnection", "MLBConfig"]
 __author__ = "Matthew Levine"
 __email__ = "straycat000@yahoo.com"
 
-VERSION ="2012rev319"
+VERSION ="2012rev343"
 URL = "http://sourceforge.net/projects/mlbviewer"
 
 AUTHDIR = '.mlb'
@@ -16,6 +16,7 @@ from mlbtv import GameStream
 from config import MLBConfig
 from mlbtv import MLBUrlError
 from mlbtv import MLBJsonError
+from mlblogin import MLBAuthError
 from LIRC import LircConnection
 from mlbtv import TEAMCODES, LOGFILE
 from mlbprocess import MLBprocess
