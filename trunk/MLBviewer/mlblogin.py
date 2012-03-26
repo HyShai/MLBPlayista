@@ -29,7 +29,6 @@ AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
 SESSIONKEY = os.path.join(os.environ['HOME'], AUTHDIR, 'sessionkey')
 LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
-#LOGFILE = '/tmp/mlblogin.log'
 USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
 
 class Error(Exception):
@@ -49,7 +48,6 @@ class MLBSession:
         self.auth = True
         self.logged_in = None
         self.cookie_jar = None
-        self.session_cookies = None
         self.cookies = {}
         self.debug = debug
         try:
@@ -71,14 +69,14 @@ class MLBSession:
         return session_key
 
     def extractCookies(self):
-        for c in self.session_cookies:
+        for c in self.cookie_jar:
             self.cookies[c.name] = c.value
 
     def readCookieFile(self):
-        self.session_cookies = cookielib.LWPCookieJar()
-        if self.session_cookies != None:
+        self.cookie_jar = cookielib.LWPCookieJar()
+        if self.cookie_jar != None:
             if os.path.isfile(COOKIEFILE):
-                self.session_cookies.load(COOKIEFILE,ignore_discard=True)
+                self.cookie_jar.load(COOKIEFILE,ignore_discard=True)
                 self.extractCookies()
             else:
                 raise MLBNoCookieFileError
@@ -91,7 +89,7 @@ class MLBSession:
             self.readCookieFile()
         except MLBNoCookieFileError:
             pass
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.session_cookies))
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
         urllib2.install_opener(opener)
 
         # First visit the login page and get the session cookie
@@ -129,9 +127,9 @@ class MLBSession:
             raise Exception,detail
         if self.debug:
             self.log.write('Did we receive a cookie from the wizard?\n')
-            for index, cookie in enumerate(self.session_cookies):
+            for index, cookie in enumerate(self.cookie_jar):
                 print >> self.log, index, ' : ' , cookie
-        self.session_cookies.save(COOKIEFILE,ignore_discard=True)
+        self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
 
         rdata = handle.read()
 
@@ -149,7 +147,7 @@ class MLBSession:
         req = urllib2.Request(auth_url,auth_data,txheaders)
         try:
             handle = urllib2.urlopen(req)
-            self.session_cookies.save(COOKIEFILE,ignore_discard=True)
+            self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
             self.extractCookies()
         except:
             self.error_str = 'Error occurred in HTTP request to auth page'
@@ -157,9 +155,9 @@ class MLBSession:
         auth_page = handle.read()
         if self.debug:
             self.log.write('Did we receive a cookie from authenticate?\n')
-            for index, cookie in enumerate(self.session_cookies):
+            for index, cookie in enumerate(self.cookie_jar):
                 print >> self.log, index, ' : ' , cookie
-        self.session_cookies.save(COOKIEFILE,ignore_discard=True)
+        self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
         try:
            loggedin = re.search('Login Success', auth_page).groups()
            self.log.write('Logged in successfully!\n')
@@ -183,7 +181,7 @@ class MLBSession:
         # The hope is that this sequence will always be the same and leave
         # it to url() to determine if an error occurs.  This way, hopefully,
         # error or no, we'll always log out.
-        if self.session_cookies is None:
+        if self.cookie_jar is None:
             if self.logged_in is None:
                 login_count = 0
                 while not self.logged_in:
@@ -219,10 +217,10 @@ class MLBSession:
         if self.debug:
             if self.auth:
                 self.log.write('Did we receive a cookie from workflow?\n')
-                for index, cookie in enumerate(self.session_cookies):
+                for index, cookie in enumerate(self.cookie_jar):
                     print >> self.log, index, ' : ' , cookie
         if self.auth:
-            self.session_cookies.save(COOKIEFILE,ignore_discard=True)
+            self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
         if self.debug:
            self.log.write("DEBUG>>> writing workflow page")
            self.log.write(url_data)
@@ -252,8 +250,8 @@ class MLBSession:
            self.log.write(logout_info)
         # clear session cookies since they're no longer valid
         self.log.write('Clearing session cookies\n')
-        self.session_cookies.clear_session_cookies()
+        self.cookie_jar.clear_cookie_jar()
         # session is bogus now - force a new login each time
-        self.session_cookies = None
+        self.cookie_jar = None
         # END logout
 

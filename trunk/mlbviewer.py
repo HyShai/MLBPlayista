@@ -5,7 +5,7 @@ from MLBviewer import GameStream
 from MLBviewer import LircConnection
 from MLBviewer import MLBConfig
 from MLBviewer import MLBUrlError
-from MLBviewer import MLBJsonError
+from MLBviewer import MLBXmlError
 from MLBviewer import MLBAuthError
 from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE, LOGFILE
 from MLBviewer import TEAMCODES
@@ -41,6 +41,7 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'c'          : 'Play Condensed Game Video (if available)',
                 'j'          : 'Jump to a date',
                 'm'          : 'Bookmark a game or edit bookmark title',
+                'n'          : 'Toggle NEXDEF mode',
                 'l (or Esc)' : 'Return to listings',
                 'b'          : 'View bookmarks',
                 'x (or Bksp)': 'Delete a bookmark',
@@ -54,7 +55,7 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
               }
 
 HELPFILE = (
-    ('COMMANDS' , ( 'Enter', 'a', 'c', 'd' )),
+    ('COMMANDS' , ( 'Enter', 'a', 'c', 'd', 'n' )),
     ('LISTINGS', ( 'Up/Down', 'Left/Right', 'j', 'p', 'r' )),
     ('SCREENS'  , ( 't', 'b', 'h', 'l (or Esc)' )),
     ('BOOKMARKS', ( 'm', 'x (or Bksp)' ))
@@ -135,7 +136,6 @@ def mainloop(myscr,cfg):
     # Toggle the speed to 400k for top plays.  
     # Initialize the value here in case 'l' selected before 't'
     RESTORE_SPEED = cfg['speed']
-    #cfg['use_nexdef'] = False
 
     if cfg['x_display']:
         os.environ['DISPLAY'] = cfg['x_display']
@@ -176,12 +176,9 @@ def mainloop(myscr,cfg):
         except curses.error:
             pass
 
-    #myscr = curses.initscr()
-
     # This will be used for statuslines
     statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
     titlewin  = curses.newwin(2,curses.COLS-1,0,0)
-
 
     current_cursor = 0
     
@@ -195,11 +192,8 @@ def mainloop(myscr,cfg):
     statuswin.refresh()
     titlewin.refresh()
 
-
     # new login code
     session = MLBSession(user=cfg['user'],passwd=cfg['pass'],debug=cfg['debug'])
-    # for now, we want errors here to be fatal since nothing else will
-    # work without session data like cookies and session key
     try:
         session.getSessionData()
     except MLBAuthError:
@@ -222,9 +216,8 @@ def mainloop(myscr,cfg):
     today_day = mysched.day
 
     try:
-        available = mysched.getListings(cfg['speed'],cfg['blackout'],cfg['audio_follow'])
-    except (KeyError, MLBJsonError), detail:
-        #raise Exception,detail
+        available = mysched.getListings(cfg['speed'], cfg['blackout'])
+    except (KeyError, MLBXmlError), detail:
         if cfg['debug']:
             raise Exception, detail
         available = []
@@ -317,7 +310,6 @@ def mainloop(myscr,cfg):
         # Draw a line
         titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
 
-        is_adaptive = False
         for n in range(curses.LINES-4):
             if n < len(available):
                 if 'topPlays' in CURRENT_SCREEN:
@@ -346,16 +338,19 @@ def mainloop(myscr,cfg):
             # Only draw the screen if there are any games
             if available:
                 if n == current_cursor:
+                    # highlight and bold if in progress, else just highlight
                     if available[n][5] == 'I':
                         cursesflags = curses.A_REVERSE|curses.A_BOLD
                     else:
                         cursesflags = curses.A_REVERSE
+                    # status string depending on screen
                     if 'topPlays' in CURRENT_SCREEN:
                         status_str = 'Press L to return to listings...'
                     elif 'PostSeason' in CURRENT_SCREEN:
                         status_str = 'Press L to return to listings...'
                     else:
-                        status_str = statusline.get(available[n][5],"Unknown Flag = "+available[n][5])
+                        status_str = statusline.get(available[n][5],
+                                         "Unknown Flag = "+available[n][5])
 			if len(available[n][2]) + len(available[n][3]) == 0:
                             status_str += ' (No media)'
                         elif len(available[n][2]) == 0:
@@ -446,9 +441,8 @@ def mainloop(myscr,cfg):
                                 except:
                                     prefer['audio'] = None
                         
-                        # Is the preferred coverage in HD?
-                        # If 'HD' is in the call letters, light up the HD 
-                        # indicator if nexdef enabled (that check comes later)
+                        # HD indicator replaced with Adaptive Streaming
+                        # indicator
                         if cfg['adaptive_stream']:
                             is_adaptive = True
                         else:
@@ -534,6 +528,26 @@ def mainloop(myscr,cfg):
             if irc_socket in inputs:
                 c = irc_conn.next_code()
 
+        if c in ('ReloadCfg', ord('R')):
+            # reload the configuration
+            mycfg = MLBConfig(mydefaults)
+            mycfg.loads(myconf)
+            cfg = {}
+            cfg = mycfg.data
+            status_str = "Reloading " + str(myconf) + "..."
+            statuswin.addstr(0,0,status_str)
+            statuswin.refresh()
+            time.sleep(2)
+            try:
+                available = mysched.getListings(cfg['speed'], cfg['blackout'])
+            except (KeyError,MLBXmlError),detail:
+                if cfg['debug']:
+                    raise Exception,detail
+                available = []
+                status_str = "There was a parser problem with the listings page"
+                statuswin.addstr(0,0,status_str)
+                statuswin.refresh()
+                time.sleep(2)
         if c in ('InningsRaw', ord('y')):
             innings = []
             tmp_id = available[current_cursor][2][0][3]
@@ -681,10 +695,8 @@ def mainloop(myscr,cfg):
             statuswin.refresh()
             cfg['speed'] = str(RESTORE_SPEED)
             try:
-                available = mysched.getListings(cfg['speed'],
-                                            cfg['blackout'],
-                                            cfg['audio_follow'])
-            except (KeyError,MLBJsonError),detail:
+                available = mysched.getListings(cfg['speed'], cfg['blackout'])
+            except (KeyError,MLBXmlError),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
@@ -736,10 +748,8 @@ def mainloop(myscr,cfg):
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
             try:
-                available = mysched.getListings(cfg['speed'],
-                                            cfg['blackout'],
-                                            cfg['audio_follow'])
-            except (KeyError,MLBJsonError),detail:
+                available = mysched.getListings(cfg['speed'], cfg['blackout'])
+            except (KeyError,MLBXmlError),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
@@ -778,10 +788,8 @@ def mainloop(myscr,cfg):
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
             try:
-                available = mysched.getListings(cfg['speed'],
-                                            cfg['blackout'],
-                                            cfg['audio_follow'])
-            except ( KeyError, MLBJsonError ),detail:
+                available = mysched.getListings(cfg['speed'], cfg['blackout'])
+            except ( KeyError, MLBXmlError ),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
@@ -804,10 +812,8 @@ def mainloop(myscr,cfg):
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
             try:
-                available = mysched.getListings(cfg['speed'],
-                                            cfg['blackout'],
-                                            cfg['audio_follow'])
-            except (MLBJsonError, MLBUrlError, KeyError ),detail:
+                available = mysched.getListings(cfg['speed'], cfg['blackout'])
+            except (MLBXmlError, MLBUrlError, KeyError ),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
@@ -839,9 +845,8 @@ def mainloop(myscr,cfg):
                 statuswin.refresh()
                 try:
                     available = mysched.getListings(cfg['speed'],
-                                                cfg['blackout'],
-                                                cfg['audio_follow'])
-                except (KeyError,MLBJsonError),detail:
+                                                cfg['blackout'])
+                except (KeyError,MLBXmlError),detail:
                     if cfg['debug']:
                         raise Exception,detail
                     available = []
@@ -873,8 +878,7 @@ def mainloop(myscr,cfg):
                     newsched = MLBSchedule((myyear, mymonth, myday))
                     try:
                         available = newsched.getListings(cfg['speed'],
-                                                         cfg['blackout'],
-                                                         cfg['audio_follow'])
+                                                         cfg['blackout'])
                         mysched = newsched
                         current_cursor = 0
                     except (KeyError,MLBUrlError):
@@ -885,7 +889,7 @@ def mainloop(myscr,cfg):
                         statuswin.addstr(0,0,error_str,curses.A_BOLD)
                         statuswin.refresh()
                         time.sleep(1.5)
-                    except MLBJsonError,detail:
+                    except MLBXmlError,detail:
                         if cfg['debug']:
                             raise Exception,detail
                         available = []
@@ -1467,10 +1471,8 @@ def mainloop(myscr,cfg):
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
             try:
-                available = mysched.getListings(cfg['speed'],
-                                            cfg['blackout'],
-                                            cfg['audio_follow'])
-            except ( KeyError, MLBJsonError ),detail:
+                available = mysched.getListings(cfg['speed'], cfg['blackout'])
+            except ( KeyError, MLBXmlError ),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 status_str = "There was a parser problem with the listings page"
@@ -1493,7 +1495,6 @@ if __name__ == "__main__":
 
     myconfdir = os.path.join(os.environ['HOME'],AUTHDIR)
     myconf =  os.path.join(myconfdir,AUTHFILE)
-    #myconf = os.path.join(os.environ['HOME'], AUTHDIR, AUTHFILE)
     mydefaults = {'speed': DEFAULT_SPEED,
                   'video_player': DEFAULT_V_PLAYER,
                   'audio_player': DEFAULT_A_PLAYER,
