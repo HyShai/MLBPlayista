@@ -539,7 +539,7 @@ def mainloop(myscr,cfg):
             i = 0
             for elem in OPTIONS_DEBUG:
                 optstr = elem + ' = ' + str(cfg[elem])
-                myscr.addstr(i,0,optstr)
+                myscr.addstr(i,0,optstr[0:curses.COLS-1])
                 i+=1
             myscr.refresh()
             statuswin.refresh()
