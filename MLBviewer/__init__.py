@@ -15,7 +15,7 @@ from mlbtv import MLBSchedule
 from mlbtv import GameStream
 from config import MLBConfig
 from mlbtv import MLBUrlError
-from mlbtv import MLBJsonError
+from mlbtv import MLBXmlError
 from mlblogin import MLBAuthError
 from LIRC import LircConnection
 from mlbtv import TEAMCODES, LOGFILE

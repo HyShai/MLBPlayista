@@ -5,7 +5,7 @@ from MLBviewer import GameStream
 from MLBviewer import LircConnection
 from MLBviewer import MLBConfig
 from MLBviewer import MLBUrlError
-from MLBviewer import MLBJsonError
+from MLBviewer import MLBXmlError
 from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE
 from MLBviewer import TEAMCODES
 from MLBviewer import MLBprocess
@@ -169,9 +169,8 @@ mysched = MLBSchedule(ymd_tuple=startdate,time_shift=cfg['time_offset'])
 
 # Now retrieve the listings for that day
 try:
-    available = mysched.getListings(cfg['speed'],cfg['blackout'],
-                                    cfg['audio_follow'])
-except (KeyError, MLBJsonError), detail:
+    available = mysched.getListings(cfg['speed'], cfg['blackout'])
+except (KeyError, MLBXmlError), detail:
     if cfg['debug']:
         raise Exception, detail
     available = []

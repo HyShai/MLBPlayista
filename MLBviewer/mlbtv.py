@@ -243,7 +243,7 @@ class Error(Exception):
 class MLBUrlError(Error):
     pass
 
-class MLBJsonError(Error):
+class MLBXmlError(Error):
     pass
 
 class MLBAuthError(Error):
@@ -482,13 +482,13 @@ class MLBSchedule:
         try:
             self.data = self.__xmlToPython()
         except ValueError,detail:
-            raise MLBJsonError,detail
+            raise MLBXmlError,detail
 
     def trimXmlList(self,blackout=()):
         # This is the XML version of trimList
         # easier to write a new method than adapt the old one
         if not self.data:
-            raise MLBJsonError, "No games available today."
+            raise MLBXmlError, "No games available today."
         out = []
         for game in self.data:
             dct = {}
@@ -657,12 +657,12 @@ class MLBSchedule:
         listtime = datetime.datetime(self.year, self.month, self.day)
         return self.getXmlTopPlays(gameid)
 
-    def getListings(self, myspeed, blackout, audiofollow):
+    def getListings(self, myspeed, blackout):
         listtime = datetime.datetime(self.year, self.month, self.day)
-        return self.getXmlListings(myspeed, blackout, audiofollow)
+        return self.getXmlListings(myspeed, blackout)
 
 
-    def getXmlListings(self, myspeed, blackout, audiofollow):
+    def getXmlListings(self, myspeed, blackout):
         self.getData()
         listings = self.trimXmlList(blackout)
 
