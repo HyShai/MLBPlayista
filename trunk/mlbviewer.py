@@ -61,7 +61,11 @@ HELPFILE = (
     ('BOOKMARKS', ( 'm', 'x (or Bksp)' ))
     )
 
-
+OPTIONS_DEBUG = ( 'video_player', 'audio_player', 'top_plays_player',
+                  'speed', 'use_nexdef', 'min_bps', 'max_bps', 
+                  'adaptive_stream', 'use_librtmp',
+                  'video_follow', 'audio_follow', 'blackout', 'coverage',
+                  'show_player_command', 'user' )
 
 COLORS = { 'black'   : curses.COLOR_BLACK,
            'red'     : curses.COLOR_RED,
@@ -528,6 +532,19 @@ def mainloop(myscr,cfg):
             if irc_socket in inputs:
                 c = irc_conn.next_code()
 
+        if c in ('OptionsDebug', ord('o')):
+            myscr.clear()
+            statuswin.clear()
+            statuswin.addstr(0,0,'Press any key to continue...')
+            i = 0
+            for elem in OPTIONS_DEBUG:
+                optstr = elem + ' = ' + str(cfg[elem])
+                myscr.addstr(i,0,optstr)
+                i+=1
+            myscr.refresh()
+            statuswin.refresh()
+            myscr.getch()
+            continue
         if c in ('ReloadCfg', ord('R')):
             # reload the configuration
             mycfg = MLBConfig(mydefaults)
