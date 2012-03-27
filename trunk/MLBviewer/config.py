@@ -26,7 +26,8 @@ class MLBConfig:
                 val = val.strip()
                 # These are the ones that take multiple values
                 if key in ('blackout', 'audio_follow', 'video_follow', 'favorite'):
-                    self.data[key].append(val)
+                    if val not in self.data[key]:
+                        self.data[key].append(val)
                 # These are the booleans:
                 elif key in ('show_player_command', 'debug', 'use_color', 'dvr_record_only', 'live_from_start', 'use_nexdef', 'adaptive_stream', 'show_inning_frames', 'postseason', 'use_librtmp'):
                     if val.isdigit():
