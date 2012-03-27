@@ -547,9 +547,10 @@ def mainloop(myscr,cfg):
             continue
         if c in ('ReloadCfg', ord('R')):
             # reload the configuration
-            newcfg = MLBConfig(mydefaults)
-            newcfg.loads(myconf)
-            cfg = newcfg.data
+            cfg = {}
+            mycfg = MLBConfig(mydefaults)
+            mycfg.loads(myconf)
+            cfg = mycfg.data
             status_str = "Reloading " + str(myconf) + "..."
             statuswin.addstr(0,0,status_str)
             statuswin.refresh()
