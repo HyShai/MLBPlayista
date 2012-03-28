@@ -211,6 +211,11 @@ def mainloop(myscr,cfg):
     cfg['cookies'] = session.cookies
     cfg['cookie_jar'] = session.cookie_jar
     #raise Exception,repr(cfg['cookies'])
+    try:
+        log.write('session-key from cookie file: ' + session.cookies['ftmu'] +\
+                  '\n')
+    except:
+        log.write('no session-key found in cookie file\n')
     
 
     # Listings 
@@ -1259,8 +1264,7 @@ def mainloop(myscr,cfg):
                     except:
                         coverage = '0'
 
-                    g = GameStream(stream, cookies=cfg['cookies'],
-                               cookie_jar=cfg['cookie_jar'],
+                    g = GameStream(stream, session=session,
                                debug=cfg['debug'], streamtype='audio',
                                use_nexdef=False,
                                coverage=coverage,
@@ -1332,8 +1336,7 @@ def mainloop(myscr,cfg):
                             else:
                                 start_time = 0
 
-                    g = GameStream(stream, cookies=cfg['cookies'],
-                               cookie_jar=cfg['cookie_jar'],
+                    g = GameStream(stream, session=session,
                                debug=cfg['debug'], use_nexdef=cfg['use_nexdef'],
                                speed=cfg['speed'],
                                adaptive=cfg['adaptive_stream'],
@@ -1385,6 +1388,11 @@ def mainloop(myscr,cfg):
                         myscr.addstr(1,0,u)
                     except:
                         raise Exception,u
+                    try:
+                        log.write('session-key after GameStream: ' +\
+                                  session.cookies['ftmu'] + '\n')
+                    except:
+                        log.write('no session-key back from GameStream\n')
                     myscr.refresh()
                     #GMARK - help me find where to enable debug getch()
                     #myscr.getch()

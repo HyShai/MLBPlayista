@@ -714,17 +714,17 @@ class MLBSchedule:
 
 
 class GameStream:
-    def __init__(self,stream, cookies, cookie_jar, debug=None,
+    def __init__(self,stream, session, debug=None,
                  auth=True, streamtype='video',speed=1200,
                  coverage=None, use_nexdef=False, max_bps=1200000,
                  min_bps=500000, start_time=0,
                  adaptive=False,condensed=False,postseason=False,camera=0,
                  use_librtmp=False):
-        self.cookies = {}
-        self.cookies = deepcopy(cookies)
-        self.cookie_jar = cookie_jar
+        self.session = session
+        self.cookies = session.cookies
+        self.cookie_jar = session.cookie_jar
         try:
-            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
+            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.session.cookie_jar))
             urllib2.install_opener(opener)
         except:
             raise
@@ -954,14 +954,14 @@ class GameStream:
         # identical, but different strategy for request/parse now.
         base_url = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.3?'
         try:
-            sessionKey = urllib.unquote(self.cookies['ftmu'])
+            sessionKey = urllib.unquote(self.session.cookies['ftmu'])
         except:
             sessionKey = None
         query_values = {
             'eventId': self.event_id,
             'sessionKey': sessionKey,
-            'fingerprint': urllib.unquote(self.cookies['fprt']),
-            'identityPointId': self.cookies['ipid'],
+            'fingerprint': urllib.unquote(self.session.cookies['fprt']),
+            'identityPointId': self.session.cookies['ipid'],
             'subject': self.subject
         }
         url = base_url + urllib.urlencode(query_values)
@@ -975,7 +975,7 @@ class GameStream:
 
         try:
             self.session_key = reply.getElementsByTagName('session-key')[0].childNodes[0].data
-            self.cookies['ftmu'] = self.session_key
+            self.session.cookies['ftmu'] = self.session_key
         except:
             pass
         content_list = self.parseMediaRequest(reply)
@@ -1017,17 +1017,17 @@ class GameStream:
             self.log.write("DEBUG>> soap event-id:" + str(self.stream) + '\n')
             self.log.write("DEBUG>> soap content-id:" + str(self.content_id) + '\n')
         try:
-            sessionkey = urllib.unquote(self.cookies['ftmu'])
+            sessionkey = urllib.unquote(self.session.cookies['ftmu'])
         except:
             sessionkey = None
         query_values = {
             'subject': self.subject,
             'sessionKey': sessionkey,
-            'identityPointId': self.cookies['ipid'],
+            'identityPointId': self.session.cookies['ipid'],
             'contentId': self.content_id,
             'playbackScenario': self.scenario,
             'eventId': self.event_id,
-            'fingerprint': urllib.unquote(self.cookies['fprt'])
+            'fingerprint': urllib.unquote(self.session.cookies['fprt'])
         }
         url = base_url + urllib.urlencode(query_values)
         req = urllib2.Request(url)
@@ -1049,7 +1049,7 @@ class GameStream:
             raise Exception,self.error_str
         try:
             self.session_key = reply.getElementsByTagName('session-vey')[0].childNodes[0].data
-            self.cookies['ftmu'] = self.session_key
+            self.session.cookies['ftmu'] = self.session_key
         except:
             self.session_key = None
         try:
