@@ -53,6 +53,7 @@ COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
 SESSIONKEY = os.path.join(os.environ['HOME'], AUTHDIR, 'sessionkey')
 LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
 ERRORLOG = os.path.join(os.environ['HOME'], AUTHDIR, 'unsuccessful.xml')
+SESSIONLOG = os.path.join(os.environ['HOME'], AUTHDIR, 'session.xml')
 USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
 TESTXML = os.path.join(os.environ['HOME'], AUTHDIR, 'test_epg.xml')
 BLACKFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'blackout')
@@ -967,7 +968,16 @@ class GameStream:
         req = urllib2.Request(url)
         response = urllib2.urlopen(req)
         reply = parse(response)
+        if self.debug:
+            fd = open(SESSIONLOG, 'w')
+            reply.writexml(fd)
+            fd.close()
 
+        try:
+            self.session_key = reply.getElementsByTagName('session-key')[0].childNodes[0].data
+            self.cookies['ftmu'] = self.session_key
+        except:
+            pass
         content_list = self.parseMediaRequest(reply)
 
         # now iterate over the content_list with the following rules:
@@ -1038,7 +1048,8 @@ class GameStream:
             self.error_str = SOAPCODES[status_code]
             raise Exception,self.error_str
         try:
-            self.session_key = reply['session-key']
+            self.session_key = reply.getElementsByTagName('session-vey')[0].childNodes[0].data
+            self.cookies['ftmu'] = self.session_key
         except:
             self.session_key = None
         try:
