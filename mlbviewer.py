@@ -209,6 +209,7 @@ def mainloop(myscr,cfg):
     # now populate necessary fields for later use
     cfg['cookies'] = {}
     cfg['cookies'] = session.cookies
+    cfg['cookie_jar'] = session.cookie_jar
     #raise Exception,repr(cfg['cookies'])
     
 
@@ -1259,6 +1260,7 @@ def mainloop(myscr,cfg):
                         coverage = '0'
 
                     g = GameStream(stream, cookies=cfg['cookies'],
+                               cookie_jar=cfg['cookie_jar'],
                                debug=cfg['debug'], streamtype='audio',
                                use_nexdef=False,
                                coverage=coverage,
@@ -1331,6 +1333,7 @@ def mainloop(myscr,cfg):
                                 start_time = 0
 
                     g = GameStream(stream, cookies=cfg['cookies'],
+                               cookie_jar=cfg['cookie_jar'],
                                debug=cfg['debug'], use_nexdef=cfg['use_nexdef'],
                                speed=cfg['speed'],
                                adaptive=cfg['adaptive_stream'],
