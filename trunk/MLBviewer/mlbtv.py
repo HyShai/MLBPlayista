@@ -52,6 +52,7 @@ AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
 SESSIONKEY = os.path.join(os.environ['HOME'], AUTHDIR, 'sessionkey')
 LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
+ERRORLOG = os.path.join(os.environ['HOME'], AUTHDIR, 'unsuccessful.xml')
 USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
 TESTXML = os.path.join(os.environ['HOME'], AUTHDIR, 'test_epg.xml')
 BLACKFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'blackout')
@@ -778,10 +779,10 @@ class GameStream:
         status_code = str(reply.getElementsByTagName('status-code')[0].childNodes[0].data)
         if status_code != "1":
             self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response event_id = " + str(self.event_id) + "\n")
-            df = open('/tmp/unsuccessful.xml','w')
+            df = open(ERRORLOG,'w')
             reply.writexml(df)
             df.close()
-            df = open('/tmp/unsuccessful.xml')
+            df = open(ERRORLOG)
             msg = df.read()
             df.close()
             self.log.write(msg + '\n')
