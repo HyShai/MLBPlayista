@@ -244,17 +244,15 @@ cfg['cookie_jar'] = session.cookie_jar
 # GameStream object for the correct type of media
 if stream is not None:
     if streamtype == 'audio':
-        g = GameStream(stream, cfg['cookies'],
+        g = GameStream(stream, session=session,
                        debug=cfg['debug'], 
-                       cookie_jar=cfg['cookie_jar'],
                        streamtype='audio',
                        use_nexdef=False,
                        use_librtmp=cfg['use_librtmp'],
                        coverage=stream[1])
     elif streamtype in ( 'video', 'condensed'):
-        g = GameStream(stream, cfg['cookies'],
+        g = GameStream(stream, session=session,
                        debug=cfg['debug'], 
-                       cookie_jar=cfg['cookie_jar'],
                        use_nexdef=cfg['use_nexdef'], speed=cfg['speed'],
                        adaptive=cfg['adaptive_stream'],
                        coverage=stream[1],condensed=cfg['condensed'],
