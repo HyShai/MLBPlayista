@@ -976,7 +976,9 @@ class GameStream:
         try:
             self.session_key = reply.getElementsByTagName('session-key')[0].childNodes[0].data
             self.session.cookies['ftmu'] = self.session_key
+            self.session.cookie_jar.save(COOKIEFILE,ignore_discard=True)
         except:
+            #raise
             pass
         content_list = self.parseMediaRequest(reply)
 
@@ -1048,9 +1050,11 @@ class GameStream:
             self.error_str = SOAPCODES[status_code]
             raise Exception,self.error_str
         try:
-            self.session_key = reply.getElementsByTagName('session-vey')[0].childNodes[0].data
+            self.session_key = reply.getElementsByTagName('session-key')[0].childNodes[0].data
             self.session.cookies['ftmu'] = self.session_key
+            self.session.cookie_jar.save(COOKIEFILE,ignore_discard=True)
         except:
+            #raise
             self.session_key = None
         try:
             game_url = reply.getElementsByTagName('url')[0].childNodes[0].data
