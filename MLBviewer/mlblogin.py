@@ -25,10 +25,20 @@ import sys
 
 from mlbtv import MLBLog
 
+# DEBUG VARIABLES
+# Cookie debug writes cookie contents to cookielog
+COOKIE_DEBUG=True
+
+# If this is set to True, all cookie morsels are written to cookie file
+# else if morsels are marked as discard, then they are not written to file
+IGNORE_DISCARD=True
+
+# DO NOT EDIT BELOW HERE
+
 AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
 SESSIONKEY = os.path.join(os.environ['HOME'], AUTHDIR, 'sessionkey')
-LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
+LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookielog')
 USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
 
 class Error(Exception):
@@ -50,6 +60,8 @@ class MLBSession:
         self.cookie_jar = None
         self.cookies = {}
         self.debug = debug
+        if COOKIE_DEBUG:
+            self.debug = True
         self.log = MLBLog(LOGFILE)
         try:
             self.session_key = self.readSessionKey()
@@ -87,7 +99,7 @@ class MLBSession:
         self.cookie_jar = cookielib.LWPCookieJar()
         if self.cookie_jar != None:
             if os.path.isfile(COOKIEFILE):
-                self.cookie_jar.load(COOKIEFILE,ignore_discard=True)
+                self.cookie_jar.load(COOKIEFILE,ignore_discard=IGNORE_DISCARD)
                 if self.debug:
                     self.log.write('readCookieFile:\n')
                 self.extractCookies()
@@ -146,7 +158,7 @@ class MLBSession:
         #    self.log.write('Did we receive a cookie from the wizard?\n')
         #    for index, cookie in enumerate(self.cookie_jar):
         #        print >> self.log, index, ' : ' , cookie
-        self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
+        self.cookie_jar.save(COOKIEFILE,ignore_discard=IGNORE_DISCARD)
 
         rdata = handle.read()
 
@@ -164,7 +176,7 @@ class MLBSession:
         req = urllib2.Request(auth_url,auth_data,txheaders)
         try:
             handle = urllib2.urlopen(req)
-            self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
+            self.cookie_jar.save(COOKIEFILE,ignore_discard=IGNORE_DISCARD)
             if self.debug:
                 self.log.write('post-login: (this gets saved to file)\n')
             self.extractCookies()
@@ -176,7 +188,7 @@ class MLBSession:
         #    self.log.write('Did we receive a cookie from authenticate?\n')
         #    for index, cookie in enumerate(self.cookie_jar):
         #        print >> self.log, index, ' : ' , cookie
-        self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
+        self.cookie_jar.save(COOKIEFILE,ignore_discard=IGNORE_DISCARD)
         try:
            loggedin = re.search('Login Success', auth_page).groups()
            self.log.write('Logged in successfully!\n')
@@ -241,7 +253,7 @@ class MLBSession:
         #        for index, cookie in enumerate(self.cookie_jar):
         #            print >> self.log, index, ' : ' , cookie
         if self.auth:
-            self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
+            self.cookie_jar.save(COOKIEFILE,ignore_discard=IGNORE_DISCARD)
         #if self.debug:
         #   self.log.write("DEBUG>>> writing workflow page")
         #   self.log.write(url_data)

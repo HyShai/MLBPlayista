@@ -62,6 +62,7 @@ mydefaults = {'speed': DEFAULT_SPEED,
               'use_nexdef': 0,
               'condensed' : 0,
               'nexdef_url': 0,
+              'adaptive_stream': 1,
               'zdebug' : 0,
               'time_offset': ''}
 
@@ -236,19 +237,23 @@ session.getSessionData()
 # copy all the cookie data to pass to GameStream
 cfg['cookies'] = {}
 cfg['cookies'] = session.cookies
+cfg['cookie_jar'] = session.cookie_jar
 
 # Once the correct media tuple has been assigned to stream, create the 
 # GameStream object for the correct type of media
 if stream is not None:
     if streamtype == 'audio':
         g = GameStream(stream, cfg['cookies'],
-                       cfg['debug'], streamtype='audio',
+                       debug=cfg['debug'], 
+                       cookie_jar=cfg['cookie_jar'],
+                       streamtype='audio',
                        use_nexdef=False,
                        use_librtmp=cfg['use_librtmp'],
                        coverage=stream[1])
     elif streamtype in ( 'video', 'condensed'):
         g = GameStream(stream, cfg['cookies'],
-                       cfg['debug'], 
+                       debug=cfg['debug'], 
+                       cookie_jar=cfg['cookie_jar'],
                        use_nexdef=cfg['use_nexdef'], speed=cfg['speed'],
                        adaptive=cfg['adaptive_stream'],
                        coverage=stream[1],condensed=cfg['condensed'],
