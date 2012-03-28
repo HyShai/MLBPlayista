@@ -712,7 +712,7 @@ class MLBSchedule:
 
 
 class GameStream:
-    def __init__(self,stream, cookies, debug=None,
+    def __init__(self,stream, cookies, cookie_jar, debug=None,
                  auth=True, streamtype='video',speed=1200,
                  coverage=None, use_nexdef=False, max_bps=1200000,
                  min_bps=500000, start_time=0,
@@ -720,6 +720,12 @@ class GameStream:
                  use_librtmp=False):
         self.cookies = {}
         self.cookies = deepcopy(cookies)
+        self.cookie_jar = cookie_jar
+        try:
+            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
+            urllib2.install_opener(opener)
+        except:
+            raise
         self.adaptive = adaptive
         self.condensed = condensed
         self.postseason = postseason

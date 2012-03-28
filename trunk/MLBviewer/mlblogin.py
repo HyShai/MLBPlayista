@@ -50,11 +50,13 @@ class MLBSession:
         self.cookie_jar = None
         self.cookies = {}
         self.debug = debug
+        self.log = MLBLog(LOGFILE)
         try:
             self.session_key = self.readSessionKey()
+            if self.debug:
+                self.log.write("LOGIN> Read session key from file: " + str(self.session_key))
         except:
             self.session_key = None
-        self.log = MLBLog(LOGFILE)
 
     def readSessionKey(self):
         sk = open(SESSIONKEY,"r")
@@ -71,12 +73,23 @@ class MLBSession:
     def extractCookies(self):
         for c in self.cookie_jar:
             self.cookies[c.name] = c.value
+        self.printCookies()
+
+    def printCookies(self):
+        if self.debug:
+            self.log.write('Printing relevant cookie morsels...\n')
+            for name in self.cookies.keys():
+                if name in ('fprt', 'ftmu', 'ipid'):
+                    self.log.write(str(name) + ' = ' + str(self.cookies[name]))
+                    self.log.write('\n')
 
     def readCookieFile(self):
         self.cookie_jar = cookielib.LWPCookieJar()
         if self.cookie_jar != None:
             if os.path.isfile(COOKIEFILE):
                 self.cookie_jar.load(COOKIEFILE,ignore_discard=True)
+                if self.debug:
+                    self.log.write('readCookieFile:\n')
                 self.extractCookies()
             else:
                 raise MLBNoCookieFileError
@@ -88,7 +101,9 @@ class MLBSession:
         try:
             self.readCookieFile()
         except MLBNoCookieFileError:
-            pass
+            #pass
+            if self.debug:
+                self.log.write("LOGIN> No cookie file")
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
         urllib2.install_opener(opener)
 
@@ -122,13 +137,15 @@ class MLBSession:
             self.error_str = 'Error occurred in HTTP request to login page'
             raise Exception, self.error_str
         try:
+            if self.debug:
+                self.log.write('pre-login:\n')
             self.extractCookies()
         except Exception,detail:
             raise Exception,detail
-        if self.debug:
-            self.log.write('Did we receive a cookie from the wizard?\n')
-            for index, cookie in enumerate(self.cookie_jar):
-                print >> self.log, index, ' : ' , cookie
+        #if self.debug:
+        #    self.log.write('Did we receive a cookie from the wizard?\n')
+        #    for index, cookie in enumerate(self.cookie_jar):
+        #        print >> self.log, index, ' : ' , cookie
         self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
 
         rdata = handle.read()
@@ -148,15 +165,17 @@ class MLBSession:
         try:
             handle = urllib2.urlopen(req)
             self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
+            if self.debug:
+                self.log.write('post-login: (this gets saved to file)\n')
             self.extractCookies()
         except:
             self.error_str = 'Error occurred in HTTP request to auth page'
             raise Exception, self.error_str
         auth_page = handle.read()
-        if self.debug:
-            self.log.write('Did we receive a cookie from authenticate?\n')
-            for index, cookie in enumerate(self.cookie_jar):
-                print >> self.log, index, ' : ' , cookie
+        #if self.debug:
+        #    self.log.write('Did we receive a cookie from authenticate?\n')
+        #    for index, cookie in enumerate(self.cookie_jar):
+        #        print >> self.log, index, ' : ' , cookie
         self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
         try:
            loggedin = re.search('Login Success', auth_page).groups()
@@ -167,9 +186,9 @@ class MLBSession:
            self.log.write(auth_page)
            os.remove(COOKIEFILE)
            raise MLBAuthError, self.error_str
-        if self.debug:
-           self.log.write("DEBUG>>> writing login page")
-           self.log.write(auth_page)
+        #if self.debug:
+        #   self.log.write("DEBUG>>> writing login page")
+        #   self.log.write(auth_page)
         # END login()
   
     def getSessionData(self):
@@ -209,21 +228,23 @@ class MLBSession:
         req = urllib2.Request(url=wf_url,headers=txheaders,data=None)
         try:
             handle = urllib2.urlopen(req)
+            if self.debug:
+                self.log.write('getSessionData:\n')
             self.extractCookies()
         except Exception,detail:
             self.error_str = 'Error occurred in HTTP request to workflow page:' + str(detail)
             raise Exception, self.error_str
         url_data = handle.read()
-        if self.debug:
-            if self.auth:
-                self.log.write('Did we receive a cookie from workflow?\n')
-                for index, cookie in enumerate(self.cookie_jar):
-                    print >> self.log, index, ' : ' , cookie
+        #if self.debug:
+        #    if self.auth:
+        #        self.log.write('Did we receive a cookie from workflow?\n')
+        #        for index, cookie in enumerate(self.cookie_jar):
+        #            print >> self.log, index, ' : ' , cookie
         if self.auth:
             self.cookie_jar.save(COOKIEFILE,ignore_discard=True)
-        if self.debug:
-           self.log.write("DEBUG>>> writing workflow page")
-           self.log.write(url_data)
+        #if self.debug:
+        #   self.log.write("DEBUG>>> writing workflow page")
+        #   self.log.write(url_data)
         return url_data
 
     def logout(self):
