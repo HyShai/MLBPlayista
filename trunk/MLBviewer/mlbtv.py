@@ -977,7 +977,7 @@ class GameStream:
         try:
             self.session_key = reply.getElementsByTagName('session-key')[0].childNodes[0].data
             self.session.cookies['ftmu'] = self.session_key
-            self.session.cookie_jar.save(COOKIEFILE,ignore_discard=True)
+            self.session.writeSessionKey(self.session_key)
         except:
             #raise
             pass
@@ -1053,7 +1053,7 @@ class GameStream:
         try:
             self.session_key = reply.getElementsByTagName('session-key')[0].childNodes[0].data
             self.session.cookies['ftmu'] = self.session_key
-            self.session.cookie_jar.save(COOKIEFILE,ignore_discard=True)
+            self.session.writeSessionKey(self.session_key)
         except:
             #raise
             self.session_key = None
