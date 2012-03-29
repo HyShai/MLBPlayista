@@ -37,6 +37,7 @@ except:
     sys.exit()
 
 # Set this to True if you want to see all the html pages in the logfile
+SESSION_DEBUG=True
 #DEBUG = True
 #DEBUG = None
 #from __init__ import AUTHDIR
@@ -968,7 +969,7 @@ class GameStream:
         req = urllib2.Request(url)
         response = urllib2.urlopen(req)
         reply = parse(response)
-        if self.debug:
+        if self.debug or SESSION_DEBUG:
             fd = open(SESSIONLOG, 'w')
             reply.writexml(fd)
             fd.close()
