@@ -78,6 +78,36 @@ COLORS = { 'black'   : curses.COLOR_BLACK,
            'xterm'   : -1
          }
 
+statusline = {
+        "E" : "Status: Completed Early",
+        "C" : "Status: Cancelled",
+        "I" : "Status: In Progress",
+        "W" : "Status: Not Yet Available",
+        "F" : "Status: Final",
+        "CG": "Status: Final (Condensed Game Available)",
+        "P" : "Status: Not Yet Available",
+        "S" : "Status: Suspended",
+        "D" : "Status: Delayed",
+        "IP": "Status: Pregame",
+        "PO": "Status: Postponed",
+        "GO": "Status: Game Over - stream not yet available",
+        "NB": "Status: National Blackout",
+        "LB": "Status: Local Blackout"}
+
+speedtoggle = {
+        "300"  : "[ 300K]",
+        "500"  : "[ 500K]",
+        "1200" : "[1200K]",
+        "1800" : "[1800K]",
+        "2400" : "[2400K]"}
+
+coveragetoggle = {
+    "away" : "[AWAY]",
+    "home" : "[HOME]"}
+
+sstoggle = {
+    True  : "[>>]",
+    False : "[--]"}
 
 def doinstall(config,dct,dir=None):
     print "Creating configuration files"
@@ -137,6 +167,7 @@ def mainloop(myscr,cfg):
     log = open(LOGFILE,"a")
     DISABLED_FEATURES = []
     CURRENT_SCREEN = 'listings'
+
     # Toggle the speed to 400k for top plays.  
     # Initialize the value here in case 'l' selected before 't'
     RESTORE_SPEED = cfg['speed']
@@ -192,6 +223,17 @@ def mainloop(myscr,cfg):
     for i in xrange(len(lines)):
         myscr.addstr(curses.LINES/2+i, (curses.COLS-len(lines[i]))/2, lines[i])
     myscr.refresh()
+
+    # Defensive code to insure speed is set correctly
+    if not speedtoggle.has_key(cfg['speed']):
+        s = 'Invalid speed in ' + str(myconf) +'.  Using speed=1200'
+	cfg['speed'] = '1200'
+        statuswin.clear()
+	statuswin.addstr(0,0,s)
+	statuswin.refresh()
+	time.sleep(2)
+
+    statuswin.clear()
     statuswin.addstr(0,0,'Logging into mlb.com...')
     statuswin.refresh()
     titlewin.refresh()
@@ -235,38 +277,6 @@ def mainloop(myscr,cfg):
         statuswin.addstr(0,0,status_str)
         statuswin.refresh()
         time.sleep(2)
-
-
-    statusline = {
-        "E" : "Status: Completed Early",
-        "C" : "Status: Cancelled",
-        "I" : "Status: In Progress",
-        "W" : "Status: Not Yet Available",
-        "F" : "Status: Final",
-        "CG": "Status: Final (Condensed Game Available)",
-        "P" : "Status: Not Yet Available",
-        "S" : "Status: Suspended",
-        "D" : "Status: Delayed",
-        "IP": "Status: Pregame",
-        "PO": "Status: Postponed",
-        "GO": "Status: Game Over - stream not yet available",
-        "NB": "Status: National Blackout",
-        "LB": "Status: Local Blackout"}
-
-    speedtoggle = {
-        "300"  : "[ 300K]",
-        "500"  : "[ 500K]",
-        "1200" : "[1200K]",
-        "1800" : "[1800K]",
-        "2400" : "[2400K]"}
-
-    coveragetoggle = {
-        "away" : "[AWAY]",
-        "home" : "[HOME]"}
-
-    sstoggle = {
-        True  : "[>>]",
-        False : "[--]"}
 
 
     while True:
@@ -558,9 +568,20 @@ def mainloop(myscr,cfg):
             mycfg.loads(myconf)
             cfg = mycfg.data
             status_str = "Reloading " + str(myconf) + "..."
+            statuswin.clear()
             statuswin.addstr(0,0,status_str)
             statuswin.refresh()
             time.sleep(2)
+
+            # Defensive code to insure speed is set correctly
+            if not speedtoggle.has_key(cfg['speed']):
+                s = 'Invalid speed in ' + str(myconf) +'.  Using speed=1200'
+                cfg['speed'] = '1200'
+                statuswin.clear()
+                statuswin.addstr(0,0,s)
+                statuswin.refresh()
+	        time.sleep(2)
+
             try:
                 available = mysched.getListings(cfg['speed'], cfg['blackout'])
             except (KeyError,MLBXmlError),detail:
