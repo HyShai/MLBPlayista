@@ -2,7 +2,7 @@ REQUIREMENTS FOR MLBVIEWER 2012 SEASON
 
 FOR 2011 USERS:
 
-If you used mlbviewer in 2011, not much has changed (yet.)
+If you used mlbviewer in 2011, not much has changed.
 
 1. Download mlbhls (if you plan to use nexdef), build it, install it.
 
@@ -14,7 +14,7 @@ sudo cp mlbhls /usr/bin
 2. If you were using speed=800 in $HOME/.mlb/config, change that to 1200. The
 800 stream may not exist in 2012.
 
-Other than that, you shouldn't have to do anything different for 2012.
+Other than that, you should not have to do anything different for 2012.
 
 NEW USERS:
 
@@ -47,54 +47,28 @@ You will need rtmpdump version 1.7 or greater.
 
 rtmpdump - http://rtmpdump.mplayerhq.hu/
 
-[PROBABLY OBSOLETE] ALL USERS - VERY IMPORTANT
+MPLAYER2 VS MPLAYER
 
-NOTE: In the past, you needed to build mplayer from the latest source to pick
-up bug fixes made specifically for MLB streams.  However, it seems most recent
-distributions and updated binaries have these fixes by now.  This section is 
-here in case you run into problems with the video stream not being recognized 
-at all.  If you have any other problems playing the video stream, this is also
-an option available to you.
+Mplayer2 is fork of the mplayer project.  It also seems to play the streams 
+and handle stream rate switches (important if you enable adaptive streaming
+in nexdef mode - see README for more details) better than the original mplayer.
+For this reason, it is recommended that you download, compile, and install
+mplayer2 for use with mlbviewer and MLB.TV.
 
-HISTORICAL (You can probably ignore this section)
+http://www.mplayer2.org
 
-You will need to re-compile MPlayer from source.  MPlayer requires a bug fix
-to play MLB.TV streams smoothly.  This fix is only a couple of weeks old and 
-far too new for any distribution's version of MPlayer to have it.
 
-QUICK INSTRUCTIONS FOR GETTING AND BUILDING THE LATEST MPLAYER
+The basic instructions are:
 
-Step 1: Verify you have subversion by typing "svn":
+1. Download a tarball.
+2. Unpack it.
+3. Run 'make -j 6'
+4. Run 'make install'
 
-$ svn
-Type 'svn help' for usage.
-$
+The binary is statically linked so it will not replace the library files that
+other players like vlc are using.
 
-If you don't have subversion, you can download it from your distribution's
-package management system (e.g. apt-get install subversion if you're using 
-Ubuntu or Debian), or you can get it here:
-
-http://subversion.tigris.org/
-
-Step 2: Download the latest MPlayer source via svn:
-
-$ svn checkout svn://svn.mplayerhq.hu/mplayer/trunk mplayer
-
-Step 3: Run the configure script with, at a minimum, the following options:
-
-$ cd mplayer
-$ sh configure --enable-dynamic-plugins --prefix=/usr
-
-It's very important you use --prefix=/usr as you want to install this new 
-version of mplayer over your pre-distributed package.
-
-Step 4: Run 'make'
-
-$ make
-
-Step 5: (as root), run 'make install'
-
-$ make install
+---------------------------------------------------------------------------
 
 READ THE README FOR MORE HELP ON USING MLBVIEWER 2012.
 

@@ -24,7 +24,8 @@ speed selection
 condensed games
 debug (network debugging)
 zdebug (media listings debugging)
-nexdef (not officially supported yet but you're welcome to try it)
+nexdef
+adaptive streaming (through configuration file)
 
 BASIC USAGE
 
@@ -72,10 +73,9 @@ debug, d     : True/False (or 1/0) value that enables network debugging
 zdebug, z    : True/False (or 1/0) value that enables media listing debugging
 nexdef, n    : True/False (or 1/0) value, implies video_follow
 
-Nexdef is not fully tested for 2011.  It may work.  It may not.
 
-Valid speeds are 500, 800, 1200, 1800, or 2200.  Additionally, nexdef provides
-speed values of 3000 and 4500.
+Valid speeds are 200, 500, 1200, 1800, or 2400.  Additionally, nexdef provides
+speed values of 3000 and 4500 through the max_bps setting in ~/.mlb/config.
 
 EXAMPLES
 
@@ -95,7 +95,7 @@ To watch the Yankees broadcast of Boston @ New York for the 5/14/2011 game:
 
 mlbplay v=nyy j=05/14/11
 
-To watch the same game in nexdef (experimental):
+To watch the same game in nexdef:
 
 mlbplay v=nyy j=05/14/11 n=1
 
