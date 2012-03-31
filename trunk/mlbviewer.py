@@ -63,7 +63,7 @@ HELPFILE = (
 
 OPTIONS_DEBUG = ( 'video_player', 'audio_player', 'top_plays_player',
                   'speed', 'use_nexdef', 'min_bps', 'max_bps', 
-                  'adaptive_stream', 'use_librtmp',
+                  'adaptive_stream', 'use_librtmp', 'live_from_start',
                   'video_follow', 'audio_follow', 'blackout', 'coverage',
                   'show_player_command', 'user' )
 
@@ -1328,13 +1328,31 @@ def mainloop(myscr,cfg):
 			# postseason=False
                         postseason=cfg['postseason']
 
+                    # move the innings parse for nexdef start_time
+                    # out of live or archive to support live_from_start
+                    # for nexdef
+                    if cfg['use_nexdef']:
+                        # first try the start timecode in innings.xml
+                        try:
+                            tmp_id = available[current_cursor][2][0][3]
+                            innings = mysched.parseInningsXml(tmp_id, cfg['use_nexdef'])
+                        except:
+                            # fallback to the start_time in listings.
+                            innings = None
+
                     # This next block is non-intuitive
                     # if live game (I or D) and live_from_start = False
                     # look up the start_time from the describe (start_time=0)
                     # else, don't include start_time (start_time=None)
                     if str(available[current_cursor][5]) in ('I', 'D') and start_time == None:
-                        if cfg['live_from_start']:
-                            start_time=0
+                        if cfg['live_from_start'] and cfg['use_nexdef']:
+                            if innings is not None:
+                                for i in range(len(innings)):
+                                    if int(innings[i][0]) == 0:
+                                        start_time = innings[i][2]
+                                        continue
+                            else:
+                                start_time = 0
                         else:
                             start_time=None
                     else:
@@ -1343,16 +1361,13 @@ def mainloop(myscr,cfg):
                         if start_time is None:
                             if cfg['use_nexdef']:
                                 # first try the start timecode in innings.xml
-                                try:
-                                    tmp_id = available[current_cursor][2][0][3]
-                                    innings = mysched.parseInningsXml(tmp_id, cfg['use_nexdef'])
+                                if innings is not None:
                                     for i in range(len(innings)):
                                         if int(innings[i][0]) == 0:
                                             start_time = innings[i][2]
                                             continue
-                                except:
+                                else:
                                     # fallback to the start_time in listings.
-                                    #raise
                                     start_time=available[current_cursor][8]
                             else:
                                 start_time = 0
