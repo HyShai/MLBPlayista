@@ -6,19 +6,25 @@ import os.path
 import sys
 import re
 import subprocess
+import urllib2
 
 import logging
 logging.basicConfig(level=logging.INFO)
-logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
-#from suds.client import Client
-#from suds import WebFault
+from xml.dom.minidom import parse
+
 
 import xml.etree.ElementTree
 
-url = 'file://'
-url += os.path.join(os.environ['HOME'], '.mlb', 'MediaService.wsdl')
-#client = Client(url)
+DEFAULT_HD_PLAYER = 'mlbhls -B %B'
+
+MPLAYER_CMD = 'mplayer -really-quiet -cache 8192 -fs -'
+
+MAX_BPS=1200000
+
+MIN_BPS=500000
+
+ADAPTIVE=True
 
 SESSIONKEY = os.path.join(os.environ['HOME'], '.mlb', 'sessionkey')
 
@@ -50,10 +56,7 @@ except:
 try:
     SCENARIO = sys.argv[3]
 except:
-    #SCENARIO = "MLB_FLASH_800K_STREAM"
-    SCENARIO = "AUDIO_FMS_32K"
-    #SCENARIO = "FLASH_1200K_800X448"
-    #SCENARIO = "FLASH_1800K_800X448"
+    SCENARIO = "HTTP_CLOUD_WIRED"
 
 try:
     content_id = sys.argv[2]
@@ -92,7 +95,7 @@ except:
 AUTHFILE = os.path.join(os.environ['HOME'],'.mlb/config')
  
 DEFAULT_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
-DEFAULT_RECORDER = 'rtmpdump -f \"LNX 10,0,22,87\" -r %s --resume'
+DEFAULT_RECORDER = 'rtmpdump -f \"LNX 10,0,22,87\" -o %e.mp4 -r %s --resume'
 
 try:
    import cookielib
@@ -248,14 +251,16 @@ except:
     #session = None
 
 event_id = EVENT
+#pd = {'event-id':event_id, 'subject':'LIVE_EVENT_COVERAGE' }
+#reply = client.service.find(**pd)
 values = {
     'eventId': event_id, 
     'sessionKey': session,
     'fingerprint': urllib.unquote(cookies['fprt']),
     'identityPointId': cookies['ipid'],
-    'subject':'MLBCOM_GAMEDAY_AUDIO'
+    'subject':'LIVE_EVENT_COVERAGE'
 }
-theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.3?' +\
+theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.1?' +\
     urllib.urlencode(values)
 req = urllib2.Request(theUrl, None, txheaders);
 response = urllib2.urlopen(req).read()
@@ -265,11 +270,10 @@ utag = re.search('(\{.*\}).*', el.tag).group(1)
 status = el.find(utag + 'status-code').text
 
 try:
-    session = el.find(utag + 'session-key').text
+    session = el.find(utag + ['session-key']).text
     #sk = open(SESSIONKEY,"w")
-    #sk.write(session)
+    #sk.write(session_key)
 except:
-    raise
     print "no session-key found in reply"
 if status != "1":
     error_str = SOAPCODES[status]
@@ -278,15 +282,22 @@ if status != "1":
 if content_id is None:
     for stream in el.findall('*/' + utag + 'user-verified-content'):
         type = stream.find(utag + 'type').text
-        if type == 'audio':
+        if type == 'video':
             content_id = stream.find(utag + 'content-id').text
 else:
     print "Using content_id from arguments: " + content_id
+#for i in range(len(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'])): 
+#    print str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i]._name) + " = " + str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i])
+
+#content_id = reply[0][0]['user-verified-content'][1]['content-id']
 print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
+#sys.exit()
+
+
 
 
 values = {
-    'subject':'MLBCOM_GAMEDAY_AUDIO',
+    'subject':'LIVE_EVENT_COVERAGE',
     'sessionKey': session,
     'identityPointId': cookies['ipid'],
     'contentId': content_id,
@@ -313,70 +324,36 @@ if status != "1":
 game_url = el.find('%suser-verified-event/%suser-verified-content/%suser-verified-media-item/%surl' %\
     (utag, utag, utag, utag)).text
 
-try:
-    if play_path is None:
-        #play_path_pat = re.compile(r'ondemand\/(.*)\?')
-        play_path_pat = re.compile(r'ondemand\/(.*)$')
-        play_path = re.search(play_path_pat,game_url).groups()[0]
-        print "play_path = " + repr(play_path)
-        app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
-        app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
-        app += re.search(app_pat,game_url).groups()[1]
-except:
-    play_path = None
-try:
-    if play_path is None:
-        live_sub_pat = re.compile(r'live\/mlb_audio(.*)\?(.*)')
-        sub_path = re.search(live_sub_pat,game_url).groups()[0]
-        sub_path = 'mlb_audio' + sub_path
-        auth_chunk = re.search(live_sub_pat,game_url).groups()[1]
-        live_play_pat = re.compile(r'live\/mlb_audio(.*)$')
-        play_path = re.search(live_play_pat,game_url).groups()[0]
-        play_path = 'mlb_audio' + play_path
-        app = "live?_fcs_vhost=cp153281.live.edgefcs.net&akmfv=1.6&" + auth_chunk
-        bSubscribe = True
-        
-except:
-    play_path = None
-    sub_path = None
 
 print "url = " + str(game_url)
-print "play_path = " + str(play_path)
-#sys.exit()
 
-#sys.exit()
-# End MORSEL extraction
+# Get the start time from the innings.xml
+gameid, year, month, day = event_id.split('-')[1:5]
+innUrl = 'http://mlb.mlb.com/mlb/mmls%s/%s.xml' % (year, gameid)
+req = urllib2.Request(innUrl)
 
+rsp = urllib2.urlopen(req)
 
-theurl = 'http://cp65670.edgefcs.net/fcs/ident'
-txheaders = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'}
-data = None
-req = urllib2.Request(theurl,data,txheaders)
-response = urllib2.urlopen(req)
-print response.read()
-#sys.exit()
+iptr = parse(rsp)
+game = iptr.getElementsByTagName('game')[0]
+start_timecode = game.getAttribute('start_timecode')
 
 
-#cmd_str = player + ' "' + game_url + '"'
-recorder = datadct['video_recorder']
-cmd_str = recorder.replace('%s', '"' + game_url + '"')
-if play_path is not None:
-    cmd_str += ' -y "' + play_path + '"'
-if bSubscribe:
-    cmd_str += ' -v -d ' + sub_path
-if app is not None:
-    cmd_str += ' -a "' + app + '"'
-cmd_str += ' -o - '
-cmd_str = cmd_str.replace('%e', event_id)
-cmd_str += ' | mplayer -really-quiet -cache 128 -'
-try:
-    print "\nplay_path = " + play_path
-    print "\nsub_path  = " + sub_path
-    print "\napp       = " + app
-except:
-    pass
-print cmd_str + '\n'
-#sys.exit()
-playprocess = subprocess.Popen(cmd_str,shell=True)
+hd_str = DEFAULT_HD_PLAYER
+hd_str = hd_str.replace('%B', str(game_url))
+if ADAPTIVE:
+    hd_str += ' -b ' + str(MAX_BPS)
+    hd_str += ' -s ' + str(MIN_BPS)
+    hd_str += ' -m ' + str(MIN_BPS)
+else:
+    hd_str += ' -L'
+    hd_str += ' -s ' + str(MAX_BPS)
+hd_str += ' -F ' + start_timecode
+hd_str += ' -o %e.mp4'
+hd_str = hd_str.replace('%e', event_id)
+#hd_str += ' -o - | ' + MPLAYER_CMD
+
+print hd_str + '\n'
+playprocess = subprocess.Popen(hd_str,shell=True)
 playprocess.wait()
-
+sys.exit()

@@ -6,6 +6,7 @@ import os.path
 import sys
 import re
 import subprocess
+import urllib2
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -15,6 +16,15 @@ from xml.dom.minidom import parse
 
 import xml.etree.ElementTree
 
+DEFAULT_HD_PLAYER = 'mlbhls -B %B'
+
+MPLAYER_CMD = 'mplayer -really-quiet -cache 8192 -fs -'
+
+MAX_BPS=1200000
+
+MIN_BPS=500000
+
+ADAPTIVE=True
 
 SESSIONKEY = os.path.join(os.environ['HOME'], '.mlb', 'sessionkey')
 
@@ -224,9 +234,9 @@ print "ipid = " + str(cookies['ipid']) + " fingerprint = " + str(cookies['fprt']
 try:
     print "session-key = " + str(cookies['ftmu'])
     session = urllib.unquote(cookies['ftmu'])
-    sk = open(SESSIONKEY,"w")
-    sk.write(session)
-    sk.close()
+    #sk = open(SESSIONKEY,"w")
+    #sk.write(session)
+    #sk.close()
 
 except:
     logout_url = 'https://secure.mlb.com/enterworkflow.do?flowId=registration.logout&c_id=mlb'
@@ -258,11 +268,12 @@ print response
 el = xml.etree.ElementTree.XML(response)
 utag = re.search('(\{.*\}).*', el.tag).group(1)
 status = el.find(utag + 'status-code').text
+print 'status-code = ' + status + '\n'
 
 try:
     session = el.find(utag + ['session-key']).text
-    sk = open(SESSIONKEY,"w")
-    sk.write(session_key)
+    #sk = open(SESSIONKEY,"w")
+    #sk.write(session_key)
 except:
     print "no session-key found in reply"
 if status != "1":
@@ -276,12 +287,6 @@ if content_id is None:
             content_id = stream.find(utag + 'content-id').text
 else:
     print "Using content_id from arguments: " + content_id
-#for i in range(len(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'])): 
-#    print str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i]._name) + " = " + str(reply['user-verified-event'][0]['user-verified-content'][0]['domain-specific-attributes']['domain-attribute'][i])
-
-#content_id = reply[0][0]['user-verified-content'][1]['content-id']
-print "Event-id = " + str(event_id) + " and content-id = " + str(content_id)
-#sys.exit()
 
 
 
@@ -314,38 +319,34 @@ if status != "1":
 game_url = el.find('%suser-verified-event/%suser-verified-content/%suser-verified-media-item/%surl' %\
     (utag, utag, utag, utag)).text
 
-try:
-    if play_path is None:
-        #play_path_pat = re.compile(r'ondemand\/(.*)\?')
-        play_path_pat = re.compile(r'ondemand\/(.*)$')
-        play_path = re.search(play_path_pat,game_url).groups()[0]
-        print "play_path = " + repr(play_path)
-        app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
-        app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
-        app += re.search(app_pat,game_url).groups()[1]
-except:
-    play_path = None
-try:
-    if play_path is None:
-        live_sub_pat = re.compile(r'live\/mlb_s800(.*)\?')
-        sub_path = re.search(live_sub_pat,game_url).groups()[0]
-        sub_path = 'mlb_s800' + sub_path
-        live_play_pat = re.compile(r'live\/mlb_s800(.*)$')
-        play_path = re.search(live_play_pat,game_url).groups()[0]
-        play_path = 'mlb_s800' + play_path
-        app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
-        bSubscribe = True
-        
-except:
-    play_path = None
-    sub_path = None
 
 print "url = " + str(game_url)
-#print "play_path = " + str(play_path)
 
-print '\n\nNexdef support is not yet available for 2011 season in mlbviewer.\n'
-print 'This script is largely for debug purposes at the moment and is not ready'
-print '\nfor playback yet.'
+# Get the start time from the innings.xml
+gameid, year, month, day = event_id.split('-')[1:5]
+innUrl = 'http://mlb.mlb.com/mlb/mmls%s/%s.xml' % (year, gameid)
+req = urllib2.Request(innUrl)
+
+rsp = urllib2.urlopen(req)
+
+iptr = parse(rsp)
+game = iptr.getElementsByTagName('game')[0]
+start_timecode = game.getAttribute('start_timecode')
 
 
+hd_str = DEFAULT_HD_PLAYER
+hd_str = hd_str.replace('%B', str(game_url))
+if ADAPTIVE:
+    hd_str += ' -b ' + str(MAX_BPS)
+    hd_str += ' -s ' + str(MIN_BPS)
+    hd_str += ' -m ' + str(MIN_BPS)
+else:
+    hd_str += ' -L'
+    hd_str += ' -s ' + str(MAX_BPS)
+hd_str += ' -F ' + start_timecode
+hd_str += ' -o - | ' + MPLAYER_CMD
+
+print hd_str + '\n'
+playprocess = subprocess.Popen(hd_str,shell=True)
+playprocess.wait()
 sys.exit()
