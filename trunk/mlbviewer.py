@@ -252,7 +252,6 @@ def mainloop(myscr,cfg):
     cfg['cookies'] = {}
     cfg['cookies'] = session.cookies
     cfg['cookie_jar'] = session.cookie_jar
-    #raise Exception,repr(cfg['cookies'])
     try:
         log.write('session-key from cookie file: ' + session.cookies['ftmu'] +\
                   '\n')
@@ -1510,7 +1509,6 @@ def mainloop(myscr,cfg):
                     #if ['show_player_command']:
                     #    time.sleep(3)
                 except:
-                    raise
                     myscr.clear()
                     titlewin.clear()
                     ERROR_STRING = "There was an error in the player process."
