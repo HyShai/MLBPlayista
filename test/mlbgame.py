@@ -93,7 +93,7 @@ except:
 AUTHFILE = os.path.join(os.environ['HOME'],'.mlb/config')
  
 DEFAULT_PLAYER = 'xterm -e mplayer -cache 2048 -quiet -fs'
-DEFAULT_RECORDER = 'rtmpdump -f \"LNX 10,0,22,87\" -r %s --resume'
+DEFAULT_RECORDER = 'rtmpdump -f \"LNX 10,0,22,87\" -r %s'
 
 try:
    import cookielib
@@ -232,9 +232,9 @@ print "ipid = " + str(cookies['ipid']) + " fingerprint = " + str(cookies['fprt']
 try:
     print "session-key = " + str(cookies['ftmu'])
     session = urllib.unquote(cookies['ftmu'])
-    sk = open(SESSIONKEY,"w")
-    sk.write(session)
-    sk.close()
+    #sk = open(SESSIONKEY,"w")
+    #sk.write(session)
+    #sk.close()
 
 except:
     logout_url = 'https://secure.mlb.com/enterworkflow.do?flowId=registration.logout&c_id=mlb'
@@ -268,8 +268,8 @@ status = el.find(utag + 'status-code').text
 
 try:
     session = el.find(utag + ['session-key']).text
-    sk = open(SESSIONKEY,"w")
-    sk.write(session_key)
+    #sk = open(SESSIONKEY,"w")
+    #sk.write(session_key)
 except:
     print "no session-key found in reply"
 if status != "1":
@@ -362,10 +362,10 @@ print game_url
 try:
     if play_path is None:
         #play_path_pat = re.compile(r'ondemand\/(.*)\?')
-        play_path_pat = re.compile(r'ondemand\/(.*)$')
+        play_path_pat = re.compile(r'ondemand(.*)$')
         play_path = re.search(play_path_pat,game_url).groups()[0]
         print "play_path = " + repr(play_path)
-        app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
+        app_pat = re.compile(r'ondemand(.*)\?(.*)$')
         app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6"
         app += re.search(app_pat,game_url).groups()[1]
 except:
@@ -378,10 +378,14 @@ try:
         live_play_pat = re.compile(r'live\/mlb_c(.*)$')
         play_path = re.search(live_play_pat,game_url).groups()[0]
         play_path = 'mlb_c' + play_path
-        app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
+        if re.search('mlbsecurelive(.*)', game_url).groups() is not None:
+            app = 'mlbsecurelive-live'
+        else:
+            app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
         bSubscribe = True
         
 except:
+    raise
     play_path = None
     sub_path = None
 

@@ -1,0 +1,100 @@
+mlblistings.py
+
+Mlblistings.py is a test application that uses the MLBviewer library (which
+is why it's not located in the test directory) and prints the listings for
+a given day in a predictable "awk-able" format.  It is meant primarily for
+finding the event-id of a particular game which can be used with the test
+tools described in the next section.
+
+Mlblistings.py supports the startdate=mm/dd/yy command-line option.
+
+Sample output:
+
+$ mlblistings.py
+MLB.TV Listings for 5/2/2009
+CG: 10:05 AM: 2009/05/02/anamlb-nyamlb-1 E: 14-244538-2009-05-02
+CG: 10:05 AM: 2009/05/02/flomlb-chnmlb-1 E: 14-244546-2009-05-02
+CG: 10:05 AM: 2009/05/02/slnmlb-wasmlb-1 E: 14-244552-2009-05-02
+CG: 10:07 AM: 2009/05/02/balmlb-tormlb-1 E: 14-244540-2009-05-02
+CG: 12:30 PM: 2009/05/02/houmlb-atlmlb-1 E: 14-244547-2009-05-02
+CG: 12:40 PM: 2009/05/02/clemlb-detmlb-1 E: 14-244544-2009-05-02
+CG: 12:40 PM: 2009/05/02/nynmlb-phimlb-1 E: 14-244549-2009-05-02
+CG:  1:05 PM: 2009/05/02/colmlb-sfnmlb-1 E: 14-244545-2009-05-02
+CG:  4:05 PM: 2009/05/02/arimlb-milmlb-1 E: 14-244539-2009-05-02
+CG:  4:05 PM: 2009/05/02/cinmlb-pitmlb-1 E: 14-244543-2009-05-02
+CG:  4:08 PM: 2009/05/02/bosmlb-tbamlb-1 E: 14-244541-2009-05-02
+CG:  4:10 PM: 2009/05/02/kcamlb-minmlb-1 E: 14-244548-2009-05-02
+CG:  5:05 PM: 2009/05/02/chamlb-texmlb-1 E: 14-244542-2009-05-02
+CG:  6:10 PM: 2009/05/02/oakmlb-seamlb-1 E: 14-244550-2009-05-02
+CG:  7:10 PM: 2009/05/02/sdnmlb-lanmlb-1 E: 14-244551-2009-05-02
+
+The first line can be ignored or excluded with grep -v.
+
+The fields for the remaining lines are:
+
+1:Status Code (one of the following):
+        "I" : "Status: In Progress",
+        "W" : "Status: Not Yet Available",
+        "F" : "Status: Final",
+        "CG": "Status: Final (Condensed Game Available)",
+        "P" : "Status: Not Yet Available",
+        "S" : "Status: Suspended",
+        "D" : "Status: Delayed",
+        "IP": "Status: Pregame",
+        "PO": "Status: Postponed",
+        "GO": "Status: Game Over - stream not yet available",
+        "NB": "Status: National Blackout",
+        "LB": "Status: Local Blackout"
+
+2:Game Time: Translated using time_offset option in ~/.mlb/config, if present
+
+3:Gameid: These game id's are always of the format:
+          year/month/day/awayteam-hometeam-sequence
+          The sequence number is almost always 1 unless there is a doubleheader
+          that day.
+
+4:Event ID: This ID is necessary for the test tools described in the next
+            section.
+
+The event ID's can be used with the test scripts in the test directory.
+
+The times are already in a format the 'at' command can accept so it is
+possible to schedule a game to play automatically using the at command in 
+conjunction with mlbplay.  See the at(1) man page for more details on the 
+at command.
+
+The mlblistings.py script uses the $HOME/.mlb/config file wherever relevant,
+and also accepts the startdate=m/d/yy command-line option for looking at
+listings in the future (or the past.)
+
+Mlblistings.py can also be used as an example for developing your own
+application using the MLBviewer python library.
+
+TEST TOOLS
+
+The following scripts located in the test directory are meant to provide 
+verbose logging and network debugging.  These scripts are provided as a 
+means to collect more information than mlbviewer provides and to test new
+network algorithms.  They are not meant to replace mlbviewer or mlbplay in 
+any way.  There will be no feature development for these scripts.  The only
+time the end user is expected to use these scripts is when the author requests
+more information for troubleshooting problems unique to that user.
+
+All scripts take the event ID (field 4 from mlblistings.py) as the only
+mandatory argument.  Optionally, the coverage can be selected by providing the 
+content ID.  The content ID is found through the 'z' screen in mlbviewer.
+
+gdaudio.py  <event-id>  : Gameday audio
+
+mlbgame.py <event-id>   : Basic service video
+
+nexdef.py <event-id>    : Nexdef (premium service) video
+
+These utilities are only meant to provide small sample files for media player
+debugging e.g. to file a bug report with mplayer or ffmpeg development:
+
+mlbgamedl.py <event-id> : Record basic service video
+
+nexdefdl.py <event-id>  : Record nexdef video
+
+
