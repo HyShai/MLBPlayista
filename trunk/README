@@ -20,21 +20,22 @@ come to learn that MLBAM is not only aware of the project but several
 of their developers have used it or continue to use it.
 
 The official purpose and intention of mlbviewer always has and always will be
-to remain fully compliant with the Terms and Service of MLB.TV.  As such,
+to provide the highest level of feature parity with the offical offering while 
+remaining fully compliant with the MLB.TV Terms of Service.  As such,
 there will never be proxy support or any other means to circumvent blackouts.
-Any other feature that might violate the T&S or compete with a paid app will 
+Any other feature that might violate the ToS or compete with a paid app will 
 not be supported or developed (so please don't ask for an Android app or 
 methods to stream to Android or iPhone.)  New feature requests are always
 welcome but they will always be considered against the official offering
-and whether they might either conflict with the Terms and Service or 
+and whether they might either conflict with the Terms of Service or 
 remove revenue from an official competing product.  Similiarly, mlbviewer and 
-its associated tools can be used in ways that might conflict with the T & S.
+its associated tools can be used in ways that might conflict with the ToS.
 The author is not responsible for uses the code and tools were not intended
 for nor will the author assist or provide development support for these uses.
 
 In more simple terms, just because mlbviewer can be used to record streams
 does not mean that the author will provide any assistance or support for
-this unintended feature.  If you do so, you do at your own risk and your 
+this unintended feature.  If you do so, you do this at your own risk and your 
 on your own for how to do it.
 
 One final word of disclaimer, it is the author and the user community's belief
@@ -78,7 +79,7 @@ Hot Keys
 --------
 
 The curses interface uses hot-keys (individual case-sensitive keystrokes) 
-to implement certain features or select game media 
+to implement certain features or select game media for playback.
 
 Basic usage:
 
@@ -304,7 +305,7 @@ $ svn up
 U    REQUIREMENTS-2012.tx
 G    mlbviewer.py
 U    NEW-MLBPLAY
-G    mlbplay.py
+U    mlbplay.py
 U    MLBviewer/__init__.p
 U    MLBviewer/mlblogin.p
 U    MLBviewer/mlbtv.py
