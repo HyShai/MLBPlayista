@@ -55,6 +55,7 @@ FEATURES OF MLBVIEWER
 - Gameday audio, Basic service video, and Premium (Nexdef) video
 - Live and archive game support for audio and video
 - Adaptive streaming in Nexdef mode (and the ability to disable adaptive mode)
+- Radio synchronized broadcast for video streams (premium service only)
 - Support for all stream speeds
 - Support for home and away coverage
 - Condensed games
@@ -117,6 +118,11 @@ R                   : Reload the configuration
 LISTINGS
 p                   : In nexdef mode, p key toggles adaptive streaming
 
+MPLAYER
+#                   : In nexdef streams, the # key in mplayer will select 
+                      audio from video broadcast or audio from synchronized
+                      radio broadcast (premium service only)
+
 ---------------------------------------------------------------------------
 
 CONFIGURATION FILE OPTIONS
@@ -158,7 +164,7 @@ adaptive_stream  : True/False for whether to let mlbhls adjust the stream
                    the stream (if network is slow, adaptive streaming adjusts)
 
 Without adaptive streaming enabled, mlbhls will attempt to lock onto the 
-highest available stream that's less than or equal to max_bps.
+highest available stream that is less than or equal to max_bps.
 
 live_from_start= : True/False, for nexdef games, if True, live games will 
                    begin from the start of the broadcast rather than current

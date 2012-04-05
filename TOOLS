@@ -98,3 +98,60 @@ mlbgamedl.py <event-id> : Record basic service video
 nexdefdl.py <event-id>  : Record nexdef video
 
 
+DEBUGGING AUDIO / VIDEO PROBLEMS USING TOOLS
+
+First and foremost, mplayer2 is recommended for playing the nexdef media 
+streams.
+
+Basic Service Debugging
+
+1. Download and install mplayer2.  If your Linux distribution does not have 
+mplayer2 in its package repository, navigate to http://www.mplayer2.org and 
+download a binary or build from source.
+
+2. Record a small sample of the stream using the following command:
+
+$ test/mlbgamedl.py 14-332571-2012-04-04
+
+Ctrl-C after a few seconds have been recorded:
+
+INFO: sampledescription:
+INFO:   length                513634304.00
+INFO:   timescale             48000.00
+INFO:   language              und
+INFO: sampledescription:
+513.631 kB / 4.91 sec (0.0%)
+
+3. Open the sample using mplayer:
+
+$ mplayer 14-332571-2012-04-04.mp4
+
+If the errors are not immediately obvious to you, please post the mplayer 
+command output to http://pastebin.com .
+
+4. Post the resulting link from the pase operation to http://pastebin.com to
+the linuxforums thread mentioned in README file.
+
+Premium Service Debugging
+
+1. Download and install mplayer2.  If your Linux distribution does not have
+mplayer2 in its package repository, navigate to http://www.mplayer2.org and
+download a binary or build from source.
+
+2. Perform step 2 above recording a small video sample using:
+
+$ test/nexdefdl.py 14-332571-2012-04-04
+
+Ctrl-C after two or three lines like the following:
+
+[MLB] Get: 12/00/01.ts (bw: 500000, time: 2.61s) [Avg. D/L Rate of last 3 chunks: 1.32 Mbps]
+[MLB] Get: 12/00/07.ts (bw: 500000, time: 2.58s) [Avg. D/L Rate of last 3 chunks: 1.37 Mbps]
+
+3. Perform step 3 same as above.
+
+4. Perform step 4 same as above.
+
+If video is working but not audio, use the # key in mplayer to switch between 
+audio streams.  Often the '0' stream is silent, with the '1' and '2' 
+audio streams being audio from the TV stream and synchronized audio from the 
+radio stream, respectively.
