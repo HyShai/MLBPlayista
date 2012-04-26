@@ -35,7 +35,7 @@ for nor will the author assist or provide development support for these uses.
 
 In more simple terms, just because mlbviewer can be used to record streams
 does not mean that the author will provide any assistance or support for
-this unintended feature.  If you do so, you do this at your own risk and your 
+this unintended feature.  If you do so, you do this at your own risk and you're
 on your own for how to do it.
 
 One final word of disclaimer, it is the author and the user community's belief
@@ -309,7 +309,7 @@ You'll see output similar to this:
 
 $ svn up
 U    REQUIREMENTS-2012.tx
-G    mlbviewer.py
+U    mlbviewer.py
 U    NEW-MLBPLAY
 U    mlbplay.py
 U    MLBviewer/__init__.p
