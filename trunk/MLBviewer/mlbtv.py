@@ -1061,6 +1061,9 @@ class GameStream:
             game_url = reply.getElementsByTagName('url')[0].childNodes[0].data
         except:
             self.error_str = "Stream URL not found in reply.  Stream may not be available yet."
+            df = open(ERRORLOG,'w')
+            reply.writexml(df)
+            df.close()
             raise Exception,self.error_str
         self.log.write("DEBUG>> URL received: " + game_url + '\n')
 
