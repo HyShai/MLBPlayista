@@ -54,6 +54,7 @@ COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
 SESSIONKEY = os.path.join(os.environ['HOME'], AUTHDIR, 'sessionkey')
 LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
 ERRORLOG = os.path.join(os.environ['HOME'], AUTHDIR, 'unsuccessful.xml')
+MEDIALOG = os.path.join(os.environ['HOME'], AUTHDIR, 'successful.xml')
 SESSIONLOG = os.path.join(os.environ['HOME'], AUTHDIR, 'session.xml')
 USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
 TESTXML = os.path.join(os.environ['HOME'], AUTHDIR, 'test_epg.xml')
@@ -790,6 +791,11 @@ class GameStream:
             self.log.write(msg + '\n')
             self.error_str = SOAPCODES[status_code]
             raise Exception,self.error_str
+        else:
+            df = open(MEDIALOG,'w')
+            reply.writexml(df)
+            df.close()
+            
 
         ### TEST CODE BLOCK - COMMENT AFTER TESTING
         #blackout_status = reply.getElementsByTagName('blackout-status')[0]
@@ -1065,6 +1071,10 @@ class GameStream:
             reply.writexml(df)
             df.close()
             raise Exception,self.error_str
+        else:
+            df = open(MEDIALOG,'w')
+            reply.writexml(df)
+            df.close()
         self.log.write("DEBUG>> URL received: " + game_url + '\n')
 
         # Nexdef has been simplified to make mlbhls mandatory

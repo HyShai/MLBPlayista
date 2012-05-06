@@ -77,6 +77,8 @@ class MLBSession:
         return session_key
 
     def writeSessionKey(self,session_key):
+        if self.debug:
+            self.log.write('Writing session-key to file: ' + str(self.session_key) + '\n')
         sk = open(SESSIONKEY,"w")
         sk.write(session_key)
         sk.close()
