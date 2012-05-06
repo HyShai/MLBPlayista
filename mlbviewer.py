@@ -181,17 +181,22 @@ def mainloop(myscr,cfg):
         pass
 
     LIRC = 1
-    try:
-        irc_conn = LircConnection()
-        irc_conn.connect()
-        irc_conn.getconfig()
-        irc_socket=irc_conn.conn
-        s = "LIRC Initialized"
-        inputlst = [sys.stdin, irc_socket]
-    except:
+    if cfg['no_lirc']:
         s = "LIRC not initialized"
         LIRC = 0
         inputlst = [sys.stdin]
+    else:
+        try:
+            irc_conn = LircConnection()
+            irc_conn.connect()
+            irc_conn.getconfig()
+            irc_socket=irc_conn.conn
+            s = "LIRC Initialized"
+            inputlst = [sys.stdin, irc_socket]
+        except:
+            s = "LIRC not initialized"
+            LIRC = 0
+            inputlst = [sys.stdin]
 
     log.write(s + '\n\n')
     log.flush()
@@ -1580,6 +1585,7 @@ if __name__ == "__main__":
                   'coverage' : 'home',
                   'show_inning_frames': 1,
                   'use_librtmp': 0,
+                  'no_lirc': 0,
                   'postseason': 0,
                   'flash_browser': DEFAULT_FLASH_BROWSER}
 
