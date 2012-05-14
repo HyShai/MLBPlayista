@@ -222,6 +222,7 @@ if media is not None:
                 stream = condensed_media[0]
             else:
                 stream = media[n]
+            break
 else:
     print 'Could not find media for teamcode: ' + teamcode
     sys.exit()
