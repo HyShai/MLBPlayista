@@ -53,8 +53,10 @@ AUTHDIR = '.mlb'
 COOKIEFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'cookie')
 SESSIONKEY = os.path.join(os.environ['HOME'], AUTHDIR, 'sessionkey')
 LOGFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'log')
-ERRORLOG = os.path.join(os.environ['HOME'], AUTHDIR, 'unsuccessful.xml')
-MEDIALOG = os.path.join(os.environ['HOME'], AUTHDIR, 'successful.xml')
+ERRORLOG_1 = os.path.join(os.environ['HOME'], AUTHDIR, 'unsuccessful-1.xml')
+ERRORLOG_2 = os.path.join(os.environ['HOME'], AUTHDIR, 'unsuccessful-2.xml')
+MEDIALOG_1 = os.path.join(os.environ['HOME'], AUTHDIR, 'successful-1.xml')
+MEDIALOG_2 = os.path.join(os.environ['HOME'], AUTHDIR, 'successful-2.xml')
 SESSIONLOG = os.path.join(os.environ['HOME'], AUTHDIR, 'session.xml')
 USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
 TESTXML = os.path.join(os.environ['HOME'], AUTHDIR, 'test_epg.xml')
@@ -766,7 +768,8 @@ class GameStream:
                 self.scenario = 'HTTP_CLOUD_WIRED'
             else:
                 self.scenario = 'FMS_CLOUD'
-            self.subject  = "LIVE_EVENT_COVERAGE"
+            #self.subject  = "LIVE_EVENT_COVERAGE"
+            self.subject = "MLBTV"
         self.auth_chunk = None
         self.play_path = None
         self.tc_url = None
@@ -782,17 +785,17 @@ class GameStream:
         status_code = str(reply.getElementsByTagName('status-code')[0].childNodes[0].data)
         if status_code != "1":
             self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response event_id = " + str(self.event_id) + "\n")
-            df = open(ERRORLOG,'w')
+            df = open(ERRORLOG_1,'w')
             reply.writexml(df)
             df.close()
-            df = open(ERRORLOG)
+            df = open(ERRORLOG_1)
             msg = df.read()
             df.close()
             self.log.write(msg + '\n')
             self.error_str = SOAPCODES[status_code]
             raise Exception,self.error_str
         else:
-            df = open(MEDIALOG,'w')
+            df = open(MEDIALOG_1,'w')
             reply.writexml(df)
             df.close()
             
@@ -969,6 +972,7 @@ class GameStream:
             'sessionKey': sessionKey,
             'fingerprint': urllib.unquote(self.session.cookies['fprt']),
             'identityPointId': self.session.cookies['ipid'],
+            'playbackScenario': self.scenario,
             'subject': self.subject
         }
         url = base_url + urllib.urlencode(query_values)
@@ -1067,12 +1071,12 @@ class GameStream:
             game_url = reply.getElementsByTagName('url')[0].childNodes[0].data
         except:
             self.error_str = "Stream URL not found in reply.  Stream may not be available yet."
-            df = open(ERRORLOG,'w')
+            df = open(ERRORLOG_2,'w')
             reply.writexml(df)
             df.close()
             raise Exception,self.error_str
         else:
-            df = open(MEDIALOG,'w')
+            df = open(MEDIALOG_2,'w')
             reply.writexml(df)
             df.close()
         self.log.write("DEBUG>> URL received: " + game_url + '\n')
