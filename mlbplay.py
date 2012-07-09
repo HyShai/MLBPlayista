@@ -154,6 +154,11 @@ if len(sys.argv) > 1:
             startmonth = int(split[0])
             startday  = int(split[2])
             startyear  = int('20' + split[4])
+            # not sure why jesse went with yy instead of yyyy but let's 
+            # throw an error for 4 digit years for the heck of it.
+            if startyear == 2020:
+                print 'Error: listing start date not in mm/dd/yy format.'
+                sys.exit()
             startdate = (startyear, startmonth, startday)
         else:
             print 'Error: unknown variable argument: '+split[0]
