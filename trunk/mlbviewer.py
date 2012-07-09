@@ -286,6 +286,7 @@ def mainloop(myscr,cfg):
     while True:
         # some initialization
         condensed = False
+        is_adaptive = False
         start_time = None
 
         myscr.clear()
