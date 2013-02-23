@@ -58,7 +58,7 @@ ERRORLOG_2 = os.path.join(os.environ['HOME'], AUTHDIR, 'unsuccessful-2.xml')
 MEDIALOG_1 = os.path.join(os.environ['HOME'], AUTHDIR, 'successful-1.xml')
 MEDIALOG_2 = os.path.join(os.environ['HOME'], AUTHDIR, 'successful-2.xml')
 SESSIONLOG = os.path.join(os.environ['HOME'], AUTHDIR, 'session.xml')
-USERAGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
+USERAGENT = 'Mozilla/5.0 (Windows NT 5.1; rv:18.0) Gecko/20100101 Firefox/18.0'
 TESTXML = os.path.join(os.environ['HOME'], AUTHDIR, 'test_epg.xml')
 BLACKFILE = os.path.join(os.environ['HOME'], AUTHDIR, 'blackout')
 
@@ -208,7 +208,7 @@ def gameTimeConvert(datetime_tuple, time_shift=None):
         '2010': (datetime.datetime(2010,3,14),datetime.datetime(2010,11,7)),
         '2011': (datetime.datetime(2011,3,13),datetime.datetime(2011,11,6)),
 	'2012': (datetime.datetime(2012,3,11),datetime.datetime(2012,11,4)),
-	'2013': (datetime.datetime(2013,3,10),datetime.datetime(2012,11,3)),
+	'2013': (datetime.datetime(2013,3,10),datetime.datetime(2013,11,3)),
                }
     now = datetime.datetime.now()            
     if (now >= DAYLIGHT[str(now.year)][0]) \
@@ -309,17 +309,12 @@ class MLBSchedule:
             + padstr(self.year)\
             + "/month_" + padstr(self.month)\
             + "/day_" + padstr(self.day) + "/multi_angle_epg.xml"
-        # For BETA testing, use my own xml
-        # For BETA testing, use my own xml
-        #self.grid = "http://eds.org/~straycat/wbc_epg.xml"
-        mytime = datetime.datetime(self.year, self.month, self.day)
         self.log = MLBLog(LOGFILE)
         self.data = []
 
     def __getSchedule(self):
         txheaders = {'User-agent' : USERAGENT}
         data = None
-        # 2009 marks the end of the jsp page, so use epg page instead
         req = urllib2.Request(self.grid,data,txheaders)
         try:
             fp = urllib2.urlopen(req)
