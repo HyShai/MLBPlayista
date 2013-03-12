@@ -1378,7 +1378,8 @@ def mainloop(myscr,cfg):
                                 start_time = 0
 
                     g = GameStream(stream, session=session,
-                               debug=cfg['debug'], use_nexdef=cfg['use_nexdef'],
+                               debug=cfg['debug'], 
+  	                       use_nexdef=cfg['use_nexdef'],
                                speed=cfg['speed'],
                                adaptive=cfg['adaptive_stream'],
                                coverage=coverage,
