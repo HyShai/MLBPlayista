@@ -270,7 +270,7 @@ theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVe
     urllib.urlencode(values)
 req = urllib2.Request(theUrl, None, txheaders);
 response = urllib2.urlopen(req).read()
-print response
+#print response
 IL=0
 xp = parseString(response)
 printChildNodes(xp,IL)
@@ -316,7 +316,7 @@ theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVe
     urllib.urlencode(values)
 req = urllib2.Request(theUrl, None, txheaders);
 response = urllib2.urlopen(req).read()
-print response
+#print response
 IL=0
 xp = parseString(response)
 printChildNodes(xp,IL)
