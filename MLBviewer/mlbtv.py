@@ -436,7 +436,7 @@ class MLBSchedule:
                    content['audio'].append(out)
            elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
                if tmp['playback_scenario'] in \
-                     ( 'HTTP_CLOUD_WIRED', 'FMS_CLOUD'):
+                     ( 'HTTP_CLOUD_WIRED_WEB', 'FMS_CLOUD'):
                    # candidate for new procedure: determine whether game is 
                    # national blackout
                    try:
@@ -463,7 +463,7 @@ class MLBSchedule:
 
                    # determine where to store this tuple - trimList will 
                    # return only the listings for a given speed/stream type
-                   if tmp['playback_scenario'] == 'HTTP_CLOUD_WIRED':
+                   if tmp['playback_scenario'] == 'HTTP_CLOUD_WIRED_WEB':
                        content['video']['swarm'].append(out)
                    elif tmp['playback_scenario'] == 'FMS_CLOUD':
                        for s in ('300', '500', '1200', '1800', '2400'):
@@ -761,7 +761,7 @@ class GameStream:
             self.subject  = "MLBCOM_GAMEDAY_AUDIO"
         else:
             if self.use_nexdef:
-                self.scenario = 'HTTP_CLOUD_WIRED'
+                self.scenario = 'HTTP_CLOUD_WIRED_WEB'
             else:
                 self.scenario = 'FMS_CLOUD'
             #self.subject  = "LIVE_EVENT_COVERAGE"
