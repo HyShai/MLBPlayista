@@ -13,6 +13,18 @@ logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
 import xml.etree.ElementTree
 from xml.dom.minidom import parse
+from xml.dom.minidom import parseString
+
+def printChildNodes(node,IL):
+  if node.hasChildNodes():
+    print "%s %s:" % (IL*' ', node.nodeName)
+    IL += 1
+    for child in node.childNodes:
+      printChildNodes(child,IL)
+  else:
+    print "%s %s: %s" % (IL*' ', node.nodeName, node.nodeValue)
+    IL -= 1
+
 
 url = 'file://'
 url += os.path.join(os.environ['HOME'], '.mlb', 'MediaService.wsdl')
@@ -258,6 +270,11 @@ theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVe
     urllib.urlencode(values)
 req = urllib2.Request(theUrl, None, txheaders);
 response = urllib2.urlopen(req).read()
+print response
+IL=0
+xp = parseString(response)
+printChildNodes(xp,IL)
+
 el = xml.etree.ElementTree.XML(response)
 utag = re.search('(\{.*\}).*', el.tag).group(1)
 status = el.find(utag + 'status-code').text
@@ -300,6 +317,11 @@ theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVe
 req = urllib2.Request(theUrl, None, txheaders);
 response = urllib2.urlopen(req).read()
 print response
+IL=0
+xp = parseString(response)
+printChildNodes(xp,IL)
+
+
 #sys.exit()
 el = xml.etree.ElementTree.XML(response)
 utag = re.search('(\{.*\}).*', el.tag).group(1)
