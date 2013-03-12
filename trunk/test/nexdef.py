@@ -11,7 +11,18 @@ import urllib2
 import logging
 logging.basicConfig(level=logging.INFO)
 
+from xml.dom.minidom import parseString
 from xml.dom.minidom import parse
+
+def printChildNodes(node,IL):
+  if node.hasChildNodes():
+    print "%s %s:" % (IL*' ', node.nodeName)
+    IL += 1
+    for child in node.childNodes:
+      printChildNodes(child,IL)
+  else:
+    print "%s %s: %s" % (IL*' ', node.nodeName, node.nodeValue)
+    IL -= 1
 
 
 import xml.etree.ElementTree
@@ -265,6 +276,10 @@ theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVe
 req = urllib2.Request(theUrl, None, txheaders);
 response = urllib2.urlopen(req).read()
 print response
+xp = parseString(response)
+IL = 0
+printChildNodes(xp,IL)
+
 el = xml.etree.ElementTree.XML(response)
 utag = re.search('(\{.*\}).*', el.tag).group(1)
 status = el.find(utag + 'status-code').text
@@ -305,6 +320,9 @@ theUrl = 'https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVe
 req = urllib2.Request(theUrl, None, txheaders);
 response = urllib2.urlopen(req).read()
 print response
+xp = parseString(response)
+IL = 0
+printChildNodes(xp,IL)
 #sys.exit()
 el = xml.etree.ElementTree.XML(response)
 utag = re.search('(\{.*\}).*', el.tag).group(1)
