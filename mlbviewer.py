@@ -62,7 +62,7 @@ HELPFILE = (
     )
 
 OPTIONS_DEBUG = ( 'video_player', 'audio_player', 'top_plays_player',
-                  'speed', 'use_nexdef', 'min_bps', 'max_bps', 
+                  'speed', 'use_nexdef', 'use_wired_web', 'min_bps', 'max_bps', 
                   'adaptive_stream', 'use_librtmp', 'live_from_start',
                   'video_follow', 'audio_follow', 'blackout', 'coverage',
                   'show_player_command', 'user' )
@@ -265,7 +265,7 @@ def mainloop(myscr,cfg):
     
 
     # Listings 
-    mysched = MLBSchedule(ymd_tuple=startdate,time_shift=cfg['time_offset'])
+    mysched = MLBSchedule(ymd_tuple=startdate,time_shift=cfg['time_offset'],use_wired_web=cfg['use_wired_web'])
     # We'll make a note of the date, to return to it later.
     today_year = mysched.year
     today_month = mysched.month
@@ -832,7 +832,7 @@ def mainloop(myscr,cfg):
             t = datetime.datetime(mysched.year, mysched.month, mysched.day)
             dif = datetime.timedelta(1)
             t -= dif
-            mysched = MLBSchedule((t.year, t.month, t.day))
+            mysched = MLBSchedule((t.year, t.month, t.day),use_wired_web=cfg['use_wired_web'])
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
@@ -856,7 +856,7 @@ def mainloop(myscr,cfg):
             # if (t-now).days < 2:
             dif = datetime.timedelta(1)
             t += dif
-            mysched = MLBSchedule((t.year, t.month, t.day))
+            mysched = MLBSchedule((t.year, t.month, t.day),use_wired_web=cfg['use_wired_web'])
             statuswin.clear()
             statuswin.addstr(0,0,'Refreshing listings...')
             statuswin.refresh()
@@ -888,7 +888,7 @@ def mainloop(myscr,cfg):
                 statuswin.refresh()
                 time.sleep(1)
 
-                mysched = MLBSchedule((today_year, today_month, today_day))
+                mysched = MLBSchedule((today_year, today_month, today_day),use_wired_web=cfg['use_wired_web'])
                 statuswin.clear()
                 statuswin.addstr(0,0,'Refreshing listings...')
                 statuswin.refresh()
@@ -924,7 +924,7 @@ def mainloop(myscr,cfg):
                     myyear = int('20' + split[4])
                                 
 
-                    newsched = MLBSchedule((myyear, mymonth, myday))
+                    newsched = MLBSchedule((myyear, mymonth, myday),use_wired_web=cfg['use_wired_web'])
                     try:
                         available = newsched.getListings(cfg['speed'],
                                                          cfg['blackout'])
@@ -1380,6 +1380,7 @@ def mainloop(myscr,cfg):
                     g = GameStream(stream, session=session,
                                debug=cfg['debug'], 
   	                       use_nexdef=cfg['use_nexdef'],
+                               use_wired_web=cfg['use_wired_web'],
                                speed=cfg['speed'],
                                adaptive=cfg['adaptive_stream'],
                                coverage=coverage,
@@ -1583,6 +1584,7 @@ if __name__ == "__main__":
                   'min_bps': 500000,
                   'live_from_start': 0,
                   'use_nexdef': 0,
+                  'use_wired_web': 0,
                   'adaptive_stream': 0,
                   'coverage' : 'home',
                   'show_inning_frames': 1,
