@@ -281,7 +281,9 @@ class MLBLog:
 
 class MLBSchedule:
 
-    def __init__(self,ymd_tuple=None,time_shift=None):
+    def __init__(self,ymd_tuple=None,time_shift=None,use_wired_web=False):
+        # maybe the answer for nexdef for basic subscribers
+        self.use_wired_web = use_wired_web
         # Default to today
         if not ymd_tuple:
             now = datetime.datetime.now()
@@ -436,7 +438,7 @@ class MLBSchedule:
                    content['audio'].append(out)
            elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
                if tmp['playback_scenario'] in \
-                     ( 'HTTP_CLOUD_WIRED', 'FMS_CLOUD'):
+                     ( 'HTTP_CLOUD_WIRED', 'HTTP_CLOUD_WIRED_WEB', 'FMS_CLOUD'):
                    # candidate for new procedure: determine whether game is 
                    # national blackout
                    try:
@@ -464,7 +466,11 @@ class MLBSchedule:
                    # determine where to store this tuple - trimList will 
                    # return only the listings for a given speed/stream type
                    if tmp['playback_scenario'] == 'HTTP_CLOUD_WIRED':
-                       content['video']['swarm'].append(out)
+                       if not self.use_wired_web:
+                           content['video']['swarm'].append(out)
+                   elif tmp['playback_scenario'] == 'HTTP_CLOUD_WIRED_WEB':
+                       if self.use_wired_web:
+                           content['video']['swarm'].append(out)
                    elif tmp['playback_scenario'] == 'FMS_CLOUD':
                        for s in ('300', '500', '1200', '1800', '2400'):
                            content['video'][s].append(out)
@@ -717,7 +723,7 @@ class GameStream:
     def __init__(self,stream, session, debug=None,
                  auth=True, streamtype='video',speed=1200,
                  coverage=None, use_nexdef=False, max_bps=1200000,
-                 min_bps=500000, start_time=0,
+                 use_wired_web=False,min_bps=500000, start_time=0,
                  adaptive=False,condensed=False,postseason=False,camera=0,
                  use_librtmp=False):
         self.session = session
@@ -732,6 +738,7 @@ class GameStream:
         self.condensed = condensed
         self.postseason = postseason
         self.use_librtmp = use_librtmp
+        self.use_wired_web = use_wired_web
         self.camera = camera
         self.this_camera = 0
         self.use_nexdef = use_nexdef
@@ -761,7 +768,10 @@ class GameStream:
             self.subject  = "MLBCOM_GAMEDAY_AUDIO"
         else:
             if self.use_nexdef:
-                self.scenario = 'HTTP_CLOUD_WIRED'
+                if self.use_wired_web:
+                    self.scenario = 'HTTP_CLOUD_WIRED_WEB'
+                else:
+                    self.scenario = 'HTTP_CLOUD_WIRED'
             else:
                 self.scenario = 'FMS_CLOUD'
             #self.subject  = "LIVE_EVENT_COVERAGE"
