@@ -7,7 +7,7 @@ import socket
 import re
 import logging
 import time
-from mlbtv import LOGFILE
+from mlbConstants import LOGFILE
 
 class LircConnection:
     """A connection to LIRC"""

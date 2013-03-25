@@ -16,10 +16,11 @@
 import subprocess
 import signal
 import os
+import time
 
 class MLBprocess:
 
-    def __init__(self,cmd_str,retries=None,errlog=None,stdout=None):
+    def __init__(self,cmd_str,retries=0,errlog=None,stdout=None):
         self.cmd_str = cmd_str
         self.retries = retries
         self.retcode = None
@@ -27,7 +28,7 @@ class MLBprocess:
         self.errlog  = errlog
         self.stdout  = stdout
 
-    def replace(self,cmd_str,retries=None,errlog=None,stdout=None):
+    def replace(self,cmd_str,retries=0,errlog=None,stdout=None):
         self.__init__(cmd_str,retries,errlog,stdout)
 
     def open(self):
@@ -37,6 +38,9 @@ class MLBprocess:
                                                      stderr=self.errlog)
         self.retcode = None
         return self.process
+
+    def wait(self):
+        self.process.wait()
 
     def close(self,signal=signal.SIGTERM):
         try:
@@ -60,4 +64,25 @@ class MLBprocess:
             return retcode
         else:
             return None
+            
+
+    def waitInteractive(self,myscr):
+        myscr.timeout(10000)
+        while self.poll() is None:
+            try:
+                c = myscr.getch()
+            except KeyboardInterrupt:
+                myscr.clear()
+                myscr.addstr('Quitting player, cleaning up...')
+                myscr.refresh()
+                self.close(signal=signal.SIGINT)
+                time.sleep(3)
+            if c in ('Close', ord('q')):
+                myscr.clear()
+                myscr.addstr('Quitting player, cleaning up...')
+                self.close(signal=signal.SIGINT)
+                c = ''
+                time.sleep(3)
+                continue
+        myscr.timeout(-1)   
             
