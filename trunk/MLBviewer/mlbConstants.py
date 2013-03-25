@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 
-VERSION ="2013rev381+"
-URL = "http://sourceforge.net/projects/mlbviewer"
-
-
 # mlbviewer is free software; you can redistribute it and/or modify
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation, Version 2.
@@ -16,6 +12,9 @@ URL = "http://sourceforge.net/projects/mlbviewer"
 # For a copy of the GNU General Public License, write to the Free
 # Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 # 02111-1307 USA
+
+VERSION ="2013rev384+"
+URL = "http://sourceforge.net/projects/mlbviewer"
 
 import os
 import subprocess
