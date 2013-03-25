@@ -23,7 +23,7 @@ import cookielib
 import os
 import sys
 
-from mlbtv import MLBLog
+from mlbLog import MLBLog
 
 # DEBUG VARIABLES
 # Cookie debug writes cookie contents to cookielog

@@ -1,15 +1,6 @@
 #!/usr/bin/env python
 
-from MLBviewer import MLBSchedule
-from MLBviewer import GameStream
-from MLBviewer import LircConnection
-from MLBviewer import MLBConfig
-from MLBviewer import MLBUrlError
-from MLBviewer import MLBXmlError
-from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE
-from MLBviewer import TEAMCODES
-from MLBviewer import MLBprocess
-from MLBviewer import MLBSession
+from MLBviewer import *
 import os
 import sys
 import re
@@ -22,9 +13,6 @@ import time
 import pickle
 import copy
 
-DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
-DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
-DEFAULT_SPEED = '1200'
 
 def padstr(s,num):
     if len(str(s)) < num:
@@ -70,8 +58,6 @@ mydefaults = {'speed': DEFAULT_SPEED,
 mycfg = MLBConfig(mydefaults)
 mycfg.loads(myconf)
 
-cfg = mycfg.data
-
 # initialize some defaults
 startdate = None
 
@@ -100,45 +86,45 @@ if len(sys.argv) > 1:
         # Condensed game:  c=<teamcode> 
         if split[0] in ( 'condensed', 'c'):
             streamtype='condensed'
-            cfg['condensed'] = True
+            mycfg.set('condensed', True)
             teamcode = split[1]
-            if cfg['top_plays_player']:
-                player = cfg['top_plays_player']
+            if mycfg.get('top_plays_player'):
+                player = mycfg.get('top_plays_player')
             else:
-                player = cfg['video_player']
+                player = mycfg.get('video_player')
         # Audio: a=<teamcode>
         elif split[0] in ( 'audio', 'a' ):
             streamtype = 'audio'
             teamcode = split[1]
-            player = cfg['audio_player']
+            player = mycfg.get('audio_player')
         # Video: v=<teamcode>
         elif split[0] in ( 'video', 'v' ):
             streamtype = 'video'
             teamcode = split[1]
-            player = cfg['video_player']
+            player = mycfg.get('video_player')
         # Speed: p=<speed> (Default: 1200)
         elif split[0] in ( 'speed', 'p' ):
-            cfg['speed'] = split[1]
+            mycfg.set('speed', split[1])
         # Nexdef URL: nu=1
         elif split[0] in ( 'nexdefurl', 'nu' ):
             parsed = check_bool(split[1])
             if parsed != None:
-                cfg['nexdef_url'] = parsed
+                mycfg.set('nexdef_url', parsed)
         # Debug: d=1
         elif split[0] in ( 'debug', 'd' ):
             parsed = check_bool(split[1])
             if parsed != None:
-                cfg['debug'] = parsed
+                mycfg.set('debug', parsed)
         # Listing debug: z=1
         elif split[0] in ( 'zdebug', 'z' ):
             parsed = check_bool(split[1])
             if parsed != None:
-                cfg['zdebug'] = parsed
+                mycfg.set('zdebug', parsed)
         # Nexdef: n=1
         elif split[0] in ( 'nexdef', 'n' ):
             parsed = check_bool(split[1])
             if parsed != None:
-                cfg['use_nexdef'] = parsed
+                mycfg.set('use_nexdef', parsed)
         # Startdate: j=mm/dd/yy
         elif split[0] in ( 'startdate', 'j'):
             try:
@@ -172,13 +158,13 @@ if startdate is None:
     startdate = (now.year, now.month, now.day)
 
 # First create a schedule object
-mysched = MLBSchedule(ymd_tuple=startdate,time_shift=cfg['time_offset'])
+mysched = MLBSchedule(ymd_tuple=startdate,time_shift=mycfg.get('time_offset'))
 
 # Now retrieve the listings for that day
 try:
-    available = mysched.getListings(cfg['speed'], cfg['blackout'])
+    available = mysched.getListings(mycfg.get('speed'), mycfg.get('blackout'))
 except (KeyError, MLBXmlError), detail:
-    if cfg['debug']:
+    if cfg.get('debug'):
         raise Exception, detail
     available = []
     #raise 
@@ -210,6 +196,7 @@ if teamcode is not None:
                 condensed_media = available[n][4]
             else:
                 media = available[n][3]
+            eventId = available[n][6]
 
 # media assigned above will be a list of both home and away media tuples
 # This next section determines which media tuple to use (home or away)
@@ -233,38 +220,31 @@ else:
     sys.exit()
 
 # Similar behavior to the 'z' key in mlbviewer
-if cfg['zdebug']:
+if mycfg.get('zdebug'):
     print 'media = ' + repr(media)
     print 'prefer = ' + repr(stream)
     sys.exit()
 
 # Before creating GameStream object, get session data from login
-session = MLBSession(user=cfg['user'],passwd=cfg['pass'],debug=cfg['debug'])
+session = MLBSession(user=mycfg.get('user'),passwd=mycfg.get('pass'),
+                     debug=mycfg.get('debug'))
 session.getSessionData()
 # copy all the cookie data to pass to GameStream
-cfg['cookies'] = {}
-cfg['cookies'] = session.cookies
-cfg['cookie_jar'] = session.cookie_jar
+mycfg.set('cookies', {})
+mycfg.set('cookies', session.cookies)
+mycfg.set('cookie_jar', session.cookie_jar)
 
 # Once the correct media tuple has been assigned to stream, create the 
-# GameStream object for the correct type of media
+# MediaStream object for the correct type of media
 if stream is not None:
     if streamtype == 'audio':
-        g = GameStream(stream, session=session,
-                       debug=cfg['debug'], 
-                       streamtype='audio',
-                       use_nexdef=False,
-                       use_librtmp=cfg['use_librtmp'],
-                       coverage=stream[1])
+        m = MediaStream(stream, session=session,
+                        cfg=mycfg,
+                        streamtype='audio')
     elif streamtype in ( 'video', 'condensed'):
-        g = GameStream(stream, session=session,
-                       debug=cfg['debug'], 
-                       use_nexdef=cfg['use_nexdef'], speed=cfg['speed'],
-                       adaptive=cfg['adaptive_stream'],
-                       coverage=stream[1],condensed=cfg['condensed'],
-                       postseason=False,
-                       use_librtmp=cfg['use_librtmp'],
-                       max_bps=cfg['max_bps'],start_time=0)
+        m = MediaStream(stream, session=session,
+                        streamtype=streamtype,
+                        cfg=mycfg,start_time=0)
     else:
         print 'Unknown streamtype: ' + repr(streamtype)
         sys.exit()
@@ -280,49 +260,40 @@ else:
 # prepares most of the necessary command-line to interact with the 
 # player command (depending on the format of that command string.)
 try:
-    url = g.url()
+    mediaUrl = m.locateMedia()
 except:
-    if cfg['debug']:
+    if mycfg.get('debug'):
         raise
     else:
         print 'An error occurred locating the media URL:'
-        print g.error_str
+        print m.error_str
         #sys.exit()
 
-if cfg['nexdef_url']:
-    print g.nexdef_media_url
+if mycfg.get('nexdef_url'):
+    print m.nexdef_media_url
     sys.exit()
 
-if cfg['debug']:
+if mycfg.get('debug'):
     print 'Media URL received: '
-    print url
+    print mediaUrl
     sys.exit()
 
-if '%s' in player:
-    if cfg['use_librtmp']:
-        cmd_str = player.replace('%s', url)
-    else:
-        cmd_str = player.replace('%s', '-')
-        cmd_str = url + ' | ' + cmd_str
-else:
-    if cfg['use_librtmp']:
-        cmd_str = player + ' ' + url
-    else:
-        cmd_str = url + ' | ' + player + ' -'
-if '%f' in player:
-    if streamtype == 'audio':
-        suf = '.mp3'
-    else:
-        suf = '.mp4'
-    cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + call_letters + suf + "'")
+mediaUrl = m.prepareMediaPlayer(mediaUrl)
+cmdStr   = m.preparePlayerCmd(mediaUrl,eventId,streamtype)
 
-if cfg['show_player_command']:
-    print cmd_str
+if mycfg.get('show_player_command'):
+    print cmdStr
 
 try:
-    playprocess = subprocess.Popen(cmd_str,shell=True)
-    playprocess.wait()
+    
+    #playprocess = subprocess.Popen(cmdStr,shell=True)
+    #playprocess.wait()
+    play = MLBprocess(cmdStr)
+    play.open()
+    play.wait()
+    play.close()
 except KeyboardInterrupt:
+    play.close()
     sys.exit()
 except:
     raise

@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 
-from MLBviewer import MLBSchedule
-from MLBviewer import GameStream
-from MLBviewer import LircConnection
-from MLBviewer import MLBConfig
-from MLBviewer import MLBUrlError
-from MLBviewer import MLBXmlError
-from MLBviewer import VERSION, URL, AUTHDIR, AUTHFILE
-from MLBviewer import TEAMCODES
+from MLBviewer import *
 import os
 import sys
 import re
@@ -20,9 +13,6 @@ import time
 import pickle
 import copy
 
-DEFAULT_V_PLAYER = 'xterm -e mplayer -cache 2048 -quiet'
-DEFAULT_A_PLAYER = 'xterm -e mplayer -cache 64 -quiet -playlist'
-DEFAULT_SPEED = '400'
 
 def padstr(s,num):
     if len(str(s)) < num:
@@ -84,10 +74,10 @@ else:
         now = now - dif
     startdate = (now.year, now.month, now.day)
 
-mysched = MLBSchedule(ymd_tuple=startdate,time_shift=cfg['time_offset'])
+mysched = MLBSchedule(ymd_tuple=startdate,time_shift=mycfg.get('time_offset'))
 
 try:
-    available = mysched.getListings(cfg['speed'],cfg['blackout'])
+    available = mysched.getListings(mycfg.get('speed'),mycfg.get('blackout'))
 except (KeyError, MLBXmlError), detail:
     if cfg['debug']:
         raise Exception, detail

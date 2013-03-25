@@ -45,4 +45,14 @@ class MLBConfig:
                 else:
                     self.data[key] = val
 
+    def get(self,key):
+        try:
+            return self.data[key]
+        except:
+            return None
 
+    def set(self,key,value):
+        try:
+            self.data[key] = value
+        except:
+            return None
