@@ -36,7 +36,9 @@ def printNodeAttributes(node,IL):
     if node.hasAttributes():
       IL+=1
       for n in range(node.attributes.length):
-        print "%s %s:" % (IL*' ', str(node.attributes.item(n).nodeValue))
+        #print "%s %s:" % (IL*' ', str(node.attributes.item(n).nodeValue))
+        print "%s %s: %s" % (IL*' ', str(node.attributes.item(n).nodeName),
+                                     str(node.attributes.item(n).nodeValue))
     IL -=1
 
 printChildNodes(xp,IL)
