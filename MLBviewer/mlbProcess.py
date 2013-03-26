@@ -82,7 +82,7 @@ class MLBprocess:
                 myscr.addstr('Quitting player, cleaning up...')
                 self.close(signal=signal.SIGINT)
                 c = ''
-                time.sleep(3)
+                time.sleep(2)
                 continue
         myscr.timeout(-1)   
             

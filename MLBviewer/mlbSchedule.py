@@ -485,7 +485,7 @@ class MLBSchedule:
 	away = available[0]['away']
         homecode = TEAMCODES[home][0]
         awaycode = TEAMCODES[away][0]
-        # build dictionary for home and away media
+        # build dictionary for home and away video
         for elem in available[2]:
             if homecode in elem[1]:
                 media['video']['home'] = elem
@@ -534,7 +534,10 @@ class MLBSchedule:
                     prefer[type] = media[type][cfg.get('coverage')]
                 except:
                     try:
-                        prefer[type] = available[2][0]
+                        if type == 'video':
+                            prefer[type] = available[2][0]
+                        else:
+                            prefer[type] = available[3][0]
                     except:
                         prefer[type] = None
         return prefer

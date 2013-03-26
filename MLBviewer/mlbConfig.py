@@ -29,7 +29,11 @@ class MLBConfig:
                     if val not in self.data[key]:
                         self.data[key].append(val)
                 # These are the booleans:
-                elif key in ('show_player_command', 'debug', 'use_color', 'dvr_record_only', 'live_from_start', 'use_nexdef', 'adaptive_stream', 'show_inning_frames', 'postseason', 'use_librtmp', 'no_lirc', 'use_wired_web'):
+                elif key in ('show_player_command', 'debug', 'use_color', 
+                             'live_from_start', 'use_nexdef', 
+                             'adaptive_stream', 'show_inning_frames', 
+                             'postseason', 'use_librtmp', 'no_lirc', 
+                             'use_wired_web', 'free_condensed'):
                     if val.isdigit():
                         self.data[key] = bool(int(val))
                     else:

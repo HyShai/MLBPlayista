@@ -255,8 +255,8 @@ def mainloop(myscr,mycfg):
             mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
             myscr.addstr(2,0,'getListings() for current_cursor:')
             myscr.addstr(3,0,repr(available[mywin.current_cursor]))
-            myscr.addstr(10,0,'preferred media for current cursor:')
-            myscr.addstr(11,0,repr(prefer))
+            myscr.addstr(11,0,'preferred media for current cursor:')
+            myscr.addstr(12,0,repr(prefer))
             myscr.refresh()
             mywin.titlewin.refresh()
             mywin.statusWrite('Press a key to continue...',wait=-1)
@@ -490,7 +490,8 @@ def mainloop(myscr,mycfg):
                     myscr.refresh()
                     time.sleep(2)
                     continue
-                mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
+                if not mycfg.get('free_condensed'):
+                    mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
                 eventId  = available[listwin.current_cursor][6]
 
             cmdStr = mediaStream.preparePlayerCmd(mediaUrl, eventId,streamtype)
@@ -570,6 +571,7 @@ if __name__ == "__main__":
                   'use_librtmp': 0,
                   'no_lirc': 0,
                   'postseason': 0,
+                  'free_condensed': 0,
                   'flash_browser': DEFAULT_FLASH_BROWSER}
     
     try:
