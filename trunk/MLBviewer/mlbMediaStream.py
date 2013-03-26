@@ -567,6 +567,8 @@ class MediaStream:
         else:
             if self.cfg.get('use_librtmp') or streamtype == 'highlight':
                 cmd_str = player + ' ' + media_url
+            elif streamtype == 'condensed' and self.cfg.get('free_condensed'):
+                cmd_str = player + ' ' + media_url
             else:
                 cmd_str = media_url + ' | ' + player + ' - '
         if '%f' in player:
@@ -596,8 +598,12 @@ class MediaStream:
             self.error_str = 'Error parsing condensed game location'
             self.error_str += '\n\n' + str(detail)
             raise
+        if self.cfg.get('free_condensed'):
+            playback_scenario = 'FLASH_600K_400X224'
+        else:
+            playback_scenario = 'FLASH_1200K_640X360'
         for url in media.getElementsByTagName('url'):
-            if url.getAttribute('playback_scenario') == 'FLASH_1200K_640X360':
+            if url.getAttribute('playback_scenario') == playback_scenario:
 
                 condensed = str(url.childNodes[0].data)
         try:

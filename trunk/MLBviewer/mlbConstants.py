@@ -226,7 +226,7 @@ OPTIONS_DEBUG = ( 'video_player', 'audio_player', 'top_plays_player',
                   'speed', 'use_nexdef', 'use_wired_web', 'min_bps', 'max_bps',
                   'adaptive_stream', 'use_librtmp', 'live_from_start',
                   'video_follow', 'audio_follow', 'blackout', 'coverage',
-                  'show_player_command', 'user' )
+                  'free_condensed', 'show_player_command', 'user' )
 
 COLORS = { 'black'   : curses.COLOR_BLACK,
            'red'     : curses.COLOR_RED,

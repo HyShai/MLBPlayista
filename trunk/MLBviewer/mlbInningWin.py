@@ -195,7 +195,6 @@ class MLBInningWin(MLBListWin):
             
         return start_time
 
-
                 
     def titleRefresh(self,mysched):
         if len(self.data) == 0:
