@@ -591,15 +591,15 @@ class MediaStream:
         except Exception,detail:
             self.error_str = 'Error while locating condensed game:'
             self.error_str = '\n\n' + str(detail)
-            raise
+            raise Exception,self.error_str
         try:
             media = parse(rsp)
         except Exception,detail:
             self.error_str = 'Error parsing condensed game location'
             self.error_str += '\n\n' + str(detail)
-            raise
+            raise Exception,self.error_str
         if self.cfg.get('free_condensed'):
-            playback_scenario = 'FLASH_600K_400X224'
+            playback_scenario = '3GP_H264_550K_320X240'
         else:
             playback_scenario = 'FLASH_1200K_640X360'
         for url in media.getElementsByTagName('url'):
@@ -609,9 +609,11 @@ class MediaStream:
         try:
             condensed
         except:
-            self.log.write('Error parsing condensed video reply. See %s for details.' % ERRORLOG_1)
+            self.error_str = 'Error parsing condensed video reply. See %s for XML response.\n' % ERRORLOG_1
+            self.log.write(self.error_str)
             mlog = open(ERRORLOG_1,'w')
             media.writexml(mlog)
             mlog.close()
+            raise Exception,self.error_str
         return condensed
 
