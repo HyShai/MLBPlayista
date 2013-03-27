@@ -211,12 +211,13 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'a'          : 'Play Gameday audio of highlighted game',
                 'd'          : 'Toggle debug (does not change config file)',
                 'p'          : 'Toggle speed (does not change config file)',
+                's'          : 'Toggle coverage for HOME or AWAY stream',
                 't'          : 'Display top plays listing for current game',
                 'y'          : 'Play all highlights as a playlist',
               }
 
 HELPFILE = (
-    ('COMMANDS' , ( 'Enter', 'a', 'c', 'd', 'n', 't' )),
+    ('COMMANDS' , ( 'Enter', 'a', 'c', 'd', 'n', 't', 's' )),
     ('LISTINGS', ( 'Up/Down', 'Left/Right', 'j', 'p', 'r' )),
     ('SCREENS'  , ( 't', 'h', 'l (or Esc)' )),
     ('DEBUG'    , ( 'z', 'o' )),

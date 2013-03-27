@@ -41,6 +41,11 @@ class MLBListWin:
         if self.current_cursor + 1 < len(self.data):
             self.current_cursor += 1
 
+    def PgUp(self):
+        self.current_cursor = 0
+
+    def PgDown(self):
+        self.current_cursor = len(self.data) - 1
 
     def Refresh(self):
         if len(self.data) == 0:
@@ -162,7 +167,7 @@ class MLBListWin:
         self.titlewin.clear()
         self.myscr.addstr(0,0,VERSION)
         self.myscr.addstr(0,20,URL)
-        n = 2
+        n = 1
 
         for heading in HELPFILE:
            self.myscr.addstr(n,0,heading[0],curses.A_UNDERLINE)

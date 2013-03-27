@@ -169,6 +169,12 @@ def mainloop(myscr,mycfg):
         if c in ('Down', curses.KEY_DOWN):
             mywin.Down()
 
+        if c in ('Page Down', curses.KEY_NPAGE):
+            mywin.PgDown()
+
+        if c in ('Page Up', curses.KEY_PPAGE):
+            mywin.PgUp()
+
         if c in ('Jump', ord('j')):
             if mywin != listwin:
                 continue
