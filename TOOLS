@@ -97,6 +97,43 @@ mlbgamedl.py <event-id> : Record basic service video
 
 nexdefdl.py <event-id>  : Record nexdef video
 
+MEDIAXML or DEBUGGING FAILED MEDIA REQUESTS
+
+Media location replies are logged to ~/.mlb directory either as:
+
+~/.mlb/successful-1.xml   : contains listing of all available media for 
+                            requested stream type (audio, video, condensed game)
+~/.mlb/successful-2.xml   : reply for specific media from listing above 
+
+If one of these requests returns an error status-code, that particular reply
+is logged to either ~/.mlb/unsuccessful-1.xml or ~/.mlb/unsuccessful-2.xml,
+respectively.
+
+And mlbviewer will display one of the following:
+
+    "-1000": "Requested Media Not Found",
+    "-1500": "Other Undocumented Error",
+    "-1600": "Requested Media Not Available Yet.",
+    "-2000": "Authentication Error",
+    "-2500": "Blackout Error",
+    "-3000": "Identity Error",
+    "-3500": "Sign-on Restriction Error",
+    "-4000": "System Error",
+
+mlbviewer should also tell you which of the ~/.mlb XML files to look in for
+the failure reply.  The main log file ~/.mlb/log will also have the error
+and which xml reply file to consult.
+
+The XML replies are verbose but contain a lot of useful information.  They
+can be parsed using the test/mediaxml.py script, e.g.
+
+$ test/mediaxml.py ~/.mlb/unsuccessful-2.xml
+
+This script will convert the XML into something more readable.
+
+When reporting problems about "Requested Media Not Found" or "Blackout Error",
+please post the XML files to http://pastebin.com, or post the full output from 
+mediaxml.py.
 
 DEBUGGING AUDIO / VIDEO PROBLEMS USING TOOLS
 
