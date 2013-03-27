@@ -1,23 +1,23 @@
 Requirements
 
-See REQUIREMENTS-2012.txt file for 2012 requirements.  This file is largely
-out of date for the 2012 changes.
+See REQUIREMENTS-2013.txt file for 2013 requirements.  This file is largely
+out of date for the 2013 changes.
 ------------
 
 For Linux and other *nixes:
 
 * python (should be included in most modern Linux distributions)
-* pyxml (should be available through package management in most Linux distros)
 * rtmpdump (http://rtmpdump.mplayerhq.hu/) for audio and basic service video
 * mlbhls (http://code.google.com/p/mlbtv-hls-nexdef/) for nexdef video
 * mplayer2 is the recommended player for mlbviewer video streams
-* An MLB.TV account (http://mlb.mlb.com/mlb/subscriptions/index.jsp)
+* An MLB.TV account (http://mlb.mlb.com/mlb/subscriptions/index.jsp), OR
+* An mlb.com account for free features for non-MLB.TV subscribers (condensed 
+  games and highlights)
 
 For Windows:
 
 * cygwin (http://www.cygwin.com)
 * python
-* pyxml
 * rtmpdump
 * mlbhls
 * mplayer or SMPlayer
@@ -27,6 +27,9 @@ Installation
 
 For local use:
      python mlbviewer.py from this directory.
+
+If python3 is the system default, use python2:
+     python2 mlbviewer.py
 
 
 Note: Because MLB.TV has changed their service dramatically over the years, 

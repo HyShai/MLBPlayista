@@ -1,8 +1,8 @@
-REQUIREMENTS FOR MLBVIEWER 2012 SEASON
+REQUIREMENTS FOR MLBVIEWER 2013 SEASON
 
-FOR 2011 USERS:
+FOR 2012 USERS:
 
-If you used mlbviewer in 2011, not much has changed.
+If you used mlbviewer in 2012, not much has changed.
 
 1. Download mlbhls (if you plan to use nexdef), build it, install it.
 
@@ -18,21 +18,13 @@ Other than that, you should not have to do anything different for 2012.
 
 NEW USERS:
 
-To get going for the 2012 season, you will need the following packages:
+Python2.7 or newer (not including Python3.x)
 
-OPTIONAL (but very helpful, especially for Linux beginners!):
+Python3.x is not backwards compatible with Python2.x.  As such, a significant
+chunk of mlbviewer would have to be rewritten for 3.x.  If your system uses
+python3 by default (e.g. ls -l `which python` points to python3), you can
+start mlbviewer using python2 with: "python2 mlbviewer.py"
 
-Setuptools - http://pypi.python.org/pypi/setuptools
-
-This will help you download and install the required python packages
-
-REQUIRED:
-
-PyXML - http://pyxml.sourceforge.net/topics/download.html
-
-setuptools users: You can install these with the following commands (as root):
-
-$ easy_install pyxml
 
 Please read on for further requirements depending on whether you are an MLB.TV
 Premium or MLB.TV Basic subscriber.
@@ -70,7 +62,7 @@ other players like vlc are using.
 
 ---------------------------------------------------------------------------
 
-READ THE README FOR MORE HELP ON USING MLBVIEWER 2012.
+READ THE README FOR MORE HELP ON USING MLBVIEWER 2013.
 
 Also, you can post any support questions either to the Sourceforge forum at:
 
