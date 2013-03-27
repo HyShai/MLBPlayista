@@ -462,11 +462,8 @@ def mainloop(myscr,mycfg):
                 streamtype = 'video'
 
             # for nexdef, use the innings list to find the correct start time
-            innwin = MLBInningWin(myscr, mycfg, 
-                                  listwin.data[listwin.current_cursor],
-                                  mysched)
             if mycfg.get('use_nexdef'):
-                start_time = innwin.getStartOfGame(mysched)
+                start_time = mysched.getStartOfGame(listwin.data[listwin.current_cursor],mycfg)
             else:
                 start_time = 0
             if prefer[streamtype] is None:

@@ -627,3 +627,31 @@ class MLBSchedule:
                     out.append((number, is_top, time))
         return out
 
+    def getStartOfGame(self,listing,cfg):
+        start_time = 0
+        try:
+            innings = self.parseInningsXml(listing[2][0][3],
+                                              cfg.get('use_nexdef'))
+        except:
+            return None
+        if listing[5] in ('I', 'D') and start_time == 0:
+            if cfg.get('live_from_start') and cfg.get('use_nexdef'):
+                if innings is not None:
+                    for i in range(len(innings)):
+                        if int(innings[i][0]) == 0:
+                            start_time = innings[i][2]
+                            continue
+                        else:
+                            start_time = 0
+        else:
+            if cfg.get('use_nexdef'):
+                if innings is not None:
+                    for i in range(len(innings)):
+                        if int(innings[i][0]) == 0:
+                            start_time = innings[i][2]
+                            continue
+                else:
+                    start_time=listing[8]
+
+        return start_time
+

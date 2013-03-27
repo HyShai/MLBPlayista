@@ -167,34 +167,6 @@ class MLBInningWin(MLBListWin):
         audio = False
         return start_time
 
-    def getStartOfGame(self,mysched):
-        start_time = 0
-        try:
-            innings = mysched.parseInningsXml(self.data[2][0][3],
-                                              self.mycfg.get('use_nexdef'))
-        except:
-            return None
-        if self.data[5] in ('I', 'D') and start_time == 0:
-            if self.mycfg.get('live_from_start') and self.mycfg.get('use_nexdef'):
-                if innings is not None:   
-                    for i in range(len(innings)):
-                        if int(innings[i][0]) == 0:
-                            start_time = innings[i][2]
-                            continue
-                        else:
-                            start_time = 0
-        else:
-            if self.mycfg.get('use_nexdef'):
-                if innings is not None:
-                    for i in range(len(innings)):
-                        if int(innings[i][0]) == 0:
-                            start_time = innings[i][2]
-                            continue
-                else:
-                    start_time=self.data[8]
-            
-        return start_time
-
                 
     def titleRefresh(self,mysched):
         if len(self.data) == 0:
