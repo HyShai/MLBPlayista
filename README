@@ -3,8 +3,10 @@ For system requirements and installation instructions, see INSTALL file.
 MLBVIEWER - Making MLB.TV better for Linux since 2008
 
 mlbviewer is a python-based program with a curses interface for connecting
-users with the media subscriptions they paid for.  You must have an MLB.TV
-subscription to use this program.
+users with the media subscriptions they paid for. 
+
+Most features require an MLB.TV account.  All features require an mlb.com
+account.
 
 A little history...
 
@@ -72,7 +74,8 @@ Features unique to mlbviewer:
   highlight your favorite teams to make their games easier to find in the 
   listings
 - Display of calendar in local time
-- Bookmark individual games to watch later
+- Bookmark individual games to watch later (REMOVED - Want this feature back?
+  Post a request on Sourceforge or Linuxquestions forum.)
 - mlblistings and mlbplay tools that can be used to display listings or play
   media without using the curses gui
 
@@ -134,11 +137,15 @@ default values.
 user=        : MLB.TV username (the email address associated with subscription)
 pass=        : MLB.TV password
 
+Highlights and condensed games (lower quality free version) can be accessed 
+without an MLB.TV subscription.  You will still need an mlb.com account.  Use
+that username (e-mail address) and password here.
+
 MEDIA PLAYERS
 
 video_player=     : command to play videos
 audio_player=     : command to play gameday audio
-top_plays_player= : command to play highlights 
+top_plays_player= : command to play highlights and condensed games
 
 top_plays_player defaults to video_player but you can specify a different
 command to adjust cache settings for lower bitrates compared to game streams
@@ -234,6 +241,18 @@ debug=              : True/False, normally errors are handled gracefully
                       so an error trace can be collected and used for a bug 
                       report.
 
+use_wired_web=      : True/False, set this to True if you are a basic 
+                      subscriber that wants to use the nexdef stream. This
+                      may become the default with the option removed.
+
+free_condensed=     : True/False, All users with a valid mlb.com account can 
+                      watch highlights without an MLB.TV subscription.  There
+                      is also a lower quality condensed game available for
+                      mlb.com accounts without MLB.TV subscription.  Set this
+                      to True if you do not have an MLB.TV subscription but
+                      want to watch the free version of the condensed games.
+                       
+
 True/False settings can be specified as either True/False or 1/0.  For example,
 debug can be:
 
@@ -272,7 +291,7 @@ SVN.
 
 To checkout an initial copy from SVN:
 
-svn co https://mlbviewer.svn.sourceforge.net/svnroot/mlbviewer/trunk mlbviewer
+svn checkout https://svn.code.sf.net/p/mlbviewer/code/trunk mlb2013
 
 You will need the subversion package from your Linux distribution if you 
 do not have the svn command.
