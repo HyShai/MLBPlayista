@@ -582,21 +582,25 @@ class MediaStream:
 
     def locateCondensedMedia(self):
         self.streamtype = 'condensed'
-        url = 'http://mlb.mlb.com/gen/multimedia/detail/'
-        url += self.content_id[-3] + '/' + self.content_id[-2] + '/' + self.content_id[-1]
-        url += '/' + self.content_id + '.xml'
+        cvUrl = 'http://mlb.mlb.com/gen/multimedia/detail/'
+        cvUrl += self.content_id[-3] + '/' + self.content_id[-2] + '/' + self.content_id[-1]
+        cvUrl += '/' + self.content_id + '.xml'
         try:
-            req = urllib2.Request(url)
+            req = urllib2.Request(cvUrl)
             rsp = urllib2.urlopen(req)
         except Exception,detail:
             self.error_str = 'Error while locating condensed game:'
             self.error_str = '\n\n' + str(detail)
+            self.log.write('locateCondensedMedia: %s\n' % cvUrl)
+            self.log.write(str(detail))
             raise Exception,self.error_str
         try:
             media = parse(rsp)
         except Exception,detail:
             self.error_str = 'Error parsing condensed game location'
             self.error_str += '\n\n' + str(detail)
+            self.log.write('locateCondensedMedia: %s\n' % cvUrl)
+            self.log.write(str(detail))
             raise Exception,self.error_str
         if self.cfg.get('free_condensed'):
             playback_scenario = '3GP_H264_550K_320X240'
@@ -610,10 +614,18 @@ class MediaStream:
             condensed
         except:
             self.error_str = 'Error parsing condensed video reply. See %s for XML response.\n' % ERRORLOG_1
+            self.log.write('locateCondensedMedia(): requested url:\n')
+            self.log.write('%s\n' % cvUrl)
             self.log.write(self.error_str)
             mlog = open(ERRORLOG_1,'w')
             media.writexml(mlog)
             mlog.close()
             raise Exception,self.error_str
+        self.log.write('locateCondensedMedia(): requested url:\n')
+        self.log.write('%s\n' % cvUrl)
+        mlog = open(MEDIALOG_1, 'w')
+        media.writexml(mlog)
+        mlog.close()
+        self.log.write('Wrote raw XML reply to %s\n' % MEDIALOG_1)
         return condensed
 

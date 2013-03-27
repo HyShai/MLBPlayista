@@ -70,6 +70,16 @@ teamcodes_help = "\n" +\
 "     'tex', 'tor', 'was'\n" +\
 "\n"
 
+if len(sys.argv) == 1:
+    print "%s <key>=<value>" % sys.argv[0]
+    print "examples:"
+    print "%s v=ana   // plays the video stream for LA Angels" % sys.argv[0]
+    print "%s a=nyy   // plays the audio stream for NY Yankees" % sys.argv[0]
+    print ""
+    print "See MLBPLAY-HELP for more options."
+    print teamcodes_help
+    sys.exit()
+
 # All options are name=value, loop through them all and take appropriate action
 if len(sys.argv) > 1:
     for n in range(len(sys.argv)):
@@ -188,6 +198,7 @@ if teamcode is not None:
         home = available[n][0]['home']
         away = available[n][0]['away']
         if teamcode in ( home, away ):
+            listing = available[n]
             gameid = available[n][6].replace('/','-')
             if streamtype ==  'video':
                 media = available[n][2]
@@ -242,9 +253,12 @@ if stream is not None:
                         cfg=mycfg,
                         streamtype='audio')
     elif streamtype in ( 'video', 'condensed'):
+        start_time = 0
+        if mycfg.get('use_nexdef'):
+            start_time = mysched.getStartOfGame(listing, mycfg)
         m = MediaStream(stream, session=session,
                         streamtype=streamtype,
-                        cfg=mycfg,start_time=0)
+                        cfg=mycfg,start_time=start_time)
     else:
         print 'Unknown streamtype: ' + repr(streamtype)
         sys.exit()
