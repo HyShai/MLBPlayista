@@ -196,7 +196,7 @@ class MLBListWin:
 
     def statusWrite(self, statusMsg, wait=0):
         self.statuswin.clear()
-        self.statuswin.addstr(0,0, statusMsg, curses.A_BOLD)
+        self.statuswin.addstr(0,0, str(statusMsg)[:curses.COLS-1],curses.A_BOLD)
         self.statuswin.refresh()
         if wait < 0:
             self.myscr.getch()

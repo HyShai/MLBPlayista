@@ -114,7 +114,7 @@ def mainloop(myscr,mycfg):
         mywin.statusWrite(error_str,wait=2)
     except Exception,detail:
         error_str = str(detail)
-        mywin.statusWrite(detail,wait=2)
+        mywin.statusWrite(error_str,wait=2)
 
     mycfg.set('cookies', {})
     mycfg.set('cookies', session.cookies)
@@ -510,6 +510,12 @@ def mainloop(myscr,mycfg):
                 myscr.refresh()
                 time.sleep(1)
                                         
+            if mycfg.get('debug'):
+                myscr.clear()
+                myscr.addstr(0,0,cmdStr)
+                myscr.refresh()
+                mywin.statusWrite('DEBUG enabled: Displaying URL only.  Press any key to continue',wait=-1)
+                continue
             play = MLBprocess(cmdStr)
             play.open()
             play.waitInteractive(myscr)
