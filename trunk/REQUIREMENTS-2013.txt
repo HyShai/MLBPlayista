@@ -29,7 +29,7 @@ start mlbviewer using python2 with: "python2 mlbviewer.py"
 Please read on for further requirements depending on whether you are an MLB.TV
 Premium or MLB.TV Basic subscriber.
 
-PREMIUM USERS
+PREMIUM USERS - NEXDEF STREAMS
 
 You will need mlbhls (see above) to access the higher bitrates.
 
@@ -38,6 +38,10 @@ NON-PREMIUM USERS (and Gameday Audio subscribers)
 You will need rtmpdump version 1.7 or greater.
 
 rtmpdump - http://rtmpdump.mplayerhq.hu/
+
+Non-premium users can access nexdef streams using mlbhls.  Non-premium users
+should set use_wired_web=1 in the config file to access the correct nexdef
+streams. 
 
 MPLAYER2 VS MPLAYER
 
