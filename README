@@ -5,8 +5,7 @@ MLBVIEWER - Making MLB.TV better for Linux since 2008
 mlbviewer is a python-based program with a curses interface for connecting
 users with the media subscriptions they paid for. 
 
-Most features require an MLB.TV account.  All features require an mlb.com
-account.
+Most features require an MLB.TV account.  
 
 A little history...
 
@@ -60,8 +59,8 @@ FEATURES OF MLBVIEWER
 - Radio synchronized broadcast for video streams (premium service only)
 - Support for all stream speeds
 - Support for home and away coverage
-- Condensed games
-- Top Plays for individual games
+- Condensed games (available for non-subscribers)
+- Top Plays for individual games (available for non-subscribers)
 - Jump to specific innings
 - Start live games from beginning (premium service only)
 
@@ -137,9 +136,10 @@ default values.
 user=        : MLB.TV username (the email address associated with subscription)
 pass=        : MLB.TV password
 
-Highlights and condensed games (lower quality free version) can be accessed 
-without an MLB.TV subscription.  You will still need an mlb.com account.  Use
-that username (e-mail address) and password here.
+Highlights and condensed games can be accessed without an MLB.TV subscription.  
+If you are not an MLB.TV subscriber, just leave the user= and pass= blank. 
+(3/28/13 - You will get a login error but listings will appear and top plays
+and condensed games will work without an account.)
 
 MEDIA PLAYERS
 
@@ -222,6 +222,9 @@ use_librtmp=        : True/False, if mplayer was built with librtmp support and
                       librtmp.so is installed, audio and video playback can
                       use librtmp in mplayer without requiring rtmpdump
 
+3/28/13 - This may not be working yet in 2013.  If you want it, ask for it
+in Linuxquestions forum (see below.)
+
 show_inning_frames= : Innings screen displays an innings frame showing 
                       which innings are available.  However, this can be 
                       very confusing when using a screen reader so this setting
@@ -229,6 +232,9 @@ show_inning_frames= : Innings screen displays an innings frame showing
 
 flash_browser=      : Command to launch a browser to the flash url if 
                       for some strange reason that's desired over mlbviewer
+
+3/28/13 - This may not be working yet in 2013.  If you want it, ask for it
+in Linuxquestions forum (see below.)
 
 x_display=          : Ability to display the video_player to a remote display
 
@@ -245,12 +251,6 @@ use_wired_web=      : True/False, set this to True if you are a basic
                       subscriber that wants to use the nexdef stream. This
                       may become the default with the option removed.
 
-free_condensed=     : True/False, All users with a valid mlb.com account can 
-                      watch highlights without an MLB.TV subscription.  There
-                      is also a lower quality condensed game available for
-                      mlb.com accounts without MLB.TV subscription.  Set this
-                      to True if you do not have an MLB.TV subscription but
-                      want to watch the free version of the condensed games.
                        
 
 True/False settings can be specified as either True/False or 1/0.  For example,

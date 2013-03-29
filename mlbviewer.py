@@ -70,6 +70,9 @@ def mainloop(myscr,mycfg):
     CURRENT_SCREEN = 'listings'
     RESTORE_SPEED = mycfg.get('speed')
 
+    # DEPRECATE free_condensed as it is not needed for non-subscribers
+    mycfg.set('free_condensed', False)
+
     # not sure if we need this for remote displays but couldn't hurt
     if mycfg.get('x_display'):
         os.environ['DISPLAY'] = mycfg.get('x_display')
@@ -493,8 +496,7 @@ def mainloop(myscr,mycfg):
                     myscr.refresh()
                     time.sleep(2)
                     continue
-                if not mycfg.get('free_condensed'):
-                    mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
+                mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
                 eventId  = available[listwin.current_cursor][6]
 
             cmdStr = mediaStream.preparePlayerCmd(mediaUrl, eventId,streamtype)
