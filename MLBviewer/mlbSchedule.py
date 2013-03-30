@@ -487,9 +487,9 @@ class MLBSchedule:
         awaycode = TEAMCODES[away][0]
         # build dictionary for home and away video
         for elem in available[2]:
-            if homecode in elem[1]:
+            if homecode and homecode in elem[1]:
                 media['video']['home'] = elem
-            elif awaycode in elem[1]:
+            elif awaycode and awaycode in elem[1]:
                 media['video']['away'] = elem
             else:
                 # handle game of the week
@@ -497,9 +497,9 @@ class MLBSchedule:
                 media['video']['away'] = elem
         # same for audio
         for elem in available[3]:
-            if homecode in elem[1]:
+            if homecode and homecode in elem[1]:
                 media['audio']['home'] = elem
-            elif awaycode in elem[1]:
+            elif awaycode and awaycode in elem[1]:
                 media['audio']['away'] = elem
             else:
                 # handle game of the week
@@ -598,6 +598,7 @@ class MLBSchedule:
     def parseInningsXml(self,event_id,use_nexdef):
 	gameid, year, month, day = event_id.split('-')[1:5]
         url = 'http://mlb.mlb.com/mlb/mmls%s/%s.xml' % (year, gameid)
+        self.log.write('parseInningsXml(): url = %s\n'%url)
         req = urllib2.Request(url)
         try:
             rsp = urllib2.urlopen(req)
