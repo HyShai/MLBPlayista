@@ -494,7 +494,7 @@ def mainloop(myscr,mycfg):
                     myscr.addstr(0,0,'ERROR: %s' % str(detail))
                     myscr.addstr(3,0,'See %s for more details.'%LOGFILE)
                     myscr.refresh()
-                    time.sleep(2)
+                    mywin.statusWrite('Press any key to continue',wait=-1)
                     continue
                 mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
                 eventId  = available[listwin.current_cursor][6]

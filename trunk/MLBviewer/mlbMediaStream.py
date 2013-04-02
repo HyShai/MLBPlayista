@@ -250,7 +250,7 @@ class MediaStream:
     def determineBlackoutStatus(self,reply):
         # Determine the blackout status
         try:
-            blackout_status = reply.getElementByTagName('blackout')[0].childNodes[0].data
+            blackout_status = reply.getElementsByTagName('blackout')[0].childNodes[0].data
         except:
             blackout_status = reply.getElementsByTagName('blackout-status')[0]
             try:
@@ -271,8 +271,7 @@ class MediaStream:
             if re.search(inmarket_pat,blackout_status) is not None:
                 pass
             elif media_state == 'MEDIA_ON' and not self.postseason:
-                self.log('MEDIA STREAM BLACKOUT.  See %s for XML response.' %
-                          BLACKFILE)
+                self.log.write('MEDIA STREAM BLACKOUT.  See %s for XML response.' % BLACKFILE)
                 self.error_str = 'BLACKOUT: ' + str(blackout_status)
                 bf = open(BLACKFILE, 'w')
                 reply.writexml(bf)
