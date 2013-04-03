@@ -67,7 +67,7 @@ class MLBprocess:
             
 
     def waitInteractive(self,myscr):
-        myscr.timeout(10000)
+        myscr.timeout(5000)
         while self.poll() is None:
             try:
                 c = myscr.getch()
@@ -76,13 +76,12 @@ class MLBprocess:
                 myscr.addstr('Quitting player, cleaning up...')
                 myscr.refresh()
                 self.close(signal=signal.SIGINT)
-                time.sleep(3)
+                time.sleep(1)
             if c in ('Close', ord('q')):
                 myscr.clear()
                 myscr.addstr('Quitting player, cleaning up...')
                 self.close(signal=signal.SIGINT)
-                c = ''
-                time.sleep(2)
+                time.sleep(1)
                 continue
         myscr.timeout(-1)   
             

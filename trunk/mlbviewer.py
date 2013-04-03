@@ -363,8 +363,12 @@ def mainloop(myscr,mycfg):
             except:
                 raise
             if start_time is not None:
-                mediaStream = MediaStream(available[listwin.current_cursor][2][0], 
-                                          session,mycfg,coverage=0,
+                if prefer['video'] is None:
+                    mywin.errorScreen('ERROR: Requested media not available.')
+                    continue
+                mediaStream = MediaStream(prefer['video'],
+                                          session,mycfg,
+                                          coverage=prefer['video'][1],
                                           streamtype='video',
                                           start_time=start_time)
                 mediaUrl = mediaStream.locateMedia()
