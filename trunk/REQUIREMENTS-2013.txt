@@ -11,10 +11,12 @@ cd mlbhls
 make
 sudo cp mlbhls /usr/bin
 
+!! YOU MUST UPDATE TO MINIMUM SVN REVISION 64 FOR MLBHLS !!
+
 2. If you were using speed=800 in $HOME/.mlb/config, change that to 1200. The
 800 stream may not exist in 2012.
 
-Other than that, you should not have to do anything different for 2012.
+Other than that, you should not have to do anything different for 2013.
 
 NEW USERS:
 
@@ -42,6 +44,12 @@ rtmpdump - http://rtmpdump.mplayerhq.hu/
 Non-premium users can access nexdef streams using mlbhls.  Non-premium users
 should set use_wired_web=1 in the config file to access the correct nexdef
 streams. 
+
+NON-SUBSCRIBERS
+
+Highlights and condensed games are available to non-subscribers.  Leave user=
+and pass= blank in your ~/.mlb/config file to access the free content.  You 
+will get an authentication error at start up which you can pretty much ignore.
 
 MPLAYER2 VS MPLAYER
 

@@ -59,8 +59,8 @@ FEATURES OF MLBVIEWER
 - Radio synchronized broadcast for video streams (premium service only)
 - Support for all stream speeds
 - Support for home and away coverage
-- Condensed games (available for non-subscribers)
-- Top Plays for individual games (available for non-subscribers)
+- Condensed games (available for non-subscribers too)
+- Top Plays for individual games (available for non-subscribers too)
 - Jump to specific innings
 - Start live games from beginning (premium service only)
 
@@ -103,13 +103,11 @@ r                   : Refresh listings
 
 SCREENS
 t                   : Display top plays listing for current game
+y                   : Play all highlights as a playlist (mplayer-dependent)*
 b                   : View bookmarks
 h                   : Display version and keybindings
 l (or Esc)          : Return to listings
  
-BOOKMARKS
-m                   : Bookmark a game or edit bookmark title
-x (or Bksp)         : Delete a bookmark
 
 Advanced Usage:
 DEBUG
@@ -124,6 +122,10 @@ MPLAYER
 #                   : In nexdef streams, the # key in mplayer will select 
                       audio from video broadcast or audio from synchronized
                       radio broadcast (premium service only)
+
+*Playing all games as a playlist is mplayer(2)-dependent at this time.  It 
+may be enhanced in the future to support vlc.  Ask for it and it may get 
+fixed faster. :)
 
 ---------------------------------------------------------------------------
 
