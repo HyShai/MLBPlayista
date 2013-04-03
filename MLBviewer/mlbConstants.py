@@ -13,7 +13,7 @@
 # Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 # 02111-1307 USA
 
-VERSION ="2013rev384+"
+VERSION ="2013rev400sf-1"
 URL = "http://sourceforge.net/projects/mlbviewer"
 
 import os

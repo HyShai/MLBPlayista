@@ -1,7 +1,7 @@
 Requirements
 
-See REQUIREMENTS-2013.txt file for 2013 requirements.  This file is largely
-out of date for the 2013 changes.
+See REQUIREMENTS-2013.txt file for 2013 requirements.  This file is mostly
+here for quick and dirty summary.
 ------------
 
 For Linux and other *nixes:
@@ -10,9 +10,9 @@ For Linux and other *nixes:
 * rtmpdump (http://rtmpdump.mplayerhq.hu/) for audio and basic service video
 * mlbhls (http://code.google.com/p/mlbtv-hls-nexdef/) for nexdef video
 * mplayer2 is the recommended player for mlbviewer video streams
-* An MLB.TV account (http://mlb.mlb.com/mlb/subscriptions/index.jsp), OR
-* An mlb.com account for free features for non-MLB.TV subscribers (condensed 
-  games and highlights)
+* An MLB.TV account (http://mlb.mlb.com/mlb/subscriptions/index.jsp)
+* For non-subscriber features (highlights and condensed games only), leave
+  user= and pass= blank in the ~/.mlb/config file.
 
 For Windows:
 

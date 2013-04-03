@@ -3,7 +3,7 @@
 __author__ = "Matthew Levine"
 __email__ = "straycat000@yahoo.com"
 
-VERSION ="2013rev381+"
+VERSION ="2013rev400sf-1"
 URL = "http://sourceforge.net/projects/mlbviewer"
 
 AUTHDIR = '.mlb'
