@@ -650,6 +650,12 @@ class MLBSchedule:
                     for i in range(len(innings)):
                         if int(innings[i][0]) == 0:
                             start_time = innings[i][2]
+                            # hack to make sure mlbhls can start at the correct
+                            # timestamp - add five seconds to published time
+                            d=datetime.datetime.strptime(start_time, "%H:%M:%S")
+                            t=datetime.timedelta(seconds=5)
+                            n=d+t
+                            start_time=n.strftime("%H:%M:%S")
                             continue
                 else:
                     start_time=listing[8]
