@@ -104,6 +104,8 @@ def mainloop(myscr,mycfg):
     available = []
     listwin = MLBListWin(myscr,mycfg,available)
     topwin = MLBTopWin(myscr,mycfg,available)
+    optwin = MLBOptWin(myscr,mycfg)
+    helpwin = MLBHelpWin(myscr,mycfg)
     mywin = listwin
     mywin.Splash()
     mywin.statusWrite('Logging into mlb.com...',wait=0)
@@ -146,6 +148,7 @@ def mainloop(myscr,mycfg):
         available = []
 
     mywin.data = available
+    mywin.records = available[0:curses.LINES-4]
     mywin.titleRefresh(mysched)
     
     # PLACEHOLDER - LircConnection() goes here
@@ -157,7 +160,8 @@ def mainloop(myscr,mycfg):
         mywin.titleRefresh(mysched)
         mywin.statusRefresh()
         if mywin == listwin:
-            prefer = mysched.getPreferred(available[mywin.current_cursor],mycfg)
+            prefer = mysched.getPreferred(mywin.records[mywin.current_cursor],
+                                          mycfg)
 
         # And now we do input.
         inputs, outputs, excepts = select.select(inputlst, [], [])
@@ -197,6 +201,8 @@ def mainloop(myscr,mycfg):
                                              mycfg.get('speed'),
                                              mycfg.get('blackout'))
                     mywin.data = available
+                    mywin.records = available[0:curses.LINES-4]
+                    mywin.record_cursor = 0
                     mywin.current_cursor = 0
                 except (KeyError,MLBXmlError),detail:
                     if cfg['debug']:
@@ -222,6 +228,8 @@ def mainloop(myscr,mycfg):
                                           mycfg.get('speed'),
                                           mycfg.get('blackout'))
                 mywin.data = available
+                mywin.records = available[0:curses.LINES-4]
+                mywin.record_cursor = 0
                 mywin.current_cursor = 0
             except (KeyError,MLBXmlError),detail:
                 if cfg['debug']:
@@ -250,50 +258,65 @@ def mainloop(myscr,mycfg):
                 status_str = "There was a parser problem with the listings page"
                 mywin.statusWrite(status_str,wait=2)
             mywin.data = available
+            mywin.records = available[0:curses.LINES-4]
             mywin.current_cursor = 0
+            mywin.record_cursor = 0
 
-        # DEBUG
+        # DEBUG : NEEDS ATTENTION FOR SCROLLING
         if c in ('Zdebug', ord('z')):
+            if mywin in ( optwin, helpwin ):
+                continue
             if mywin == topwin:
-                gameid = available[topwin.current_cursor][4]
+                gameid = mywin.records[topwin.current_cursor][4]
             else:
-                gameid = available[listwin.current_cursor][6]
+                gameid = mywin.records[listwin.current_cursor][6]
             myscr.clear()
             mywin.titlewin.clear()
             mywin.titlewin.addstr(0,0,'LISTINGS DEBUG FOR ' + gameid)
             mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
             myscr.addstr(2,0,'getListings() for current_cursor:')
-            myscr.addstr(3,0,repr(available[mywin.current_cursor]))
-            myscr.addstr(11,0,'preferred media for current cursor:')
-            myscr.addstr(12,0,repr(prefer))
+            myscr.addstr(3,0,repr(mywin.records[mywin.current_cursor]))
+            # hack for scrolling - don't display these lines if screen too
+            # small
+            if curses.LINES-4 > 14:
+                myscr.addstr(11,0,'preferred media for current cursor:')
+                myscr.addstr(12,0,repr(prefer))
             myscr.refresh()
             mywin.titlewin.refresh()
             mywin.statusWrite('Press a key to continue...',wait=-1)
 
-        # SCREENS
+        # SCREENS - NEEDS WORK FOR SCROLLING
         if c in ('Help', ord('h')):
-            mywin.helpScreen()
+            mywin = helpwin
+            #mywin.helpScreen()
 
+        # NEEDS ATTENTION FOR SCROLLING
         if c in ('OptionsDebug', ord('o')):
-            myscr.clear()
-            mywin.titlewin.addstr(0,0,'CURRENT OPTIONS SETTINGS')
-            mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
-            i = 2
-            for elem in OPTIONS_DEBUG:
-                optstr = elem + ' = ' + str(mycfg.get(elem))
-                myscr.addstr(i,0,optstr[0:curses.COLS-1])
-                i+=1
-            myscr.refresh()
-            mywin.titlewin.refresh()
-            mywin.statusWrite('Press a key to continue...',wait=-1)
-            continue
+            mywin = optwin
+            #myscr.clear()
+            #mywin.titlewin.addstr(0,0,'CURRENT OPTIONS SETTINGS')
+            #mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
+            #i = 2
+            # hack for now - just truncate the output to fit the screen
+            # TODO: implement an options window that scrolls
+            #for elem in OPTIONS_DEBUG[:curses.LINES-4]:
+            #    optstr = elem + ' = ' + str(mycfg.get(elem))
+            #    myscr.addstr(i,0,optstr[0:curses.COLS-1])
+            #    i+=1
+            #myscr.refresh()
+            #mywin.titlewin.refresh()
+            #mywin.statusWrite('Press a key to continue...',wait=-1)
+            #continue
 
         if c in ('Highlights', ord('t')):
+            if mywin in ( optwin, helpwin ):
+                continue
             try:
-                GAMEID = available[mywin.current_cursor][6]
+                GAMEID = listwin.records[listwin.current_cursor][6]
             except IndexError:
                 continue
-            topwin.data = available
+            #topwin.data = available
+            topwin.data = listwin.records
             listwin.statusWrite('Fetching Top Plays list...')
             try:
                 available = mysched.getTopPlays(GAMEID)
@@ -304,10 +327,14 @@ def mainloop(myscr,mycfg):
             mywin = topwin
             mywin.current_cursor = 0
             mywin.data = available
+            mywin.records = available[0:curses.LINES-4]
+            mywin.record_cursor = 0
 
         if c in ('AllHighlights', ord('y')):
+            if mywin in ( optwin, helpwin ):
+                continue
             try:
-                GAMEID = listwin.data[listwin.current_cursor][6]
+                GAMEID = listwin.records[listwin.current_cursor][6]
             except IndexError:
                 listwin.statusWrite('Could not find gameid for highlights',wait=2)
                 continue
@@ -321,12 +348,13 @@ def mainloop(myscr,mycfg):
                 fp.write(highlight[2]+'\n')
             fp.close()
             mediaUrl = '-playlist %s' % HIGHLIGHTS_LIST
-            eventId = listwin.data[listwin.current_cursor][6]
+            eventId = listwin.records[listwin.current_cursor][6]
             streamtype = 'highlight'
             mediaStream = MediaStream(prefer['video'], session, mycfg,
                                       prefer['video'][1], 
                                       streamtype=streamtype)
             cmdStr = mediaStream.preparePlayerCmd(mediaUrl, eventId,streamtype)
+            # NEEDS ATTENTION FOR SCROLLING
             if mycfg.get('show_player_command'):
                 myscr.clear()
                 myscr.addstr(0,0,cmdStr)
@@ -344,7 +372,10 @@ def mainloop(myscr,mycfg):
             play.waitInteractive(myscr)
 
 
+        # NEEDS ATTENTION FOR SCROLLING
         if c in ('Innings', ord('i')):
+            if mywin in ( optwin, helpwin ):
+                continue
             if mycfg.get('use_nexdef') or \
                available[listwin.current_cursor][5] in ('F', 'CG')  or \
                available[listwin.current_cursor][7] == 'media_archive':
@@ -390,6 +421,7 @@ def mainloop(myscr,mycfg):
             except:
                 pass
             mywin.data = available
+            mywin.records = available[mywin.record_cursor:mywin.record_cursor+curses.LINES-4]
 
         # TOGGLES
         if c in ('Nexdef', ord('n')):
@@ -439,6 +471,8 @@ def mainloop(myscr,mycfg):
                 time.sleep(2)
                 continue
             mywin.data = available
+            mywin.records = available[0:curses.LINES-4]
+            #mywin.record_cursor = 0
 
         if c in ('Debug', ord('d')):
             if mycfg.get('debug'):
@@ -450,6 +484,8 @@ def mainloop(myscr,mycfg):
         # The Big Daddy Action  
         # With luck, it can handle audio, video, condensed, and highlights
         if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c')):
+            if mywin in ( optwin , helpwin ):
+                continue
             if c in ('Audio', ord('a')):
                 if mywin == topwin:
                     listwin.statusWrite(UNSUPPORTED,wait=2)
@@ -461,7 +497,7 @@ def mainloop(myscr,mycfg):
                     continue
                 streamtype = 'condensed'
                 try:
-                    prefer[streamtype] = listwin.data[listwin.current_cursor][4][0]
+                    prefer[streamtype] = listwin.records[listwin.current_cursor][4][0]
                 except:
                     mywin.errorScreen('ERROR: Requested media not available.')
                     continue
@@ -470,7 +506,7 @@ def mainloop(myscr,mycfg):
 
             # for nexdef, use the innings list to find the correct start time
             if mycfg.get('use_nexdef'):
-                start_time = mysched.getStartOfGame(listwin.data[listwin.current_cursor],mycfg)
+                start_time = mysched.getStartOfGame(listwin.records[listwin.current_cursor],mycfg)
             else:
                 start_time = 0
             if prefer[streamtype] is None:
@@ -486,8 +522,8 @@ def mainloop(myscr,mycfg):
             if mywin == topwin:
                 # top plays are handled just a bit differently from video
                 streamtype = 'highlight'
-                mediaUrl = topwin.data[topwin.current_cursor][2]
-                eventId  = topwin.data[topwin.current_cursor][4]
+                mediaUrl = topwin.records[topwin.current_cursor][2]
+                eventId  = topwin.records[topwin.current_cursor][4]
             else:
                 try:
                     mediaUrl = mediaStream.locateMedia()
@@ -501,6 +537,7 @@ def mainloop(myscr,mycfg):
                     mywin.statusWrite('Press any key to continue',wait=-1)
                     continue
                 mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
+                # TODO: With scrolling change, is this 'available' or 'records'?
                 eventId  = available[listwin.current_cursor][6]
 
             cmdStr = mediaStream.preparePlayerCmd(mediaUrl, eventId,streamtype)
@@ -511,8 +548,9 @@ def mainloop(myscr,mycfg):
                    pos=6
                 else:
                    pos=14
-                myscr.hline(pos,0,curses.ACS_HLINE, curses.COLS-1)
-                myscr.addstr(pos+1,0,'')
+                if pos < curses.LINES-4:
+                    myscr.hline(pos,0,curses.ACS_HLINE, curses.COLS-1)
+                    myscr.addstr(pos+1,0,'')
                 myscr.refresh()
                 time.sleep(1)
                                         
@@ -531,6 +569,8 @@ def mainloop(myscr,mycfg):
             # reload the configuration
             mycfg = MLBConfig(mydefaults)
             mycfg.loads(myconf)
+            # recreate the options window to reflect any changes
+            optwin = MLBOptWin(myscr,mycfg)
             status_str = "Reloading " + str(myconf) + "..."
             mywin.statusWrite(status_str,wait=2)
 
@@ -549,6 +589,7 @@ def mainloop(myscr,mycfg):
                 available = []
                 status_str = "There was a parser problem with the listings page"
                 mywin.statusWrite(status_str,wait=2)
+            mywin.records = available[mywin.record_cursor:mywin.record_cursor+curses.LINES-4]
 
         if c in ('Quit', ord('q')):
             curses.nocbreak()
