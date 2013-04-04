@@ -113,7 +113,7 @@ class MLBInningWin(MLBListWin):
         elif latest < 10:
             latest_str += 'Top ' + str(latest)
         elif latest < 20:
-            latest_str += 'Bot ' + str(latest)
+            latest_str += 'Bot ' + str(latest - 10)
         else:
             latest_str += 'Extra Innings'
         self.myscr.addstr(curses.LINES-3,0,latest_str)
