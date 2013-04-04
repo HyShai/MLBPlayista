@@ -191,6 +191,10 @@ class MLBListWin:
         if self.mycfg.get('debug'):
             status_str_len += len('[DEBUG]')
         padding = curses.COLS - status_str_len
+        # shrink the status string to fit if it is too many chars wide for
+        # screen
+        if padding < 0:
+            status_str=status_str[:padding]
         if self.mycfg.get('debug'):
             debug_str = '[DEBUG]'
         else:
