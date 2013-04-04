@@ -25,4 +25,5 @@ from mlbLogin import MLBSession
 from mlbListWin import MLBListWin
 from mlbTopWin import MLBTopWin
 from mlbInningWin import MLBInningWin
-
+from mlbOptionWin import MLBOptWin
+from mlbHelpWin import MLBHelpWin

@@ -9,10 +9,14 @@ from mlbConstants import *
 class MLBListWin:
 
     def __init__(self,myscr,mycfg,data):
+        # self.data is everything
         self.data = data
+        # self.records is only what's "visible"
+        self.records = self.data[0:curses.LINES-4]
         self.mycfg = mycfg
         self.myscr = myscr
         self.current_cursor = 0
+        self.record_cursor = 0
         self.statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
         self.titlewin = curses.newwin(2,curses.COLS-1,0,0)
 
@@ -34,18 +38,60 @@ class MLBListWin:
         self.myscr.refresh()
 
     def Up(self):
-        if self.current_cursor > 0:
+        # old basic behavior
+        #if self.current_cursor > 0:
+        #    self.current_cursor -= 1
+        
+        # Are we at the top of the window 
+        # Do we have more records below record cursor?
+        # Move up a window in the records.
+        if self.current_cursor -1 < 0 and self.record_cursor - 1 > 0:
+            self.current_cursor = curses.LINES-4-1
+            if self.record_cursor - curses.LINES -4 < 0:
+                self.record_cursor = 0
+            else:
+                self.record_cursor -= curses.LINES-4
+            self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-4]
+            #raise Exception,repr(self.records)
+        # Elif we are not yet at top of window
+        elif self.current_cursor > 0:
             self.current_cursor -= 1
+        # Silent else do nothing when at top of window and top of records
+        # no negative scrolls
 
     def Down(self):
-        if self.current_cursor + 1 < len(self.data):
-            self.current_cursor += 1
+        # old behavior
+        #if self.current_cursor + 1 < len(self.data):
+        #    self.current_cursor += 1
+        
+        # Are we at bottom of window and
+        # still have more records?
+        # Move down a window.
+        if self.current_cursor + 1 >= len(self.records) and\
+           self.record_cursor + self.current_cursor + 1 < len(self.data):
+           self.record_cursor += self.current_cursor + 1
+           self.current_cursor = 0
+           self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-4]
+        # Elif not at bottom of window
+        elif self.current_cursor + 1 < self.records  and\
+            self.current_cursor + 1 < curses.LINES-4:
+            if self.current_cursor + 1 + self.record_cursor < len(self.data):
+                self.current_cursor += 1
+        # Silent else do nothing at bottom of window and bottom of records
+
 
     def PgUp(self):
         self.current_cursor = 0
+        self.record_cursor = 0
+        self.records = self.data[0:curses.LINES-4]
 
     def PgDown(self):
-        self.current_cursor = len(self.data) - 1
+        # assuming we scrolled down, we'll have len(data) % ( curses.LINES-4 )
+        # records left to display
+        remaining=len(self.data) % ( curses.LINES-4 )
+        self.records = self.data[-remaining:]
+        self.record_cursor = len(self.data)- remaining
+        self.current_cursor = len(self.records) - 1
 
     def Refresh(self):
         if len(self.data) == 0:
@@ -59,13 +105,13 @@ class MLBListWin:
 
         self.myscr.clear()
         for n in range(curses.LINES-4):
-            if n < len(self.data):
-                home = str(self.data[n][0]['home'])
-                away = str(self.data[n][0]['away'])
-                s = self.data[n][1].strftime('%l:%M %p') + ': ' +\
+            if n < len(self.records):
+                home = str(self.records[n][0]['home'])
+                away = str(self.records[n][0]['away'])
+                s = self.records[n][1].strftime('%l:%M %p') + ': ' +\
                     ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
                     ' '.join(TEAMCODES[home][1:]).strip()
-                if self.data[n][7] == 'media_archive':
+                if self.records[n][7] == 'media_archive':
                     s += ' (Archived)'
 
                 padding = curses.COLS - (len(s) + 1)
@@ -75,19 +121,19 @@ class MLBListWin:
                 s = ' '*(curses.COLS-1)
 
             if n == self.current_cursor:
-                if self.data[n][5] == 'I':
+                if self.records[n][5] == 'I':
                     # highlight and bold if in progress, else just highlight
                     cursesflags = curses.A_REVERSE|curses.A_BOLD
                 else:
                     cursesflags = curses.A_REVERSE
             else:
-                if n < len(self.data):
-                    if self.data[n][5] == 'I':
+                if n < len(self.records):
+                    if self.records[n][5] == 'I':
                         cursesflags = curses.A_BOLD
                     else:
                         cursesflags = 0
 
-            if n < len(self.data):
+            if n < len(self.records):
                 if home in self.mycfg.get('favorite') or\
                    away in self.mycfg.get('favorite'):
                     if self.mycfg.get('use_color'):
@@ -118,20 +164,23 @@ class MLBListWin:
 
     def statusRefresh(self):
         n = self.current_cursor
-        if len(self.data) == 0:
+        if len(self.records) == 0:
             status_str = "No listings available for this day."
             self.statuswin.clear()
             self.statuswin.addstr(0,0,status_str)
             self.statuswin.refresh()
             return
 
-        status_str = STATUSLINE.get(self.data[n][5],
-                                    "Unknown Flag = "+self.data[n][5])
-        if len(self.data[n][2]) + len(self.data[n][3]) == 0:
+        try:
+            status_str = STATUSLINE.get(self.records[n][5],
+                                    "Unknown Flag = "+self.records[n][5])
+        except:
+            raise Exception,"current_cursor:%s, len:%s"%(n,str(len(self.records)))
+        if len(self.records[n][2]) + len(self.records[n][3]) == 0:
             status_str += ' (No media)'
-        elif len(self.data[n][2]) == 0:
+        elif len(self.records[n][2]) == 0:
             status_str += ' (No video)'
-        elif len(self.data[n][3]) == 0:
+        elif len(self.records[n][3]) == 0:
             status_str += ' (No audio)'
 
         speedstr = SPEEDTOGGLE.get(self.mycfg.get('speed'))
@@ -169,13 +218,21 @@ class MLBListWin:
         self.myscr.addstr(0,20,URL)
         n = 1
 
+        # TODO: Implement a HelpWin(MLBListWin) class to take advantage of 
+        # scrolling
         for heading in HELPFILE:
-           self.myscr.addstr(n,0,heading[0],curses.A_UNDERLINE)
+           if n < curses.LINES-4:
+               self.myscr.addstr(n,0,heading[0],curses.A_UNDERLINE)
+           else:
+               continue
            n += 1
            for helpkeys in heading[1:]:
                for k in helpkeys:
-                   self.myscr.addstr(n,0,k)
-                   self.myscr.addstr(n,20, ': ' + KEYBINDINGS[k])
+                   if n < curses.LINES-4:
+                       self.myscr.addstr(n,0,k)
+                       self.myscr.addstr(n,20, ': ' + KEYBINDINGS[k])
+                   else:
+                       continue
                    n += 1
         self.statuswin.clear()
         self.statuswin.addstr(0,0,'Press a key to continue...')
