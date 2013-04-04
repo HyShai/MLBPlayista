@@ -641,9 +641,7 @@ class MLBSchedule:
                     for i in range(len(innings)):
                         if int(innings[i][0]) == 0:
                             start_time = innings[i][2]
-                            continue
-                        else:
-                            start_time = 0
+                            break
         else:
             if cfg.get('use_nexdef'):
                 if innings is not None:
@@ -656,7 +654,7 @@ class MLBSchedule:
                             #t=datetime.timedelta(seconds=5)
                             #n=d+t
                             #start_time=n.strftime("%H:%M:%S")
-                            continue
+                            break
                 else:
                     start_time=listing[8]
 
