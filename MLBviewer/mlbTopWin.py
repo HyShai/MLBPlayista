@@ -10,6 +10,8 @@ class MLBTopWin(MLBListWin):
 
     def __init__(self,myscr,mycfg,data):
         self.data = data
+        # data is everything, records is only what's visible
+        self.records = []
         self.mycfg = mycfg
         self.myscr = myscr
         self.current_cursor = 0
@@ -28,8 +30,8 @@ class MLBTopWin(MLBListWin):
 
         self.myscr.clear()
         for n in range(curses.LINES-4):
-            if n < len(self.data):
-                s = self.data[n][1]
+            if n < len(self.records):
+                s = self.records[n][1]
 
                 padding = curses.COLS - (len(s) + 1)
                 if n == self.current_cursor:
@@ -38,18 +40,18 @@ class MLBTopWin(MLBListWin):
                 s = ' '*(curses.COLS-1)
 
             if n == self.current_cursor:
-                if self.data[n][5] == 'I':
+                if self.records[n][5] == 'I':
                     # highlight and bold if in progress, else just highlight
                     cursesflags = curses.A_REVERSE|curses.A_BOLD
                 else:
                     cursesflags = curses.A_REVERSE
             else:
-                if n < len(self.data):
-                    if self.data[n][5] == 'I':
+                if n < len(self.records):
+                    if self.records[n][5] == 'I':
                         cursesflags = curses.A_BOLD
                     else:
                         cursesflags = 0
-            if n < len(self.data):
+            if n < len(self.records):
                 self.myscr.addstr(n+2, 0, s, cursesflags)
             else:
                 self.myscr.addstr(n+2, 0, s)
@@ -61,7 +63,7 @@ class MLBTopWin(MLBListWin):
             titlestr = "NO TOP PLAYS AVAILABLE FOR THIS GAME"
         else:
             titlestr = "TOP PLAYS AVAILABLE FOR " +\
-                self.data[self.current_cursor][0] +\
+                self.records[self.current_cursor][0] +\
                 ' (' +\
                 str(mysched.month) + '/' +\
                 str(mysched.day) + '/' +\
