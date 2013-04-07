@@ -277,3 +277,16 @@ SSTOGGLE = {
 
 
 UNSUPPORTED = 'ERROR: That key is not supported in this screen'
+
+# for line scores
+RUNNERS_ONBASE_STATUS = {
+    '0': 'None',
+    '1': 'Runner on 1B',
+    '2': 'Runner on 2B',
+    '3': 'Runner on 3B',
+    '4': 'Runners on 1B and 2B',
+    '5': 'Runners on 1B and 3B',
+    '6': 'Runners on 2B and 3B',
+    '7': 'Bases loaded',
+}
+

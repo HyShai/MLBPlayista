@@ -168,7 +168,7 @@ class MLBInningWin(MLBListWin):
         return start_time
 
                 
-    def titleRefresh(self,mysched):
+    def titleRefresh(self):
         if len(self.data) == 0:
             titlestr = 'ERROR OCCURRED IN JUMP TO INNINGS:'
         else:
