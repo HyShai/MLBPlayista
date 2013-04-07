@@ -86,7 +86,7 @@ STATUSCODES = {
 # audio and video follow functionality.  The first field will contain a tuple
 # of call letters for the various media outlets that cover that team.
 TEAMCODES = {
-    'ana': ('108', 'Los Angeles Angels of Anaheim'),
+    'ana': ('108', 'Los Angeles Angels'),
     'al' : ( None, 'American League', ''),
     'ari': ('109', 'Arizona Diamondbacks', ''),
     'atl': ('144', 'Atlanta Braves', ''),
