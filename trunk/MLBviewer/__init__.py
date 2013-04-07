@@ -27,3 +27,5 @@ from mlbTopWin import MLBTopWin
 from mlbInningWin import MLBInningWin
 from mlbOptionWin import MLBOptWin
 from mlbHelpWin import MLBHelpWin
+from mlbLineScore import MLBLineScore
+from mlbLineScoreWin import MLBLineScoreWin

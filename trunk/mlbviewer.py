@@ -308,6 +308,15 @@ def mainloop(myscr,mycfg):
             #mywin.statusWrite('Press a key to continue...',wait=-1)
             #continue
 
+        if c in ('Linescore', ord('b')):
+            CURRENT_SCREEN = 'Linescore'
+            GAMEID = listwin.records[listwin.current_cursor][6]
+            mywin.statusWrite('Retrieving linescore for %s...' % GAMEID)
+            linescore = MLBLineScore(GAMEID)
+            data = linescore.getLineData()
+            linewin = MLBLineScoreWin(myscr,mycfg,data)
+            mywin = linewin
+
         if c in ('Highlights', ord('t')):
             if mywin in ( optwin, helpwin ):
                 continue
@@ -389,6 +398,7 @@ def mainloop(myscr,mycfg):
                                   listwin.data[listwin.current_cursor],
                                   mysched)
             innwin.Refresh()
+            innwin.titleRefresh()
             try:
                 start_time = innwin.selectToPlay()
             except:
@@ -492,9 +502,7 @@ def mainloop(myscr,mycfg):
                     continue
                 streamtype = 'audio'
             elif c in ('Condensed', ord('c')):
-                if mywin == topwin:
-                    listwin.statusWrite(UNSUPPORTED,wait=2)
-                    continue
+                mywin.statusWrite('Retrieving requested media...')
                 streamtype = 'condensed'
                 try:
                     prefer[streamtype] = listwin.records[listwin.current_cursor][4][0]
