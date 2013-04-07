@@ -205,7 +205,7 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
                 'm'          : 'Bookmark a game or edit bookmark title',
                 'n'          : 'Toggle NEXDEF mode',
                 'l (or Esc)' : 'Return to listings',
-                'b'          : 'View bookmarks',
+                'b'          : 'View line score',
                 'z'          : 'Show listings debug',
                 'o'          : 'Show options debug',
                 'x (or Bksp)': 'Delete a bookmark',
@@ -223,7 +223,7 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
 HELPFILE = (
     ('COMMANDS' , ( 'Enter', 'a', 'c', 'd', 'n', 't', 's' )),
     ('LISTINGS', ( 'Up/Down', 'Left/Right', 'j', 'p', 'r' )),
-    ('SCREENS'  , ( 't', 'h', 'l (or Esc)' )),
+    ('SCREENS'  , ( 't', 'h', 'l (or Esc)', 'b' )),
     ('DEBUG'    , ( 'z', 'o' )),
     )
 
