@@ -12,6 +12,7 @@ class MLBLineScore:
         self.gameid = self.gameid.replace('-','_')
         ( year, month, day ) = self.gameid.split('_')[:3]
         self.boxUrl = 'http://gdx.mlb.com/components/game/mlb/year_%s/month_%s/day_%s/gid_%s/linescore.xml' % ( year, month, day, self.gameid )
+        self.hrUrl = self.boxUrl.replace('linescore.xml','miniscoreboard.xml')
         self.linescore = None
 
 
@@ -42,8 +43,66 @@ class MLBLineScore:
             self.linescore['pitchers'] = self.parseCurrentPitchers(xp)
         else:
             self.linescore['pitchers'] = self.parseProbablePitchers(xp)
+        if self.linescore['game']['status'] in ( 'In Progress', 
+                                                 'Completed Early',
+                                                 'Game Over',
+                                                 'Final' ):
+            self.linescore['hr'] = dict()
+            self.linescore['hr'] = self.getHrData()
         return self.linescore
 
+    def getHrData(self):
+        try: 
+            req = urllib2.Request(self.hrUrl)
+            rsp = urllib2.urlopen(req)
+        except:
+            raise
+        try:
+            xp = parse(rsp)
+        except:
+            raise
+        # initialize the structure
+        return self.parseHrData(xp)
+        
+
+    def parseHrData(self,xp):
+        out = dict()
+
+        # codes are not the same in this file so translate
+        for game in xp.getElementsByTagName('game'):
+            teamcodes = dict()
+            ( home_code , away_code ) = ( game.getAttribute('home_code'),
+                                          game.getAttribute('away_code') )
+            ( home_fcode , away_fcode ) = ( game.getAttribute('home_file_code'),
+                                            game.getAttribute('away_file_code'))
+            teamcodes[home_code] = home_fcode
+            teamcodes[away_code] = away_fcode
+        for node in xp.getElementsByTagName('home_runs'):
+            for player in node.getElementsByTagName('player'):
+                # mlb.com lists each homerun separately so track game and
+                # season totals
+                tmp = dict()
+                for attr in player.attributes.keys():
+                    tmp[attr] = player.getAttribute(attr)
+                # if we already have the player, this is more than one hr
+                # this game
+                team = teamcodes[tmp['team_code']].upper()
+                if not out.has_key(team):
+                    out[team] = dict()
+                if out[team].has_key(tmp['id']):
+                    game_hr += 1
+                else:
+                    game_hr = 1
+                    out[team][tmp['id']] = dict()
+                out[team][tmp['id']][game_hr] = ( tmp['id'], 
+                                            tmp['name_display_roster'],
+                                            teamcodes[tmp['team_code']],
+                                            game_hr,
+                                            tmp['std_hr'],    
+                                            tmp['inning'],
+                                            tmp['runners'] )
+        return out
+              
     def parseGameData(self,xp):
         out = dict()
         
