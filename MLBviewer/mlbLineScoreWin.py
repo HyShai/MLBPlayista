@@ -42,6 +42,7 @@ class MLBLineScoreWin(MLBListWin):
         self.records = []
         self.prepareLineScoreFrames()
         self.prepareActionLines()
+        self.prepareHrLine()
         n = 2
         for s in self.records:
             self.myscr.addstr(n,0,s)
@@ -94,7 +95,7 @@ class MLBLineScoreWin(MLBListWin):
         elif status in ( 'Final', 'Game Over' ):
             status_str = status
             # handle extra innings
-            if self.data['game']['inning'] != 9:
+            if self.data['game']['inning'] != '9':
                 status_str += "/%s" % self.data['game']['inning']
         else:
             status_str = status
@@ -147,7 +148,6 @@ class MLBLineScoreWin(MLBListWin):
                                        self.data['game']["%s_team_hits"%team],
                                        self.data['game']["%s_team_errors"%team])
             except:
-                #raise
                 s += '%2s%3s%3s%3s' % ( '', '0', '0', '0' )
             self.records.append(s)
         # insert a blank line before win/loss, currents, or probables
@@ -224,4 +224,37 @@ class MLBLineScoreWin(MLBListWin):
               self.data['pitchers']['away_probable_pitcher'][4] )
         self.records.append("Probables: %s" % ap_str)
         self.records.append("%11s" % (' '*11) + hp_str)
+
+    def prepareHrLine(self):
+        if not self.data.has_key('hr'):
+            return
+        ( away , home ) = ( self.data['game']['away_file_code'].upper(),
+                            self.data['game']['home_file_code'].upper() )
+        # start with a blank line before
+        self.records.append("")
+        self.records.append("HR:")
+        for team in ( away, home ):
+            s = ""
+            if not self.data['hr'].has_key(team):
+                continue
+            s += "%3s: " % team
+            for player in self.data['hr'][team]:
+                hr = len(self.data['hr'][team][player])
+                if hr > 1:
+                    hr_str = "%s %s (%s), " %\
+                        ( self.data['hr'][team][player][hr][1],
+                          str(hr),
+                          self.data['hr'][team][player][hr][4] )
+                else:
+                    hr_str = "%s (%s), " %\
+                        ( self.data['hr'][team][player][hr][1],
+                          self.data['hr'][team][player][hr][4] )
+                if len(s) + len(hr_str) < curses.COLS-1:
+                    s += hr_str
+                else:
+                    # start a new line
+                    self.records.append(s)
+                    s = hr_str
+            self.records.append(s.strip(", "))
+
 
