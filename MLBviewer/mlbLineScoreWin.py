@@ -42,6 +42,7 @@ class MLBLineScoreWin(MLBListWin):
         self.records = []
         self.prepareLineScoreFrames()
         self.prepareActionLines()
+        self.prepareInGameLine()
         self.prepareHrLine()
         n = 2
         for s in self.records:
@@ -224,6 +225,23 @@ class MLBLineScoreWin(MLBListWin):
               self.data['pitchers']['away_probable_pitcher'][4] )
         self.records.append("Probables: %s" % ap_str)
         self.records.append("%11s" % (' '*11) + hp_str)
+
+    def prepareInGameLine(self):
+        status = self.data['game']['status']
+        if status not in ( 'In Progress'):
+            return
+        if not self.data.has_key('in_game'):
+            return
+        if self.data['in_game'].has_key('last_pbp'):
+            s = "Last play: "
+            # make sure line breaks at word boundary rather than wrapping
+            for word in self.data['in_game']['last_pbp'].split(' '):
+                if len(s) + len(word) < curses.COLS-2:
+                    s += ' ' + word
+                else:
+                    self.records.append(s)
+                    s = word
+            self.records.append(s)
 
     def prepareHrLine(self):
         if not self.data.has_key('hr'):

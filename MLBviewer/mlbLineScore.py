@@ -47,8 +47,12 @@ class MLBLineScore:
                                                  'Completed Early',
                                                  'Game Over',
                                                  'Final' ):
+            hrptr = self.getHrData() 
             self.linescore['hr'] = dict()
-            self.linescore['hr'] = self.getHrData()
+            self.linescore['hr'] = self.parseHrData(hrptr)
+            if self.linescore['game']['status'] in ( 'In Progress', ):
+                self.linescore['in_game'] = dict()
+                self.linescore['in_game'] = self.parseInGameData(hrptr)
         return self.linescore
 
     def getHrData(self):
@@ -62,8 +66,22 @@ class MLBLineScore:
         except:
             raise
         # initialize the structure
-        return self.parseHrData(xp)
+        return xp
         
+    def parseInGameData(self,xp):
+        out = dict()
+
+        for ingame in xp.getElementsByTagName('in_game'):
+            out['last_pbp'] = ingame.getAttribute('last_pbp')
+            for tag in ( 'batter', 'pitcher', 'opposing_pitcher', 'ondeck', 
+                         'inhole', 'runner_on_1b', 'runner_on_2b', 
+                         'runner_on_3b' ):
+                out[tag] = dict()
+                for node in ingame.getElementsByTagName(tag):
+                    for attr in node.attributes.keys():
+                        out[tag][attr] = node.getAttribute(attr)
+        return out
+                    
 
     def parseHrData(self,xp):
         out = dict()
