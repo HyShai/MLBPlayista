@@ -290,3 +290,9 @@ RUNNERS_ONBASE_STATUS = {
     '7': 'Bases loaded',
 }
 
+RUNNERS_ONBASE_STRINGS = {
+    'runner_on_1b': 'Runner on 1B',
+    'runner_on_2b': 'Runner on 2B',
+    'runner_on_3b': 'Runner on 3B',
+}
+

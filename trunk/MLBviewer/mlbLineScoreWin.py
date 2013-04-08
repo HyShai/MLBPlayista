@@ -168,6 +168,8 @@ class MLBLineScoreWin(MLBListWin):
             self.prepareActionFinal()
         elif status in ( 'Preview', 'Pre-Game', 'Warmup' ):
             self.prepareActionPreview()
+        elif status in ( 'Postponed', ):
+            return
         else:
             raise Exception,status
 
@@ -182,11 +184,28 @@ class MLBLineScoreWin(MLBListWin):
               self.data['game']["%s"%pteam+"_file_code"].upper(),
               self.data['pitchers']['current_batter'][1],
               self.data['game']["%s"%bteam+"_file_code"].upper() )
-        self.records.append(s)
+        ondeck = self.data['in_game']['ondeck']['name_display_roster'] 
+        ondeck_str = "; On deck: %s" % ondeck
+        if len(s) + len(ondeck_str) < curses.COLS-2:
+            s += ondeck_str
+            self.records.append(s)
+        else:
+            self.records.append(s)
+            self.records.append("On deck: %s" % ondeck)
         self.records.append("")
-        s = "Runners on base: " +\
-            RUNNERS_ONBASE_STATUS[self.data['game']['runner_on_base_status']]
-        self.records.append(s)
+        #s = "Runners on base: " +\
+        #    RUNNERS_ONBASE_STATUS[self.data['game']['runner_on_base_status']]
+        if int(self.data['game']['runner_on_base_status']) > 0:
+            self.records.append("Runners on base:")
+            for base in ('runner_on_1b', 'runner_on_2b', 'runner_on_3b'):
+                if self.data['in_game'][base]['id'] != "":
+                    self.records.append("%s: %s" % \
+                        ( RUNNERS_ONBASE_STRINGS[base], 
+                          self.data['in_game'][base]['name_display_roster']))
+        else:
+            s = "Runners on base: None"
+            self.records.append(s)
+        self.records.append("")
         s = "%s-%s, %s outs" % \
             ( self.data['game']['balls'], self.data['game']['strikes'],
               self.data['game']['outs'] )
