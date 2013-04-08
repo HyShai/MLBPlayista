@@ -228,6 +228,10 @@ class MLBLineScoreWin(MLBListWin):
     def prepareHrLine(self):
         if not self.data.has_key('hr'):
             return
+        if len(self.data['hr']) == 0:
+            self.records.append("")
+            self.records.append("HR: None")
+            return
         ( away , home ) = ( self.data['game']['away_file_code'].upper(),
                             self.data['game']['home_file_code'].upper() )
         # start with a blank line before
