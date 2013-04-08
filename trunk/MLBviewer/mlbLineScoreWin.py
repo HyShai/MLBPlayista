@@ -51,9 +51,9 @@ class MLBLineScoreWin(MLBListWin):
 
     def titleRefresh(self,mysched):
         if len(self.data) == 0:
-            titlestr = "NO LINESCORE AVAILABLE FOR THIS GAME"
+            titlestr = "NO LINE SCORE AVAILABLE FOR THIS GAME"
         else:
-            titlestr = "LINESCORE FOR  " +\
+            titlestr = "LINE SCORE FOR  " +\
                 self.data['game']['id'] +\
                 ' (' +\
                 str(mysched.month) + '/' +\
