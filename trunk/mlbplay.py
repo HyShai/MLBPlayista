@@ -269,10 +269,8 @@ else:
     print 'prefer = ' + repr(stream)
     sys.exit()
 
-# The url method in the GameStream class is a beast and does everything 
-# necessary to return a url used by the player.  In most cases, it even 
-# prepares most of the necessary command-line to interact with the 
-# player command (depending on the format of that command string.)
+# Post-rewrite, the url beast has been replaced with locateMedia() which 
+# returns a raw url.  
 try:
     mediaUrl = m.locateMedia()
 except:
@@ -284,7 +282,7 @@ except:
         #sys.exit()
 
 if mycfg.get('nexdef_url'):
-    print m.nexdef_media_url
+    print mediaUrl
     sys.exit()
 
 if mycfg.get('debug'):
@@ -292,7 +290,12 @@ if mycfg.get('debug'):
     print mediaUrl
     sys.exit()
 
+# prepareMediaPlayer turns a raw url into either an mlbhls command or an 
+# rtmpdump command that pipes to stdout
 mediaUrl = m.prepareMediaPlayer(mediaUrl)
+
+# preparePlayerCmd is the second half of the pipe using *_player to play
+# media from stdin
 cmdStr   = m.preparePlayerCmd(mediaUrl,eventId,streamtype)
 
 if mycfg.get('show_player_command'):
