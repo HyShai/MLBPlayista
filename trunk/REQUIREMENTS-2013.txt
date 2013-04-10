@@ -11,7 +11,7 @@ cd mlbhls
 make
 sudo cp mlbhls /usr/bin
 
-!! YOU MUST UPDATE TO MINIMUM SVN REVISION 64 FOR MLBHLS !!
+!! YOU MUST UPDATE TO MINIMUM SVN REVISION 67 FOR MLBHLS !!
 
 2. If you were using speed=800 in $HOME/.mlb/config, change that to 1200. The
 800 stream may not exist in 2012.

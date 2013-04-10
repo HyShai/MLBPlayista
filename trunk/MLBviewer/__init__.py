@@ -26,6 +26,7 @@ from mlbListWin import MLBListWin
 from mlbTopWin import MLBTopWin
 from mlbInningWin import MLBInningWin
 from mlbOptionWin import MLBOptWin
+from mlbKeyBindings import MLBKeyBindings
 from mlbHelpWin import MLBHelpWin
 from mlbLineScore import MLBLineScore
 from mlbLineScoreWin import MLBLineScoreWin

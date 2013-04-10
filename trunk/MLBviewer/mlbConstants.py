@@ -23,6 +23,7 @@ from copy import deepcopy
 import sys
 import curses
 #from __init__ import VERSION, URL
+from mlbDefaultKeyBindings import DEFAULT_KEYBINDINGS
 
 # Set this to True if you want to see all the html pages in the logfile
 SESSION_DEBUG=True
@@ -221,10 +222,43 @@ KEYBINDINGS = { 'Up/Down'    : 'Highlight games in the current view',
               }
 
 HELPFILE = (
-    ('COMMANDS' , ( 'Enter', 'a', 'c', 'd', 'n', 't', 's' )),
+    ('COMMANDS' , ( 'Enter', 'a', 'c', 'd', 'n', 's' )),
     ('LISTINGS', ( 'Up/Down', 'Left/Right', 'j', 'p', 'r' )),
     ('SCREENS'  , ( 't', 'h', 'l (or Esc)', 'b' )),
     ('DEBUG'    , ( 'z', 'o' )),
+    )
+
+KEYBINDINGS_1 = { 
+    'UP'                  : 'Move cursor up in the current view',
+    'DOWN'                : 'Move cursor down in current view',
+    'VIDEO'               : 'Play video of highlighted game',
+    'LEFT'                : 'Navigate one day back',
+    'RIGHT'               : 'Navigate one day forward',
+    'CONDENSED_GAME'      : 'Play Condensed Game Video (if available)',
+    'JUMP'                : 'Jump to a date',
+    'NEXDEF'              : 'Toggle NEXDEF mode',
+    'LISTINGS'            : 'Return to listings',
+    'INNINGS'             : 'Jump to specific half inning',
+    'LINE_SCORE'          : 'View line score',
+    'MEDIA_DEBUG'         : 'Show media listings debug',
+    'OPTIONS'             : 'Show options debug',
+    'REFRESH'             : 'Refresh listings',
+    'QUIT'                : 'Quit mlbviewer',
+    'HELP'                : 'Display version and keybindings',
+    'AUDIO'               : 'Play Gameday audio of highlighted game',
+    'DEBUG'               : 'Toggle debug (does not change config file)',
+    'SPEED'               : 'Toggle speed (does not change config file)',
+    'COVERAGE'            : 'Toggle coverage for HOME or AWAY stream',
+    'HIGHLIGHTS'          : 'Display top plays listing for current game',
+    'HIGHLIGHTS_PLAYLIST' : 'Play all highlights as a playlist',
+    }
+
+HELPBINDINGS = (
+    ('COMMANDS', ('VIDEO', 'AUDIO', 'CONDENSED_GAME', 'DEBUG', 'NEXDEF', 
+                  'COVERAGE', 'HIGHLIGHTS_PLAYLIST', 'INNINGS') ),
+    ('LISTINGS', ('UP', 'DOWN', 'LEFT', 'RIGHT', 'JUMP', 'SPEED', 'REFRESH' )),
+    ('SCREENS', ('HIGHLIGHTS', 'HELP', 'LISTINGS', 'LINE_SCORE' )),
+    ('DEBUG', ( 'OPTIONS', 'DEBUG', 'MEDIA_DEBUG' )),
     )
 
 OPTIONS_DEBUG = ( 'video_player', 'audio_player', 'top_plays_player',
@@ -280,13 +314,13 @@ UNSUPPORTED = 'ERROR: That key is not supported in this screen'
 
 # for line scores
 RUNNERS_ONBASE_STATUS = {
-    '0': 'None',
-    '1': 'Runner on 1B',
-    '2': 'Runner on 2B',
-    '3': 'Runner on 3B',
-    '4': 'Runners on 1B and 2B',
-    '5': 'Runners on 1B and 3B',
-    '6': 'Runners on 2B and 3B',
+    '0': 'Empty',
+    '1': '1B',
+    '2': '2B',
+    '3': '3B',
+    '4': '1B and 2B',
+    '5': '1B and 3B',
+    '6': '2B and 3B',
     '7': 'Bases loaded',
 }
 

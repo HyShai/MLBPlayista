@@ -62,7 +62,7 @@ def prompter(win,prompt):
 
     return output
 
-def mainloop(myscr,mycfg):
+def mainloop(myscr,mycfg,mykeys):
 
     # some initialization
     log = open(LOGFILE, "a")
@@ -105,7 +105,7 @@ def mainloop(myscr,mycfg):
     listwin = MLBListWin(myscr,mycfg,available)
     topwin = MLBTopWin(myscr,mycfg,available)
     optwin = MLBOptWin(myscr,mycfg)
-    helpwin = MLBHelpWin(myscr,mycfg)
+    helpwin = MLBHelpWin(myscr,mykeys)
     mywin = listwin
     mywin.Splash()
     mywin.statusWrite('Logging into mlb.com...',wait=0)
@@ -170,19 +170,21 @@ def mainloop(myscr,mycfg):
             c = myscr.getch()
 
         # NAVIGATION
-        if c in ('Up', curses.KEY_UP):
+        if c in mykeys.get('UP'):
             mywin.Up()
         
-        if c in ('Down', curses.KEY_DOWN):
+        if c in mykeys.get('DOWN'):
             mywin.Down()
 
+        # TODO: haven't changed this binding but probably won't
         if c in ('Page Down', curses.KEY_NPAGE):
             mywin.PgDown()
 
+        # TODO: haven't changed this binding but probably won't
         if c in ('Page Up', curses.KEY_PPAGE):
             mywin.PgUp()
 
-        if c in ('Jump', ord('j')):
+        if c in mykeys.get('JUMP'):
             if mywin != listwin:
                 continue
             jump_prompt = 'Date (m/d/yy)? '
@@ -239,13 +241,12 @@ def mainloop(myscr,mycfg):
                 listwin.current_cursor = 0
             
 
-        if c in ('Left', curses.KEY_LEFT, ord('?') ,
-                 'Right', curses.KEY_RIGHT, ord('!')):
+        if c in mykeys.get('LEFT') or c in mykeys.get('RIGHT'):
             if mywin != listwin:
                 continue
             listwin.statusWrite('Refreshing listings...',wait=1)
             try:
-                if c in ('Left', curses.KEY_LEFT, ord('?')):
+                if c in mykeys.get('LEFT'):
                     available = mysched.Back(mycfg.get('speed'), 
                                              mycfg.get('blackout'))
                 else:
@@ -263,7 +264,7 @@ def mainloop(myscr,mycfg):
             mywin.record_cursor = 0
 
         # DEBUG : NEEDS ATTENTION FOR SCROLLING
-        if c in ('Zdebug', ord('z')):
+        if c in mykeys.get('MEDIA_DEBUG'):
             if mywin in ( optwin, helpwin ):
                 continue
             if mywin == topwin:
@@ -286,29 +287,15 @@ def mainloop(myscr,mycfg):
             mywin.statusWrite('Press a key to continue...',wait=-1)
 
         # SCREENS - NEEDS WORK FOR SCROLLING
-        if c in ('Help', ord('h')):
+        if c in mykeys.get('HELP'):
             mywin = helpwin
             #mywin.helpScreen()
 
         # NEEDS ATTENTION FOR SCROLLING
-        if c in ('OptionsDebug', ord('o')):
+        if c in mykeys.get('OPTIONS'):
             mywin = optwin
-            #myscr.clear()
-            #mywin.titlewin.addstr(0,0,'CURRENT OPTIONS SETTINGS')
-            #mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
-            #i = 2
-            # hack for now - just truncate the output to fit the screen
-            # TODO: implement an options window that scrolls
-            #for elem in OPTIONS_DEBUG[:curses.LINES-4]:
-            #    optstr = elem + ' = ' + str(mycfg.get(elem))
-            #    myscr.addstr(i,0,optstr[0:curses.COLS-1])
-            #    i+=1
-            #myscr.refresh()
-            #mywin.titlewin.refresh()
-            #mywin.statusWrite('Press a key to continue...',wait=-1)
-            #continue
 
-        if c in ('Linescore', ord('b')):
+        if c in mykeys.get('LINE_SCORE'):
             CURRENT_SCREEN = 'Linescore'
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving linescore for %s...' % GAMEID)
@@ -317,7 +304,7 @@ def mainloop(myscr,mycfg):
             linewin = MLBLineScoreWin(myscr,mycfg,data)
             mywin = linewin
 
-        if c in ('Highlights', ord('t')):
+        if c in mykeys.get('HIGHLIGHTS'):
             if mywin in ( optwin, helpwin ):
                 continue
             try:
@@ -339,7 +326,7 @@ def mainloop(myscr,mycfg):
             mywin.records = available[0:curses.LINES-4]
             mywin.record_cursor = 0
 
-        if c in ('AllHighlights', ord('y')):
+        if c in mykeys.get('HIGHLIGHTS_PLAYLIST'):
             if mywin in ( optwin, helpwin ):
                 continue
             try:
@@ -382,7 +369,7 @@ def mainloop(myscr,mycfg):
 
 
         # NEEDS ATTENTION FOR SCROLLING
-        if c in ('Innings', ord('i')):
+        if c in mykeys.get('INNINGS'):
             if mywin in ( optwin, helpwin ):
                 continue
             if mycfg.get('use_nexdef') or \
@@ -420,7 +407,7 @@ def mainloop(myscr,mycfg):
                 play.open()
                 play.waitInteractive(myscr)
                 
-        if c in ('Listings', ord('l'), ord('L'), 27, 'Refresh', ord('r')):
+        if c in mykeys.get('LISTINGS') or c in mykeys.get('REFRESH'):
             mywin = listwin
             # refresh
             mywin.statusWrite('Refreshing listings...',wait=1)
@@ -434,7 +421,7 @@ def mainloop(myscr,mycfg):
             mywin.records = available[mywin.record_cursor:mywin.record_cursor+curses.LINES-4]
 
         # TOGGLES
-        if c in ('Nexdef', ord('n')):
+        if c in mykeys.get('NEXDEF'):
             if mywin != listwin:
                 continue
             # there's got to be an easier way to do this
@@ -443,7 +430,7 @@ def mainloop(myscr,mycfg):
             else:
                 mycfg.set('use_nexdef', True)
 
-        if c in ('Coverage', ord('s')):
+        if c in mykeys.get('COVERAGE'):
             if mywin != listwin:
                 continue
             # there's got to be an easier way to do this
@@ -453,7 +440,7 @@ def mainloop(myscr,mycfg):
                 mycfg.set('coverage', coverage)
             del temp
 
-        if c in ('Speed', ord('p')):
+        if c in mykeys.get('SPEED'):
             if mywin != listwin:
                 continue
             # there's got to be an easier way to do this
@@ -484,7 +471,7 @@ def mainloop(myscr,mycfg):
             mywin.records = available[0:curses.LINES-4]
             #mywin.record_cursor = 0
 
-        if c in ('Debug', ord('d')):
+        if c in mykeys.get('DEBUG'):
             if mycfg.get('debug'):
                 mycfg.set('debug', False)
             else:
@@ -493,15 +480,17 @@ def mainloop(myscr,mycfg):
         # ACTIONS
         # The Big Daddy Action  
         # With luck, it can handle audio, video, condensed, and highlights
-        if c in ('Enter', 10, 'Audio', ord('a'), 'Condensed', ord('c')):
+        if c in mykeys.get('VIDEO') or \
+           c in mykeys.get('AUDIO') or \
+           c in mykeys.get('CONDENSED_GAME'):
             if mywin in ( optwin , helpwin ):
                 continue
-            if c in ('Audio', ord('a')):
+            if c in mykeys.get('AUDIO'):
                 if mywin == topwin:
                     listwin.statusWrite(UNSUPPORTED,wait=2)
                     continue
                 streamtype = 'audio'
-            elif c in ('Condensed', ord('c')):
+            elif c in mykeys.get('CONDENSED_GAME'):
                 mywin.statusWrite('Retrieving requested media...')
                 streamtype = 'condensed'
                 try:
@@ -573,7 +562,7 @@ def mainloop(myscr,mycfg):
             play.waitInteractive(myscr)
             # END OF Big Daddy Action
         
-        if c in ('ReloadCfg', ord('R')):
+        if c in mykeys.get('RELOAD_CONFIG'):
             # reload the configuration
             mycfg = MLBConfig(mydefaults)
             mycfg.loads(myconf)
@@ -599,7 +588,7 @@ def mainloop(myscr,mycfg):
                 mywin.statusWrite(status_str,wait=2)
             mywin.records = available[mywin.record_cursor:mywin.record_cursor+curses.LINES-4]
 
-        if c in ('Quit', ord('q')):
+        if c in mykeys.get('QUIT'):
             curses.nocbreak()
             myscr.keypad(0)
             curses.echo()
@@ -652,6 +641,12 @@ if __name__ == "__main__":
     mycfg = MLBConfig(mydefaults)
     mycfg.loads(myconf)
 
+    # DEFAULT_KEYBINDINGS is a dict() of default keybindings
+    # found in MLBviewer/mlbDefaultKeyBindings.py rather than
+    # MLBviewer/mlbConstants.py
+    mykeyfile = os.path.join(myconfdir,'keybindings')
+    mykeys = MLBKeyBindings(DEFAULT_KEYBINDINGS)
+    mykeys.loads(mykeyfile)
 
     # check to see if the start date is specified on command-line
     if len(sys.argv) > 1:
@@ -682,4 +677,4 @@ if __name__ == "__main__":
             now = now - dif
         startdate = (now.year, now.month, now.day)
 
-    curses.wrapper(mainloop, mycfg)
+    curses.wrapper(mainloop, mycfg, mykeys)

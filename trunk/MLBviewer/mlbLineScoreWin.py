@@ -184,14 +184,25 @@ class MLBLineScoreWin(MLBListWin):
               self.data['game']["%s"%pteam+"_file_code"].upper(),
               self.data['pitchers']['current_batter'][1],
               self.data['game']["%s"%bteam+"_file_code"].upper() )
-        ondeck = self.data['in_game']['ondeck']['name_display_roster'] 
-        ondeck_str = "; On deck: %s" % ondeck
-        if len(s) + len(ondeck_str) < curses.COLS-2:
-            s += ondeck_str
-            self.records.append(s)
-        else:
-            self.records.append(s)
-            self.records.append("On deck: %s" % ondeck)
+        try:
+            # avoid a strange race condition encountered once
+            # it is possible, status in linescore.xml was 'In Progress' but
+            # game had just finished and miniscoreboard.xml no longer has
+            # in_game information
+            ondeck = self.data['in_game']['ondeck']['name_display_roster'] 
+            ondeck_str = "; On deck: %s" % ondeck
+            if len(s) + len(ondeck_str) < curses.COLS-2:
+                s += ondeck_str
+                self.records.append(s)
+            else:
+                self.records.append(s)
+                self.records.append("On deck: %s" % ondeck)
+        except:
+            # it is also possible that the runner on base information below
+            # might also be out of sync between linescore.xml and 
+            # miniscoreboard.xml.  For such a rare race condition, we may want
+            # to change this from pass to return...
+            pass
         self.records.append("")
         #s = "Runners on base: " +\
         #    RUNNERS_ONBASE_STATUS[self.data['game']['runner_on_base_status']]
