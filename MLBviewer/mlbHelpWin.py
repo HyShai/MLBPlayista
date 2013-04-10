@@ -8,15 +8,30 @@ from mlbConstants import *
 
 class MLBHelpWin(MLBListWin):
 
-    def __init__(self,myscr,mycfg):
-        self.mycfg = mycfg
+    def __init__(self,myscr,mykeys):
+        self.mykeys = mykeys
         self.data = []
-        for heading in HELPFILE:
+        for heading in HELPBINDINGS:
             self.data.append((heading[0],curses.A_UNDERLINE))
             for helpkeys in heading[1:]:
                 for k in helpkeys:
-                    helpstr="%-20s: %s" % (k, KEYBINDINGS[k])
-                    self.data.append((helpstr, 0))
+                    keylist = self.mykeys.get(k)
+                    if isinstance(keylist, list):
+                        for elem in keylist:
+                            # some keys don't translate well so macro will 
+                            # convert it to something more meaningful if 
+                            # possible
+                            keystr = self.mykeys.macro(elem)
+                            helpstr="%-20s: %s" % (keystr, KEYBINDINGS_1[k])
+                            self.data.append((helpstr, 0))
+                    else:
+                        try:
+                            keystr = self.mykeys.macro(keylist)
+                        except:
+                            #raise Exception,repr(keylist) + k
+                            raise 
+                        helpstr="%-20s: %s" % (keystr, KEYBINDINGS_1[k])
+                        self.data.append((helpstr, 0))
         # data is everything, records is only what's visible
         self.records = self.data[0:curses.LINES-4]
         self.myscr = myscr

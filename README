@@ -61,6 +61,7 @@ FEATURES OF MLBVIEWER
 - Support for home and away coverage
 - Condensed games (available for non-subscribers too)
 - Top Plays for individual games (available for non-subscribers too)
+- Line score view including in game action (available for non-subscribers too)
 - Jump to specific innings
 - Start live games from beginning (premium service only)
 
@@ -90,6 +91,7 @@ COMMANDS
 Enter               : Play video of highlighted game
 a                   : Play Gameday audio of highlighted game
 c                   : Play Condensed Game Video (if available)
+i                   : Jump to specific half inning
 d                   : Toggle debug 
 n                   : Toggle NEXDEF mode
 
@@ -104,7 +106,7 @@ r                   : Refresh listings
 SCREENS
 t                   : Display top plays listing for current game
 y                   : Play all highlights as a playlist (mplayer-dependent)*
-b                   : View bookmarks
+b                   : View line score
 h                   : Display version and keybindings
 l (or Esc)          : Return to listings
  
@@ -126,6 +128,9 @@ MPLAYER
 *Playing all games as a playlist is mplayer(2)-dependent at this time.  It 
 may be enhanced in the future to support vlc.  Ask for it and it may get 
 fixed faster. :)
+
+The 'h'elp screen is now scrollable so the 'h'elp screen is no longer 
+limited to 20-some most important keys (e.g. a target display of 80x24.)
 
 ---------------------------------------------------------------------------
 
@@ -267,6 +272,70 @@ These are equivalent, just as these are also equivalent:
 debug=False
 
 debug=0
+
+------------------------------------------------------------------------
+
+NEW IN 2013: CUSTOM KEYBINDINGS
+
+Are you scratching your head over why a feature uses a non-intuitive key?
+Now you can define your own keybindings in $HOME/.mlb/keybindings.
+
+Some keys will retain unchangeable defaults to preserve inherited (over-loaded)
+behaviors (e.g. the Enter key is used for VIDEO but also used for HIGHLIGHTS),
+but you can create additional bindings for those keys (e.g. VIDEO will always
+be Enter, but you can also add a 'v' key binding.)
+
+All actions and screens map to a symbolic name and that name is linked to a
+help screen string as well as the key bindings.  This means any key bindings
+you change will automatically be updated in the Help screen as well.
+
+To create a keybinding, use NAME=key in $HOME/.mlb/keybindings where NAME
+maps to an action and keys are either specified as their printable ASCII key
+(such as a, b, c, d, etc) or the decimal ASCII value for non-printable keys
+(e.g. 10 maps to Enter and 27 to Esc.)  See "man ascii" to get the 
+decimal conversions.
+
+Valid actions and default keybindings are:
+
+These keys cannot be overridden but they can be added to:
+
+    'UP'                 : [ curses.KEY_UP, ],
+    'DOWN'               : [ curses.KEY_DOWN, ],
+    'LEFT'               : [ curses.KEY_LEFT, ],
+    'RIGHT'              : [ curses.KEY_RIGHT, ],
+    'VIDEO'              : [ 10, ],
+    'AUDIO'              : [ a ],
+    'HELP'               : [ h ],
+
+These can be overridden:
+
+    'JUMP'               : [ j ],
+    'MEDIA_DEBUG'        : [ z ],
+    'OPTIONS'            : [ o ],
+    'LINE_SCORE'         : [ b ],
+    'HIGHLIGHTS'         : [ t ],
+    'HIGHLIGHTS_PLAYLIST': [ y ],
+    'INNINGS'            : [ i ],
+    'LISTINGS'           : [ l ],
+    'REFRESH'            : [ r ],
+    'NEXDEF'             : [ n ],
+    'COVERAGE'           : [ s ],
+    'SPEED'              : [ p ],
+    'CONDENSED_GAME'     : [ c ],
+    'RELOAD_CONFIG'      : [ R ],
+    'QUIT'               : [ q ],
+    'DEBUG'              : [ d ],
+
+To add a 'v' key binding to VIDEO, change LISTINGS to 'g' and LINE_SCORE to 'l',
+create a file at $HOME/.mlb/keybindings and add the following lines to it:
+
+VIDEO=v
+LISTINGS=g
+LINE_SCORE=l
+
+To add 'Esc' binding to LISTINGS, add this line:
+
+LISTINGS=27
 
 ------------------------------------------------------------------------
 
