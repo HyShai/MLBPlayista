@@ -106,6 +106,7 @@ def mainloop(myscr,mycfg,mykeys):
     topwin = MLBTopWin(myscr,mycfg,available)
     optwin = MLBOptWin(myscr,mycfg)
     helpwin = MLBHelpWin(myscr,mykeys)
+    sbwin = None
     mywin = listwin
     mywin.Splash()
     mywin.statusWrite('Logging into mlb.com...',wait=0)
@@ -159,9 +160,8 @@ def mainloop(myscr,mycfg,mykeys):
         mywin.Refresh()
         mywin.titleRefresh(mysched)
         mywin.statusRefresh()
-        if mywin == listwin:
-            prefer = mysched.getPreferred(mywin.records[mywin.current_cursor],
-                                          mycfg)
+        if mywin in ( listwin, sbwin ):
+            prefer = mysched.getPreferred(listwin.records[listwin.current_cursor], mycfg)
 
         # And now we do input.
         inputs, outputs, excepts = select.select(inputlst, [], [])
@@ -171,9 +171,13 @@ def mainloop(myscr,mycfg,mykeys):
 
         # NAVIGATION
         if c in mykeys.get('UP'):
+            if mywin in ( sbwin , ):
+                listwin.Up()
             mywin.Up()
         
         if c in mykeys.get('DOWN'):
+            if mywin in ( sbwin , ):
+                listwin.Down()
             mywin.Down()
 
         # TODO: haven't changed this binding but probably won't
@@ -185,7 +189,7 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.PgUp()
 
         if c in mykeys.get('JUMP'):
-            if mywin != listwin:
+            if mywin not in ( listwin, sbwin ):
                 continue
             jump_prompt = 'Date (m/d/yy)? '
             if datetime.datetime(mysched.year,mysched.month,mysched.day) <> \
@@ -202,10 +206,10 @@ def mainloop(myscr,mycfg,mykeys):
                     available = mysched.Jump(ymd_tuple,
                                              mycfg.get('speed'),
                                              mycfg.get('blackout'))
-                    mywin.data = available
-                    mywin.records = available[0:curses.LINES-4]
-                    mywin.record_cursor = 0
-                    mywin.current_cursor = 0
+                    listwin.data = available
+                    listwin.records = available[0:curses.LINES-4]
+                    listwin.record_cursor = 0
+                    listwin.current_cursor = 0
                 except (KeyError,MLBXmlError),detail:
                     if cfg['debug']:
                         raise Exception,detail
@@ -213,6 +217,11 @@ def mainloop(myscr,mycfg,mykeys):
                     listwin.statusWrite("There was a parser problem with the listings page",wait=2)
                     listwin.data = []
                     listwin.current_cursor = 0
+                # recreate master scoreboard if current screen
+                if mywin in ( sbwin, ):
+                    GAMEID = listwin.records[listwin.current_cursor][6]
+                    sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                    mywin = sbwin
                 continue
             pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})(/)([0-9]{2})')
             parsed = re.match(pattern,query)
@@ -229,20 +238,25 @@ def mainloop(myscr,mycfg,mykeys):
                 available = mysched.Jump((myyear, mymonth, myday),
                                           mycfg.get('speed'),
                                           mycfg.get('blackout'))
-                mywin.data = available
-                mywin.records = available[0:curses.LINES-4]
-                mywin.record_cursor = 0
-                mywin.current_cursor = 0
+                listwin.data = available
+                listwin.records = available[0:curses.LINES-4]
+                listwin.record_cursor = 0
+                listwin.current_cursor = 0
             except (KeyError,MLBXmlError),detail:
                 if cfg['debug']:
                     raise Exception,detail
                 available = []
                 listwin.statusWrite("There was a parser problem with the listings page",wait=2)
                 listwin.current_cursor = 0
+            # recreate master scoreboard if current screen
+            if mywin in ( sbwin, ):
+                GAMEID = listwin.records[listwin.current_cursor][6]
+                sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                mywin = sbwin
             
 
         if c in mykeys.get('LEFT') or c in mykeys.get('RIGHT'):
-            if mywin != listwin:
+            if mywin not in ( listwin, sbwin ):
                 continue
             listwin.statusWrite('Refreshing listings...',wait=1)
             try:
@@ -258,10 +272,15 @@ def mainloop(myscr,mycfg,mykeys):
                 available = []
                 status_str = "There was a parser problem with the listings page"
                 mywin.statusWrite(status_str,wait=2)
-            mywin.data = available
-            mywin.records = available[0:curses.LINES-4]
-            mywin.current_cursor = 0
-            mywin.record_cursor = 0
+            listwin.data = available
+            listwin.records = available[0:curses.LINES-4]
+            listwin.current_cursor = 0
+            listwin.record_cursor = 0
+            # recreate the master scoreboard view if current screen
+            if mywin in ( sbwin, ):
+                GAMEID = listwin.records[listwin.current_cursor][6]
+                sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                mywin = sbwin
 
         # DEBUG : NEEDS ATTENTION FOR SCROLLING
         if c in mykeys.get('MEDIA_DEBUG'):
@@ -276,7 +295,10 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.titlewin.addstr(0,0,'LISTINGS DEBUG FOR ' + gameid)
             mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
             myscr.addstr(2,0,'getListings() for current_cursor:')
-            myscr.addstr(3,0,repr(mywin.records[mywin.current_cursor]))
+            if mywin in ( sbwin , ):
+                myscr.addstr(3,0,repr(listwin.records[listwin.current_cursor]))
+            else:
+                myscr.addstr(3,0,repr(mywin.records[mywin.current_cursor]))
             # hack for scrolling - don't display these lines if screen too
             # small
             if curses.LINES-4 > 14:
@@ -294,6 +316,13 @@ def mainloop(myscr,mycfg,mykeys):
         # NEEDS ATTENTION FOR SCROLLING
         if c in mykeys.get('OPTIONS'):
             mywin = optwin
+
+        if c in mykeys.get('MASTER_SCOREBOARD'):
+            listwin.PgUp()
+            GAMEID = listwin.records[listwin.current_cursor][6]
+            mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
+            sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+            mywin = sbwin
 
         if c in mykeys.get('LINE_SCORE'):
             CURRENT_SCREEN = 'Linescore'
@@ -422,7 +451,7 @@ def mainloop(myscr,mycfg,mykeys):
 
         # TOGGLES
         if c in mykeys.get('NEXDEF'):
-            if mywin != listwin:
+            if mywin not in ( listwin, sbwin ):
                 continue
             # there's got to be an easier way to do this
             if mycfg.get('use_nexdef'):
@@ -431,7 +460,7 @@ def mainloop(myscr,mycfg,mykeys):
                 mycfg.set('use_nexdef', True)
 
         if c in mykeys.get('COVERAGE'):
-            if mywin != listwin:
+            if mywin not in ( listwin, sbwin ):
                 continue
             # there's got to be an easier way to do this
             temp = COVERAGETOGGLE.copy()
@@ -441,7 +470,7 @@ def mainloop(myscr,mycfg,mykeys):
             del temp
 
         if c in mykeys.get('SPEED'):
-            if mywin != listwin:
+            if mywin not in ( listwin, sbwin ):
                 continue
             # there's got to be an easier way to do this
             if mycfg.get('use_nexdef'):
@@ -454,21 +483,21 @@ def mainloop(myscr,mycfg,mykeys):
             speeds.sort()
             newspeed = (speeds.index(int(mycfg.get('speed')))+1) % len(speeds)
             mycfg.set('speed', str(speeds[newspeed]))
-            mywin.statuswin.clear()
-            mywin.statuswin.addstr(0,0,'Refreshing listings...')
-            mywin.statuswin.refresh()
-            try:
-                available = mysched.getListings(mycfg.get('speed'),
-                                                mycfg.get('blackout'))
-            except Exception,detail:
-                myscr.clear()
-                myscr.addstr(0,0,'ERROR: %s' % str(detail))
-                myscr.addstr(3,0,'See %s for more details.'%LOGFILE)
-                myscr.refresh()
-                time.sleep(2)
-                continue
-            mywin.data = available
-            mywin.records = available[0:curses.LINES-4]
+            #mywin.statuswin.clear()
+            #mywin.statuswin.addstr(0,0,'Refreshing listings...')
+            #mywin.statuswin.refresh()
+            #try:
+            #    available = mysched.getListings(mycfg.get('speed'),
+            #                                    mycfg.get('blackout'))
+            #except Exception,detail:
+            #    myscr.clear()
+            #    myscr.addstr(0,0,'ERROR: %s' % str(detail))
+            #    myscr.addstr(3,0,'See %s for more details.'%LOGFILE)
+            #    myscr.refresh()
+            #    time.sleep(2)
+            #    continue
+            #mywin.data = available
+            #mywin.records = available[0:curses.LINES-4]
             #mywin.record_cursor = 0
 
         if c in mykeys.get('DEBUG'):
@@ -535,7 +564,7 @@ def mainloop(myscr,mycfg,mykeys):
                     continue
                 mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
                 # TODO: With scrolling change, is this 'available' or 'records'?
-                eventId  = available[listwin.current_cursor][6]
+                eventId  = listwin.records[listwin.current_cursor][6]
 
             cmdStr = mediaStream.preparePlayerCmd(mediaUrl, eventId,streamtype)
             if mycfg.get('show_player_command'):
