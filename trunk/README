@@ -62,6 +62,7 @@ FEATURES OF MLBVIEWER
 - Condensed games (available for non-subscribers too)
 - Top Plays for individual games (available for non-subscribers too)
 - Line score view including in game action (available for non-subscribers too)
+- Master Scoreboard view of listings (available to non-subscribers too)
 - Jump to specific innings
 - Start live games from beginning (premium service only)
 
@@ -107,6 +108,7 @@ SCREENS
 t                   : Display top plays listing for current game
 y                   : Play all highlights as a playlist (mplayer-dependent)*
 b                   : View line score
+m                   : Master scoreboard view
 h                   : Display version and keybindings
 l (or Esc)          : Return to listings
  
@@ -313,6 +315,7 @@ These can be overridden:
     'MEDIA_DEBUG'        : [ z ],
     'OPTIONS'            : [ o ],
     'LINE_SCORE'         : [ b ],
+    'MASTER_SCOREBOARD'  : [ m ],
     'HIGHLIGHTS'         : [ t ],
     'HIGHLIGHTS_PLAYLIST': [ y ],
     'INNINGS'            : [ i ],
