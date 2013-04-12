@@ -402,8 +402,8 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin in ( optwin, helpwin ):
                 continue
             if mycfg.get('use_nexdef') or \
-               available[listwin.current_cursor][5] in ('F', 'CG')  or \
-               available[listwin.current_cursor][7] == 'media_archive':
+               listwin.records[listwin.current_cursor][5] in ('F', 'CG')  or \
+               listwin.records[listwin.current_cursor][7] == 'media_archive':
                 pass
             else:
                 error_str = 'ERROR: Jump to innings only supported for NexDef mode and archived games.'
@@ -411,7 +411,7 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
 
             innwin = MLBInningWin(myscr, mycfg, 
-                                  listwin.data[listwin.current_cursor],
+                                  listwin.records[listwin.current_cursor],
                                   mysched)
             innwin.Refresh()
             innwin.titleRefresh()
@@ -431,7 +431,7 @@ def mainloop(myscr,mycfg,mykeys):
                 mediaUrl = mediaStream.locateMedia()
                 mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
                 cmdStr = mediaStream.preparePlayerCmd(mediaUrl,
-                                        available[listwin.current_cursor][6])
+                                     listwin.records[listwin.current_cursor][6])
                 play = MLBprocess(cmdStr)
                 play.open()
                 play.waitInteractive(myscr)
