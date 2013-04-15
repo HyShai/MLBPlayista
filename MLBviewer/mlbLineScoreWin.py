@@ -134,7 +134,10 @@ class MLBLineScoreWin(MLBListWin):
         # TODO: fixing it to 9 innings until we figure a better way to handle
         # extras
         end_inning=start_inning+9
-        last_inning=int(self.data['game']['inning'])
+        try:
+            last_inning=int(self.data['game']['inning'])
+        except:
+            last_inning = 9
         for i in range(start_inning,end_inning):
             if i > last_inning:
                 header_str += "%3s" % (' '*3)
