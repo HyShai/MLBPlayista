@@ -111,8 +111,6 @@ class MLBInningWin(MLBListWin):
         elif self.data[5] in ('F', 'CG', 'GO'):
             # remove spoiler of home victories
             latest_str += 'Game Completed'
-        elif latest > 9:
-            latest_str += 'Extra Innings'
         elif not self.innings[latest].has_key('home'):
             latest_str += 'Top ' + str(latest)
         else:
