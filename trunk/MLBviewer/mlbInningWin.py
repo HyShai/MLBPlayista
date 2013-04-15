@@ -16,7 +16,7 @@ class MLBInningWin(MLBListWin):
         self.mysched = mysched
         self.statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
         self.titlewin = curses.newwin(2,curses.COLS-1,0,0)
-        self.innings = {}
+        self.innings = dict()
         self.logfile = LOGFILE.replace('log', 'innwin.log')
         self.log = open(self.logfile, "w")
 
@@ -51,9 +51,10 @@ class MLBInningWin(MLBListWin):
                 this_event = self.data[2][0][3]
             except:
                 raise Exception,'Innings list is not availale for this game.'
-            myinnings = self.mysched.parseInningsXml(this_event,
+            self.innings = self.mysched.parseInningsXml(this_event,
                                                      self.mycfg.get('use_nexdef'))
         except Exception,detail:
+            #raise
             self.myscr.clear()
             self.myscr.addstr(2,0,'Could not parse innings: ')
             self.myscr.addstr(3,0,str(detail))
@@ -61,19 +62,6 @@ class MLBInningWin(MLBListWin):
             #time.sleep(3)
             return
   
-        for inning in range(len(myinnings)):
-            # incomplete solution to extra innings 
-            # better to not keep track of extras past 10 than to let 11th and
-            # beyond overwrite the bottom half innings
-            if inning > 20:
-                continue
-            # top half innings will be 1 - 10, 10 being extra innings
-            # bottom half innings will be top half plus 10
-            if myinnings[inning][1] == 'false':
-                self.innings[int(myinnings[inning][0]) + 10] = myinnings[inning][2]
-            else:
-                self.innings[int(myinnings[inning][0])] = myinnings[inning][2]
-
         # print header first:
         self.myscr.clear()
 
@@ -85,57 +73,50 @@ class MLBInningWin(MLBListWin):
         # skip a line, print top half innings
         inn_str = ' '*5 + '[1] [2] [3] [4] [5] [6] [7] [8] [9] [Extra]'
         latest = 0
+        city_str = dict()
         for city in ( 'away', 'home' ):
-            team = self.data[0][city]
-            if len(team) < 3:
-                pad = 1
-            else:
-                pad = 0
-            if city == 'away':
-                top_str = ' '*pad + team + ' '
-            else:
-                bot_str = ' '*pad + team + ' '
-        for i in range(21):
-            if i == 0:
-                continue
-            if self.innings.has_key(i):
-                # no spoilers for home victories
-                if i == 19:
-                    bot_str += ' [?]'
-                elif i > 10:
-                    bot_str += ' [+]'
-                    if (i - 10) >= latest:
-                        latest = i
+            team = self.data[0][city].upper()
+            city_str[city] = '%-3s '%team
+            for i in range(len(self.innings)):
+                # zero reserved for pre-game
+                if i == 0:
+                    continue
+                if self.innings.has_key(i): 
+                    if self.innings[i].has_key(city):
+                        if i > 9:
+                           if i > latest:
+                               latest = i
+                           continue
+                        # no spoilers for home victories
+                        if i == 9 and city == 'home':
+                            city_str[city] += ' [?]'
+                        else:
+                            city_str[city] += ' [+]'
+                        if i >= latest:
+                            latest = i
+                    else:
+                        city_str[city] += ' [-]'
                 else:
-                    top_str += ' [+]'
-                    latest = i
-            else:
-                # no spoilers for home victories
-                if i == 19:
-                    bot_str += ' [?]'
-                elif i > 10:
-                    bot_str += ' [-]'
-                else:
-                    top_str += ' [-]'
+                    city_str[city] += ' [-]'
         if self.mycfg.get('show_inning_frames'):
             self.myscr.addstr(7,0,'[+] = Half inning is available')
             self.myscr.addstr(8,0,'[-] = Half inning is not available')
             self.myscr.addstr(9,0,'[?] = Bottom of 9th availability is never shown to avoid spoilers')
             self.myscr.addstr(12,0,inn_str)
-            self.myscr.addstr(14,0,top_str)
-            self.myscr.addstr(16,0,bot_str)
+            self.myscr.addstr(14,0,city_str['away'])
+            self.myscr.addstr(16,0,city_str['home'])
         latest_str = 'Last available half inning is: '
         if latest == 0:
             latest_str += 'None'
         elif self.data[5] in ('F', 'CG', 'GO'):
             # remove spoiler of home victories
             latest_str += 'Game Completed'
-        elif latest < 10:
-            latest_str += 'Top ' + str(latest)
-        elif latest < 20:
-            latest_str += 'Bot ' + str(latest - 10)
-        else:
+        elif latest > 9:
             latest_str += 'Extra Innings'
+        elif not self.innings[latest].has_key('home'):
+            latest_str += 'Top ' + str(latest)
+        else:
+            latest_str += 'Bot ' + str(latest)
         self.myscr.addstr(curses.LINES-3,0,latest_str)
         self.myscr.refresh()
 
@@ -145,7 +126,7 @@ class MLBInningWin(MLBListWin):
         if jump == '':
             # return to listings
             return
-        jump_pat = re.compile(r'(B|T|E|D)([1-9])?')
+        jump_pat = re.compile(r'(B|T|E|D)(\d+)?')
         match = re.search(jump_pat, jump.upper())
         if match is None:
             self.statuswin.clear()
@@ -157,32 +138,27 @@ class MLBInningWin(MLBListWin):
             self.Debug()
             return
         elif match.groups()[0] == 'E':
-            try:
-                inning = 10
-                #start_time = self.innings[20]
-            except KeyError:
-                self.statuswin.clear()
-                self.statuswin.addstr(0,0,'You have entered invalid half inning.')
-                self.statuswin.refresh()
-                time.sleep(2)
-                return
+            inning = 10
+            half = 'away'
         elif match.groups()[1] is None:
-            statuswin.clear()
-            self.statuswin.addstr(0,0,'You have entered invalid half inning.')
+            self.statuswin.clear()
+            self.statuswin.addstr(0,0,'You have an entered invalid half inning.',curses.A_BOLD)
             self.statuswin.refresh()
             time.sleep(2)
             return
         elif match.groups()[0] == 'B':
             self.log.write('Matched ' + match.groups()[1] + ' inning.\n')
-            inning = int(match.groups()[1]) + 10
+            inning = int(match.groups()[1]) 
+            half = 'home'
         elif match.groups()[0] == 'T':
             self.log.write('Matched ' + match.groups()[1] + ' inning.\n')
             inning = int(match.groups()[1])
+            half = 'away'
         try:
-            start_time = self.innings[inning]
+            start_time = self.innings[inning][half]
         except KeyError:
             self.statuswin.clear()
-            self.statuswin.addstr(0,0,'You have entered invalid half inning. Returning to listings...')
+            self.statuswin.addstr(0,0,'You have entered an invalid half inning.',curses.A_BOLD)
             self.statuswin.refresh()
             time.sleep(3)
             return

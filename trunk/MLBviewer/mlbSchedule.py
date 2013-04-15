@@ -610,22 +610,30 @@ class MLBSchedule:
         except:
             self.error_str = "Could not parse the innings xml."
             raise Exception,self.error_str
-        out = []
+        out = dict()
         game = iptr.getElementsByTagName('game')[0]
         start_timecode = game.getAttribute('start_timecode')
         if use_nexdef:
-            out.append((0,'true',start_timecode))
+            out[0] = start_timecode
         for inning in iptr.getElementsByTagName('inningTimes'):
             number = inning.getAttribute('inning_number')
-            is_top = inning.getAttribute('top')
+            if not out.has_key(int(number)):
+                out[int(number)] = dict()
+            is_top = str(inning.getAttribute('top'))
             for inning_time in inning.getElementsByTagName('inningTime'):
                 type = inning_time.getAttribute('type')
                 if use_nexdef and type == 'SCAST':
                     time = inning_time.getAttribute('start')
-                    out.append((number, is_top, time))
+                    if is_top == "true":
+                        out[int(number)]['away'] = time
+                    else:
+                        out[int(number)]['home'] = time
                 elif use_nexdef == False and type == "FMS":
                     time = inning_time.getAttribute('start')
-                    out.append((number, is_top, time))
+                    if is_top == "true":
+                        out[int(number)]['away'] = time
+                    else:
+                        out[int(number)]['home'] = time
         return out
 
     def getStartOfGame(self,listing,cfg):
@@ -638,23 +646,17 @@ class MLBSchedule:
         if listing[5] in ('I', 'D') and start_time == 0:
             if cfg.get('live_from_start') and cfg.get('use_nexdef'):
                 if innings is not None:
-                    for i in range(len(innings)):
-                        if int(innings[i][0]) == 0:
-                            start_time = innings[i][2]
-                            break
+                    start_time = innings[0]
         else:
             if cfg.get('use_nexdef'):
                 if innings is not None:
-                    for i in range(len(innings)):
-                        if int(innings[i][0]) == 0:
-                            start_time = innings[i][2]
-                            # hack to make sure mlbhls can start at the correct
-                            # timestamp - add five seconds to published time
-                            #d=datetime.datetime.strptime(start_time, "%H:%M:%S")
-                            #t=datetime.timedelta(seconds=5)
-                            #n=d+t
-                            #start_time=n.strftime("%H:%M:%S")
-                            break
+                    start_time = innings[0]
+                    # hack to make sure mlbhls can start at the correct
+                    # timestamp - add five seconds to published time
+                    #d=datetime.datetime.strptime(start_time, "%H:%M:%S")
+                    #t=datetime.timedelta(seconds=5)
+                    #n=d+t
+                    #start_time=n.strftime("%H:%M:%S")
                 else:
                     start_time=listing[8]
 
