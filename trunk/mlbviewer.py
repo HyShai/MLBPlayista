@@ -107,6 +107,7 @@ def mainloop(myscr,mycfg,mykeys):
     optwin = MLBOptWin(myscr,mycfg)
     helpwin = MLBHelpWin(myscr,mykeys)
     sbwin = None
+    linewin = None
     mywin = listwin
     mywin.Splash()
     mywin.statusWrite('Logging into mlb.com...',wait=0)
@@ -256,9 +257,17 @@ def mainloop(myscr,mycfg,mykeys):
             
 
         if c in mykeys.get('LEFT') or c in mykeys.get('RIGHT'):
-            if mywin not in ( listwin, sbwin ):
+            if mywin not in ( listwin, sbwin, linewin ):
                 continue
-            listwin.statusWrite('Refreshing listings...',wait=1)
+            if mywin in ( listwin, sbwin ):
+                listwin.statusWrite('Refreshing listings...',wait=1)
+            # handle linescore separately
+            if mywin in ( linewin, ):
+                if c in mykeys.get('LEFT'):
+                    linewin.Left()
+                else:
+                    linewin.Right()
+                continue
             try:
                 if c in mykeys.get('LEFT'):
                     available = mysched.Back(mycfg.get('speed'), 
@@ -429,7 +438,7 @@ def mainloop(myscr,mycfg,mykeys):
                                           streamtype='video',
                                           start_time=start_time)
                 mediaUrl = mediaStream.locateMedia()
-                mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
+                mediaUrl = mediaStream.prepareMediaStreamer(mediaUrl)
                 cmdStr = mediaStream.preparePlayerCmd(mediaUrl,
                                      listwin.records[listwin.current_cursor][6])
                 play = MLBprocess(cmdStr)
@@ -520,7 +529,7 @@ def mainloop(myscr,mycfg,mykeys):
                     continue
                 streamtype = 'audio'
             elif c in mykeys.get('CONDENSED_GAME'):
-                mywin.statusWrite('Retrieving requested media...')
+                #mywin.statusWrite('Retrieving requested media...')
                 streamtype = 'condensed'
                 try:
                     prefer[streamtype] = listwin.records[listwin.current_cursor][4][0]
@@ -529,6 +538,7 @@ def mainloop(myscr,mycfg,mykeys):
                     continue
             else:
                 streamtype = 'video'
+            mywin.statusWrite('Retrieving requested media...')
 
             # for nexdef, use the innings list to find the correct start time
             if mycfg.get('use_nexdef'):
@@ -562,7 +572,7 @@ def mainloop(myscr,mycfg,mykeys):
                     myscr.refresh()
                     mywin.statusWrite('Press any key to continue',wait=-1)
                     continue
-                mediaUrl = mediaStream.prepareMediaPlayer(mediaUrl)
+                mediaUrl = mediaStream.prepareMediaStreamer(mediaUrl)
                 # TODO: With scrolling change, is this 'available' or 'records'?
                 eventId  = listwin.records[listwin.current_cursor][6]
 

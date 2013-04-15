@@ -17,6 +17,7 @@ class MLBLineScoreWin(MLBListWin):
         self.current_cursor = 0
         self.statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
         self.titlewin = curses.newwin(2,curses.COLS-1,0,0)
+        self.start_inning=1
 
     # no navigation key support yet
     def Up(self):
@@ -30,6 +31,21 @@ class MLBLineScoreWin(MLBListWin):
 
     def PgDown(self):
         return
+
+    def Left(self):
+        if self.start_inning - 9 < 1:
+            self.start_inning = 1
+        else:
+            self.start_inning -= 9
+        self.Refresh()
+
+    def Right(self):
+        last_inning = int(self.data['game']['inning'])
+        # don't try to scroll past the end of the game
+        if self.start_inning + 9 <= last_inning:
+            self.start_inning += 9
+        self.Refresh()
+
     
     def Refresh(self):
         if len(self.data) == 0:
@@ -40,7 +56,7 @@ class MLBLineScoreWin(MLBListWin):
 
         self.myscr.clear()
         self.records = []
-        self.prepareLineScoreFrames()
+        self.prepareLineScoreFrames(self.start_inning)
         self.prepareActionLines()
         self.prepareInGameLine()
         self.prepareHrLine()
@@ -88,7 +104,7 @@ class MLBLineScoreWin(MLBListWin):
         self.statuswin.refresh()
 
     # adds the line score frames to self.records
-    def prepareLineScoreFrames(self):
+    def prepareLineScoreFrames(self,start_inning=1):
         status = self.data['game']['status']
         if status in ( 'In Progress', ):
             status_str = "%s %s" % ( self.data['game']['inning_state'] ,
@@ -117,8 +133,13 @@ class MLBLineScoreWin(MLBListWin):
         header_str = team_sfmt % ( ' '*team_strlen )
         # TODO: fixing it to 9 innings until we figure a better way to handle
         # extras
-        for i in range(1,10):
-            header_str += "%3s" % str(i)
+        end_inning=start_inning+9
+        last_inning=int(self.data['game']['inning'])
+        for i in range(start_inning,end_inning):
+            if i > last_inning:
+                header_str += "%3s" % (' '*3)
+            else:
+                header_str += "%3s" % str(i)
         header_str += "%2s%3s%3s%3s" % ( "", "R", "H", "E" )
         self.records.append(header_str)
     
@@ -129,7 +150,7 @@ class MLBLineScoreWin(MLBListWin):
                 ( self.data['game']["%s_win"%team], 
                   self.data['game']["%s_loss"%team] )
             s = team_sfmt % team_str
-            for inn in range(1,10):
+            for inn in range(start_inning,end_inning):
                 if self.data['innings'].has_key(str(inn)):
                     if self.data['innings'][str(inn)].has_key(team):
                         if self.data['innings'][str(inn)][team] == "" and \
