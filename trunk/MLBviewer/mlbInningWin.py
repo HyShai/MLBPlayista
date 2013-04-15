@@ -71,7 +71,7 @@ class MLBInningWin(MLBListWin):
         self.myscr.addstr(4,0,'Enter E for Extra Innings.')
         self.myscr.addstr(5,0,'Press <Enter> to return to listings.')
         # skip a line, print top half innings
-        inn_str = ' '*5 + '[1] [2] [3] [4] [5] [6] [7] [8] [9] [Extra]'
+        inn_str = ' '*5 + '[1] [2] [3] [4] [5] [6] [7] [8] [9]'
         latest = 0
         city_str = dict()
         for city in ( 'away', 'home' ):
