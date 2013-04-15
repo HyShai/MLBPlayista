@@ -290,9 +290,9 @@ if mycfg.get('debug'):
     print mediaUrl
     sys.exit()
 
-# prepareMediaPlayer turns a raw url into either an mlbhls command or an 
+# prepareMediaStreamer turns a raw url into either an mlbhls command or an 
 # rtmpdump command that pipes to stdout
-mediaUrl = m.prepareMediaPlayer(mediaUrl)
+mediaUrl = m.prepareMediaStreamer(mediaUrl)
 
 # preparePlayerCmd is the second half of the pipe using *_player to play
 # media from stdin

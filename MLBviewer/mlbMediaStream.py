@@ -387,7 +387,7 @@ class MediaStream:
         return out
 
 
-    def prepareMediaPlayer(self,game_url):
+    def prepareMediaStreamer(self,game_url):
         if self.streamtype == 'condensed':
             return 'rtmpdump -r %s' % game_url
         elif self.cfg.get('use_nexdef') and self.streamtype != 'audio':
