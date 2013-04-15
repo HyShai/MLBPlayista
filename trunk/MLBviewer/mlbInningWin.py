@@ -20,6 +20,21 @@ class MLBInningWin(MLBListWin):
         self.logfile = LOGFILE.replace('log', 'innwin.log')
         self.log = open(self.logfile, "w")
 
+    def Debug(self):
+        self.statuswin.clear()
+        self.statuswin.addstr(0,0,'Press any key to return to listings...',curses.A_BOLD)
+        self.myscr.clear()
+        this_event = self.data[2][0][3]
+        self.titlewin.clear()
+        self.titlewin.addstr(0,0,'INNINGS DEBUG FOR %s'%this_event)
+        self.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
+        self.myscr.addstr(2,0,repr(self.innings))
+        self.myscr.refresh()
+        self.statuswin.refresh()
+        self.titlewin.refresh()
+        self.myscr.getch()
+        
+
     def Refresh(self):
         streamtype = 'video'
         if len(self.data) == 0:
@@ -47,6 +62,11 @@ class MLBInningWin(MLBListWin):
             return
   
         for inning in range(len(myinnings)):
+            # incomplete solution to extra innings 
+            # better to not keep track of extras past 10 than to let 11th and
+            # beyond overwrite the bottom half innings
+            if inning > 20:
+                continue
             # top half innings will be 1 - 10, 10 being extra innings
             # bottom half innings will be top half plus 10
             if myinnings[inning][1] == 'false':
@@ -125,7 +145,7 @@ class MLBInningWin(MLBListWin):
         if jump == '':
             # return to listings
             return
-        jump_pat = re.compile(r'(B|T|E)([1-9])?')
+        jump_pat = re.compile(r'(B|T|E|D)([1-9])?')
         match = re.search(jump_pat, jump.upper())
         if match is None:
             self.statuswin.clear()
@@ -133,9 +153,13 @@ class MLBInningWin(MLBListWin):
             self.statuswin.refresh()
             time.sleep(2)
             return
+        elif match.groups()[0] == 'D':
+            self.Debug()
+            return
         elif match.groups()[0] == 'E':
             try:
-                start_time = self.innings[10]
+                inning = 10
+                #start_time = self.innings[20]
             except KeyError:
                 self.statuswin.clear()
                 self.statuswin.addstr(0,0,'You have entered invalid half inning.')
@@ -162,6 +186,8 @@ class MLBInningWin(MLBListWin):
             self.statuswin.refresh()
             time.sleep(3)
             return
+        except UnboundLocalError:
+            raise Exception,repr(self.innings)
         self.log.write('Selected start_time = ' + str(start_time) + '\n')
         self.statusRefresh('Requesting media stream with start at %s'%str(start_time))
         audio = False
