@@ -124,7 +124,7 @@ class MLBBoxScoreWin(MLBListWin):
         for stat in PITCHING_STATS:
             header_str += '%5s' % stat
         self.data.append((header_str,curses.A_BOLD))
-        self.data.append(('',0))
+        #self.data.append(('',0))
         for pitcher in pitching['pitchers']['pitching-order']:
             name_str = pitching['pitchers'][pitcher]['name']
             # pitching note is W, L, SV info
@@ -157,8 +157,8 @@ class MLBBoxScoreWin(MLBListWin):
                 totals_str += '%6s' % pitching['era']
             else:
                 totals_str += '%5s' % pitching[stat.lower()]
-        self.data.append(('',0))
-        self.data.append((totals_str,0))
+        #self.data.append(('',0))
+        self.data.append((totals_str,curses.A_BOLD))
         
 
     # let's avoid a big indented for loop and require the team as an arg
@@ -187,7 +187,7 @@ class MLBBoxScoreWin(MLBListWin):
         for stat in BATTING_STATS:
             header_str += '%5s' % stat
         self.data.append((header_str,curses.A_BOLD))
-        self.data.append(('',0))
+        #self.data.append(('',0))
 
         # now the batters in the order just built
         for bo in batters:
@@ -206,14 +206,14 @@ class MLBBoxScoreWin(MLBListWin):
             for stat in BATTING_STATS:
                 name_str += '%5s' % batting['batters'][batter_id][stat.lower()]
             self.data.append((name_str,0))
-        self.data.append(('',0))
+        #self.data.append(('',0))
         # print totals
         totals_str = 'Totals'
         dots = DOTS_LEN - len(totals_str)
         totals_str += ' ' + dots*'.'
         for stat in BATTING_STATS:
             totals_str += '%5s' % batting[stat.lower()]
-        self.data.append((totals_str,0))
+        self.data.append((totals_str,curses.A_BOLD))
         # and the batting-note...
         if len(batting['batting-note']) > 0:
             self.data.append(('',0))
