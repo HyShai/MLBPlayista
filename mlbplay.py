@@ -125,6 +125,8 @@ if len(sys.argv) > 1:
             parsed = check_bool(split[1])
             if parsed != None:
                 mycfg.set('debug', parsed)
+        elif split[0] in ( 'inning', 'i' ):
+            mycfg.set('start_inning', split[1]) 
         # Listing debug: z=1
         elif split[0] in ( 'zdebug', 'z' ):
             parsed = check_bool(split[1])
@@ -245,6 +247,39 @@ mycfg.set('cookies', {})
 mycfg.set('cookies', session.cookies)
 mycfg.set('cookie_jar', session.cookie_jar)
 
+# Jump to innings returns a start_time other than the default behavior
+if mycfg.get('start_inning') is not None:
+    streamtype = 'video'
+    jump_pat = re.compile(r'(B|T|E|D)(\d+)?')
+    match = re.search(jump_pat, mycfg.get('start_inning').upper())
+    innings = mysched.parseInningsXml(stream[3], mycfg)
+    if match is not None:
+        if match.groups()[0] == 'D':
+            print "retrieving innings index for %s" % stream[3]
+            print repr(innings)
+            sys.exit()
+        elif match.groups()[0] not in ('T', 'B', 'E' ):
+            print "You have entered an invalid half inning."
+            sys.exit()
+        elif match.groups()[1] is None:
+            print "You have entered an invalid half inning."
+            sys.exit()
+        elif match.groups()[0] == 'T':
+            half = 'away'
+            inning = int(match.groups()[1])
+        elif match.groups()[0] == 'B':
+            half = 'home'
+            inning = int(match.groups()[1])
+        elif match.groups()[0] == 'E':
+            half = 'away'
+            inning = 10
+    try:
+        start_time = innings[inning][half]
+    except:
+        print "You have entered an invalid or unavailable half inning."
+        sys.exit()
+        
+
 # Once the correct media tuple has been assigned to stream, create the 
 # MediaStream object for the correct type of media
 if stream is not None:
@@ -253,9 +288,13 @@ if stream is not None:
                         cfg=mycfg,
                         streamtype='audio')
     elif streamtype in ( 'video', 'condensed'):
-        start_time = 0
+        try:
+            start_time
+        except NameError:
+            start_time = 0
         if mycfg.get('use_nexdef'):
-            start_time = mysched.getStartOfGame(listing, mycfg)
+            if mycfg.get('start_inning') is None:
+                start_time = mysched.getStartOfGame(listing, mycfg)
         m = MediaStream(stream, session=session,
                         streamtype=streamtype,
                         cfg=mycfg,start_time=start_time)
