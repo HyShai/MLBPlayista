@@ -240,6 +240,7 @@ KEYBINDINGS_1 = {
     'LISTINGS'            : 'Return to listings',
     'INNINGS'             : 'Jump to specific half inning',
     'LINE_SCORE'          : 'View line score',
+    'BOX_SCORE'           : 'View box score',
     'MASTER_SCOREBOARD'   : 'Master scoreboard view',
     'MEDIA_DEBUG'         : 'Show media listings debug',
     'OPTIONS'             : 'Show options debug',
@@ -258,7 +259,7 @@ HELPBINDINGS = (
     ('COMMANDS', ('VIDEO', 'AUDIO', 'CONDENSED_GAME', 'DEBUG', 'NEXDEF', 
                   'COVERAGE', 'HIGHLIGHTS_PLAYLIST', 'INNINGS') ),
     ('LISTINGS', ('UP', 'DOWN', 'LEFT', 'RIGHT', 'JUMP', 'SPEED', 'REFRESH' )),
-    ('SCREENS', ('HIGHLIGHTS', 'HELP', 'LISTINGS', 'LINE_SCORE',
+    ('SCREENS', ('HIGHLIGHTS', 'HELP', 'LISTINGS', 'LINE_SCORE', 'BOX_SCORE',
      'MASTER_SCOREBOARD' ) ),
     ('DEBUG', ( 'OPTIONS', 'DEBUG', 'MEDIA_DEBUG' )),
     )
