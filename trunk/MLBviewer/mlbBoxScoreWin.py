@@ -4,6 +4,8 @@ import curses
 import time
 from mlbListWin import MLBListWin
 from mlbConstants import *
+from xml.dom.minidom import parseString
+import xml.dom.minidom
 
 class MLBBoxScoreWin(MLBListWin):
 
@@ -17,9 +19,6 @@ class MLBBoxScoreWin(MLBListWin):
         self.record_cursor = 0
         self.statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
         self.titlewin = curses.newwin(2,curses.COLS-1,0,0)
-        # scrolling is uneven in box score - want to highlight
-        # individual batters and pitchers but possibly not the text blobs
-        self.meta = []
 
     def Refresh(self):
         if len(self.boxdata) == 0:
@@ -32,34 +31,40 @@ class MLBBoxScoreWin(MLBListWin):
         self.data = []
         self.prepareBattingLines('away')
         if len(self.data) > 0:
-            self.data.append(" ")
-            self.data.append("TODO: BATTING AND FIELDING NOTES GO HERE")
-            self.data.append(" ")
+            self.data.append(('',0))
+        for blob in self.boxdata['batting']['away']['batting-data']:
+            self.parseDataBlob(blob)
         self.prepareBattingLines('home')
         if len(self.data) > 0:
-            self.data.append(" ")
-            self.data.append("TODO: BATTING AND FIELDING NOTES GO HERE")
-            self.data.append(" ")
+            self.data.append(('',0))
+        for blob in self.boxdata['batting']['home']['batting-data']:
+            self.parseDataBlob(blob)
         self.preparePitchingLines('away')
         if len(self.data) > 0:
-            self.data.append(" ")
+            self.data.append(('',0))
+        for blob in self.boxdata['pitching']['away']['pitching-data']:
+            self.parseDataBlob(blob)
         self.preparePitchingLines('home')
         if len(self.data) > 0:
-            self.data.append(" ")
-            self.data.append("TODO: PITCHING NOTES GO HERE")
-            self.data.append(" ")
-            self.data.append("TODO: UMPIRES, ATTENDANCE, ETC GO HERE")
-        #self.prepareGameLines()
+            self.data.append(('',0))
+        for blob in self.boxdata['pitching']['home']['pitching-data']:
+            self.parseDataBlob(blob)
+        if len(self.data) > 0:
+            self.data.append(('',0))
+        self.parseDataBlob(self.boxdata['game_info'])
+
+        # all the lines above created the self.data list, slice it to visible
         self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-4]
         n = 0
         for s in self.records:
+            text=s[0]
             if n == self.current_cursor:
-                pad = curses.COLS-1 - len(s)
+                pad = curses.COLS-1 - len(text)
                 if pad > 0:
-                    s += ' '*pad
-                self.myscr.addstr(n+2,0,s,curses.A_REVERSE)
+                    text += ' '*pad
+                self.myscr.addstr(n+2,0,text,s[1]|curses.A_REVERSE)
             else:
-                self.myscr.addstr(n+2,0,s)
+                self.myscr.addstr(n+2,0,text,s[1])
             n+=1
         self.myscr.refresh()
 
@@ -75,7 +80,7 @@ class MLBBoxScoreWin(MLBListWin):
                 str(mysched.year) + ' ' +\
                 ')'
 
-        titlestr += "[INCOMPLETE]"
+        #titlestr += "[TESTING]"
 
         padding = curses.COLS - (len(titlestr) + 6)
         titlestr += ' '*padding
@@ -89,7 +94,8 @@ class MLBBoxScoreWin(MLBListWin):
     def statusRefresh(self):
         n = self.current_cursor
 
-        status_str = '[INCOMPLETE] Press L to return to listings...'
+        #status_str = '[TESTING] Press L to return to listings...'
+        status_str = 'Press L to return to listings...'
         #status_str = 'd_len=%s, r_len=%s, cc=%s, rc=%s, cl_-4: %s' %\
         #    ( str(len(self.data)), str(len(self.records)),
         #      str(self.current_cursor), str(self.record_cursor),
@@ -117,8 +123,8 @@ class MLBBoxScoreWin(MLBListWin):
         header_str += ' ' + dots*'.'
         for stat in PITCHING_STATS:
             header_str += '%5s' % stat
-        self.data.append(header_str)
-        self.data.append('')
+        self.data.append((header_str,curses.A_BOLD))
+        self.data.append(('',0))
         for pitcher in pitching['pitchers']['pitching-order']:
             name_str = pitching['pitchers'][pitcher]['name']
             # pitching note is W, L, SV info
@@ -136,7 +142,7 @@ class MLBBoxScoreWin(MLBListWin):
                     name_str += '%6s' % pitching['pitchers'][pitcher]['era']
                 else:
                     name_str += '%5s' % pitching['pitchers'][pitcher][stat.lower()]
-            self.data.append(name_str)
+            self.data.append((name_str,0))
         # print totals
         totals_str = 'Totals'
         dots = DOTS_LEN - len(totals_str)
@@ -151,8 +157,8 @@ class MLBBoxScoreWin(MLBListWin):
                 totals_str += '%6s' % pitching['era']
             else:
                 totals_str += '%5s' % pitching[stat.lower()]
-        self.data.append('')
-        self.data.append(totals_str)
+        self.data.append(('',0))
+        self.data.append((totals_str,0))
         
 
     # let's avoid a big indented for loop and require the team as an arg
@@ -180,8 +186,8 @@ class MLBBoxScoreWin(MLBListWin):
         header_str += ' ' + dots*'.'
         for stat in BATTING_STATS:
             header_str += '%5s' % stat
-        self.data.append(header_str)
-        self.data.append('')
+        self.data.append((header_str,curses.A_BOLD))
+        self.data.append(('',0))
 
         # now the batters in the order just built
         for bo in batters:
@@ -199,18 +205,18 @@ class MLBBoxScoreWin(MLBListWin):
             # now the stats
             for stat in BATTING_STATS:
                 name_str += '%5s' % batting['batters'][batter_id][stat.lower()]
-            self.data.append(name_str)
-        self.data.append('')
+            self.data.append((name_str,0))
+        self.data.append(('',0))
         # print totals
         totals_str = 'Totals'
         dots = DOTS_LEN - len(totals_str)
         totals_str += ' ' + dots*'.'
         for stat in BATTING_STATS:
             totals_str += '%5s' % batting[stat.lower()]
-        self.data.append(totals_str)
+        self.data.append((totals_str,0))
         # and the batting-note...
         if len(batting['batting-note']) > 0:
-            self.data.append('')
+            self.data.append(('',0))
             for bnote in batting['batting-note']:
                 # batting-note can be multi-line, break it naturally
                 if len(str(bnote)) > curses.COLS-1:
@@ -219,10 +225,44 @@ class MLBBoxScoreWin(MLBListWin):
                         if len(tmp) + len(word) + 1 < curses.COLS-1:
                             tmp += word + ' '
                         else:
-                            self.data.append(tmp.strip())
+                            self.data.append((tmp.strip(),0))
                             tmp = word + ' '
-                    self.data.append(tmp.strip())
+                    self.data.append((tmp.strip(),0))
                     tmp = ''
                 else:
-                    self.data.append(str(bnote))
+                    self.data.append((str(bnote),0))
 
+    def parseDataBlob(self,blob):
+        data='<data>'+blob.childNodes[0].data+'</data>'
+        dptr=parseString(data)
+        tmp_str=''
+        for elem in dptr.childNodes[0].childNodes:
+            if elem.nodeName == 'b':
+                tmp_str += elem.childNodes[0].nodeValue
+            elif elem.nodeName == 'span':
+                for c_elem in elem.childNodes:
+                    if c_elem.nodeName == 'b':
+                        tmp_str += c_elem.childNodes[0].nodeValue
+                    elif c_elem.nodeType == elem.TEXT_NODE:
+                        if len(tmp_str) + len(c_elem.nodeValue) > curses.COLS-1:
+                            tmp_str1 = tmp_str + ' '
+                            for word in c_elem.nodeValue.split(' '):
+                                if len(tmp_str1) + len(word) + 1 > curses.COLS-1:
+                                    self.data.append((tmp_str1.strip(),0))
+                                    tmp_str1 = word + ' '
+                                else:
+                                    tmp_str1 += word + ' '
+                            # pack any remainder back into tmp_str
+                            tmp_str = tmp_str1
+                        else:
+                            tmp_str += c_elem.nodeValue
+                    elif c_elem.nodeName == 'br':
+                        self.data.append((tmp_str,0))
+                        tmp_str=''
+            elif elem.nodeType == elem.TEXT_NODE:
+                tmp_str += elem.nodeValue
+            elif elem.nodeName == 'br':
+                self.data.append((tmp_str,0))
+                tmp_str=''
+
+        
