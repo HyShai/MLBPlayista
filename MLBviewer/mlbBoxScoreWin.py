@@ -260,7 +260,18 @@ class MLBBoxScoreWin(MLBListWin):
                         self.data.append((tmp_str,0))
                         tmp_str=''
             elif elem.nodeType == elem.TEXT_NODE:
-                tmp_str += elem.nodeValue
+                if len(tmp_str) + len(elem.nodeValue) > curses.COLS-1:
+                    tmp_str1 = tmp_str + ' '
+                    for word in elem.nodeValue.split(' '):
+                        if len(tmp_str1) + len(word) + 1 > curses.COLS-1:
+                            self.data.append((tmp_str1.strip(),0))
+                            tmp_str1 = word + ' '
+                        else:
+                            tmp_str1 += word + ' ' 
+                    # pack any remainder back into tmp_str
+                    tmp_str = tmp_str1
+                else:
+                    tmp_str += elem.nodeValue
             elif elem.nodeName == 'br':
                 self.data.append((tmp_str,0))
                 tmp_str=''
