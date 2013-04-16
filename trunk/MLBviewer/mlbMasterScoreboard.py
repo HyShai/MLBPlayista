@@ -3,6 +3,7 @@ from xml.dom.minidom import parseString
 from xml.dom import *
 import urllib2
 import datetime
+import time
 
 class MLBMasterScoreboard:
 
@@ -24,8 +25,12 @@ class MLBMasterScoreboard:
             raise
         try:
             xp = parse(rsp)
-        except:
-            raise
+        except urllib2.URLError:
+            #self.myscr.clear()
+            self.statuswin.clear()
+            self.statuswin.addstr(0,0,'Could not retrieve master_scoreboard.xml',curses.A_BOLD)
+            time.sleep(2)
+            return
         # if we got this far, initialize the data structure
         for game in xp.getElementsByTagName('game'):
             tmp = dict()

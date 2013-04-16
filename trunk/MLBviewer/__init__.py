@@ -32,3 +32,5 @@ from mlbLineScore import MLBLineScore
 from mlbLineScoreWin import MLBLineScoreWin
 from mlbMasterScoreboard import MLBMasterScoreboard
 from mlbMasterScoreboardWin import MLBMasterScoreboardWin
+from mlbBoxScore import MLBBoxScore
+from mlbBoxScoreWin import MLBBoxScoreWin
