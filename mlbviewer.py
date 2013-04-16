@@ -67,7 +67,6 @@ def mainloop(myscr,mycfg,mykeys):
     # some initialization
     log = open(LOGFILE, "a")
     DISABLED_FEATURES = []
-    CURRENT_SCREEN = 'listings'
     RESTORE_SPEED = mycfg.get('speed')
 
     # DEPRECATE free_condensed as it is not needed for non-subscribers
@@ -108,6 +107,7 @@ def mainloop(myscr,mycfg,mykeys):
     helpwin = MLBHelpWin(myscr,mykeys)
     sbwin = None
     linewin = None
+    boxwin = None
     mywin = listwin
     mywin.Splash()
     mywin.statusWrite('Logging into mlb.com...',wait=0)
@@ -333,8 +333,15 @@ def mainloop(myscr,mycfg,mykeys):
             sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
             mywin = sbwin
 
+        if c in mykeys.get('BOX_SCORE'):
+            GAMEID = listwin.records[listwin.current_cursor][6]
+            mywin.statusWrite('Retrieving box score for %s...' % GAMEID)
+            boxscore=MLBBoxScore(GAMEID)
+            data = boxscore.getBoxData()
+            boxwin = MLBBoxScoreWin(myscr,mycfg,data)
+            mywin = boxwin
+
         if c in mykeys.get('LINE_SCORE'):
-            CURRENT_SCREEN = 'Linescore'
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving linescore for %s...' % GAMEID)
             linescore = MLBLineScore(GAMEID)

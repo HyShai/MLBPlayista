@@ -14,6 +14,7 @@ DEFAULT_KEYBINDINGS = {
     'MEDIA_DEBUG'        : [ ord('z') ],
     'OPTIONS'            : [ ord('o') ],
     'LINE_SCORE'         : [ ord('b') ],
+    'BOX_SCORE'          : [ ord('x') ],
     'MASTER_SCOREBOARD'  : [ ord('m') ],
     'HIGHLIGHTS'         : [ ord('t') ],
     'HIGHLIGHTS_PLAYLIST': [ ord('y') ],
