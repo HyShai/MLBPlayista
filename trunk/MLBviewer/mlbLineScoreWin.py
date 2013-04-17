@@ -114,7 +114,7 @@ class MLBLineScoreWin(MLBListWin):
             # handle extra innings
             if self.data['game']['inning'] != '9':
                 status_str += "/%s" % self.data['game']['inning']
-        elif status in ( 'Delayed Start', ):
+        elif status in ( 'Delayed Start', 'Delayed' ):
             status_str = status
             if self.data['game']['reason'] != "":
                 status_str += ": %s" % self.data['game']['reason'] 
