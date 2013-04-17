@@ -118,6 +118,8 @@ class MLBLineScoreWin(MLBListWin):
             status_str = status
             if self.data['game']['reason'] != "":
                 status_str += ": %s" % self.data['game']['reason'] 
+            if self.data['game'].has_key('resume_date'):
+                status_str += " (Completion on %s)" % self.data['game']['resume_date']
         else:
             status_str = status
         self.records.append(status_str)
@@ -192,13 +194,13 @@ class MLBLineScoreWin(MLBListWin):
     #     for future games, print the probable pitchers
     def prepareActionLines(self):
         status = self.data['game']['status']
-        if status in ( 'In Progress', 'Delayed' ):
+        if status in ( 'In Progress', 'Delayed', 'Suspended' ):
             self.prepareActionInProgress()
         elif status in ( 'Final', 'Game Over', 'Completed Early' ):
             self.prepareActionFinal()
         elif status in ( 'Preview', 'Pre-Game', 'Warmup', 'Delayed Start' ):
             self.prepareActionPreview()
-        elif status in ( 'Postponed', 'Suspended' ):
+        elif status in ( 'Postponed', ):
             return
         else:
             raise Exception,status
@@ -209,11 +211,12 @@ class MLBLineScoreWin(MLBListWin):
             ( pteam, bteam ) = ( 'home', 'away' )
         else:
             ( pteam, bteam ) = ( 'away', 'home' )
-        s = "Pitching: %s (%s); Batting: %s (%s)" % \
-            ( self.data['pitchers']['current_pitcher'][1],
-              self.data['game']["%s"%pteam+"_file_code"].upper(),
-              self.data['pitchers']['current_batter'][1],
-              self.data['game']["%s"%bteam+"_file_code"].upper() )
+        if status not in ( 'Suspended', ):
+            s = "Pitching: %s (%s); Batting: %s (%s)" % \
+                ( self.data['pitchers']['current_pitcher'][1],
+                  self.data['game']["%s"%pteam+"_file_code"].upper(),
+                  self.data['pitchers']['current_batter'][1],
+                  self.data['game']["%s"%bteam+"_file_code"].upper() )
         try:
             # avoid a strange race condition encountered once
             # it is possible, status in linescore.xml was 'In Progress' but
@@ -288,7 +291,7 @@ class MLBLineScoreWin(MLBListWin):
 
     def prepareInGameLine(self):
         status = self.data['game']['status']
-        if status not in ( 'In Progress'):
+        if status not in ( 'In Progress', 'Suspended' ):
             return
         if not self.data.has_key('in_game'):
             return
