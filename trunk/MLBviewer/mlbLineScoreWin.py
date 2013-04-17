@@ -190,7 +190,7 @@ class MLBLineScoreWin(MLBListWin):
     #     for future games, print the probable pitchers
     def prepareActionLines(self):
         status = self.data['game']['status']
-        if status in ( 'In Progress', ):
+        if status in ( 'In Progress', 'Delayed' ):
             self.prepareActionInProgress()
         elif status in ( 'Final', 'Game Over', 'Completed Early' ):
             self.prepareActionFinal()
