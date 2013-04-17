@@ -114,7 +114,7 @@ class MLBLineScoreWin(MLBListWin):
             # handle extra innings
             if self.data['game']['inning'] != '9':
                 status_str += "/%s" % self.data['game']['inning']
-        elif status in ( 'Delayed Start', 'Delayed', 'Postponed' ):
+        elif status in ( 'Delayed Start', 'Delayed', 'Postponed', 'Suspended' ):
             status_str = status
             if self.data['game']['reason'] != "":
                 status_str += ": %s" % self.data['game']['reason'] 
@@ -198,7 +198,7 @@ class MLBLineScoreWin(MLBListWin):
             self.prepareActionFinal()
         elif status in ( 'Preview', 'Pre-Game', 'Warmup', 'Delayed Start' ):
             self.prepareActionPreview()
-        elif status in ( 'Postponed', ):
+        elif status in ( 'Postponed', 'Suspended' ):
             return
         else:
             raise Exception,status
