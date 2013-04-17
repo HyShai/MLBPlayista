@@ -68,16 +68,24 @@ class MLBMasterScoreboardWin(MLBListWin):
             away_str = ' P: %s; %s-%s, %s outs' % \
                 ( game[gid]['in_game']['pitcher']['name_display_roster'],
                   game[gid]['b'], game[gid]['s'], game[gid]['o'] )
-        inning_str = '%s %s' % ( game[gid]['inning_state'],
-                                 game[gid]['inning'] )
+        if status in ( 'Delayed', ):
+            inning_str = 'Delayed'
+        else:
+            inning_str = '%s %s' % ( game[gid]['inning_state'],
+                                     game[gid]['inning'] )
         self.data.append("%-13s %3s %3s%3s%3s %s" % \
                 ( inning_str, game[gid]['away_file_code'].upper(),
                   game[gid]['totals']['r']['away'],
                   game[gid]['totals']['h']['away'],
                   game[gid]['totals']['e']['away'],
                   away_str ) )
+        if status in ( 'Delayed', ):
+            home_pad = '%s %s' % ( game[gid]['inning_state'],
+                                   game[gid]['inning'] )
+        else:
+            home_pad = ' '*13
         self.data.append("%-13s %3s %3s%3s%3s %s" % \
-                ( (' '*13), game[gid]['home_file_code'].upper(),
+                ( home_pad, game[gid]['home_file_code'].upper(),
                   game[gid]['totals']['r']['home'],
                   game[gid]['totals']['h']['home'],
                   game[gid]['totals']['e']['home'],
