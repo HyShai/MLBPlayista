@@ -444,7 +444,12 @@ def mainloop(myscr,mycfg,mykeys):
                                           coverage=prefer['video'][1],
                                           streamtype='video',
                                           start_time=start_time)
-                mediaUrl = mediaStream.locateMedia()
+                try:
+                    mediaUrl = mediaStream.locateMedia()
+                except:
+                    mywin.errorScreen('An error occurred in locateMedia(): %s'%\
+                                      mediaStream.error_str)
+                    continue
                 mediaUrl = mediaStream.prepareMediaStreamer(mediaUrl)
                 cmdStr = mediaStream.preparePlayerCmd(mediaUrl,
                                      listwin.records[listwin.current_cursor][6])

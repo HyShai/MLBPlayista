@@ -249,6 +249,7 @@ class MLBListWin:
             raise
         self.myscr.clear()
         self.myscr.addstr(0,0,errMsg)
+        self.myscr.addstr(2,0,'See %s for more details.' % LOGFILE)
         self.myscr.refresh()
         self.statuswin.clear()
         self.statuswin.addstr(0,0,'Press a key to continue...')
