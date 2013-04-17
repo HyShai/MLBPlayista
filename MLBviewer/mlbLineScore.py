@@ -39,18 +39,19 @@ class MLBLineScore:
         status = self.linescore['game']['status']
         if status in ('Final', 'Game Over'):
             self.linescore['pitchers'] = self.parseWinLossPitchers(xp)
-        elif status == 'In Progress':
+        elif status in ( 'In Progress', 'Delayed' ):
             self.linescore['pitchers'] = self.parseCurrentPitchers(xp)
         else:
             self.linescore['pitchers'] = self.parseProbablePitchers(xp)
         if self.linescore['game']['status'] in ( 'In Progress', 
+                                                 'Delayed',
                                                  'Completed Early',
                                                  'Game Over',
                                                  'Final' ):
             hrptr = self.getHrData() 
             self.linescore['hr'] = dict()
             self.linescore['hr'] = self.parseHrData(hrptr)
-            if self.linescore['game']['status'] in ( 'In Progress', ):
+            if self.linescore['game']['status'] in ( 'In Progress', 'Delayed' ):
                 self.linescore['in_game'] = dict()
                 self.linescore['in_game'] = self.parseInGameData(hrptr)
         return self.linescore
