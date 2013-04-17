@@ -114,13 +114,15 @@ class MLBLineScoreWin(MLBListWin):
             # handle extra innings
             if self.data['game']['inning'] != '9':
                 status_str += "/%s" % self.data['game']['inning']
-        elif status in ( 'Delayed Start', 'Delayed' ):
+        elif status in ( 'Delayed Start', 'Delayed', 'Postponed' ):
             status_str = status
             if self.data['game']['reason'] != "":
                 status_str += ": %s" % self.data['game']['reason'] 
         else:
             status_str = status
         self.records.append(status_str)
+        if self.data['game'].has_key('description'):
+            self.records.append(self.data['game']['description'])
         # insert blank line before header row
         self.records.append("")
         
