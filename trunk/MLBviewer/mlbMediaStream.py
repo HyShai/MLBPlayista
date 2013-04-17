@@ -179,6 +179,7 @@ class MediaStream:
             self.log.write("See %s for XML response.\n"%ERRORLOG_1)
             err1 = open(ERRORLOG_1, 'w')
             reply.writexml(err1)
+            err1.close()
             self.error_str = SOAPCODES[status_code]
             raise Exception,self.error_str
         else:
