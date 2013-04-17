@@ -45,13 +45,15 @@ class MLBLineScore:
             self.linescore['pitchers'] = self.parseProbablePitchers(xp)
         if self.linescore['game']['status'] in ( 'In Progress', 
                                                  'Delayed',
+                                                 'Suspended',
                                                  'Completed Early',
                                                  'Game Over',
                                                  'Final' ):
             hrptr = self.getHrData() 
             self.linescore['hr'] = dict()
             self.linescore['hr'] = self.parseHrData(hrptr)
-            if self.linescore['game']['status'] in ( 'In Progress', 'Delayed' ):
+            if self.linescore['game']['status'] in ( 'In Progress', 'Delayed', 
+                                                     'Suspended' ):
                 self.linescore['in_game'] = dict()
                 self.linescore['in_game'] = self.parseInGameData(hrptr)
         return self.linescore
