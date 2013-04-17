@@ -37,7 +37,7 @@ class MLBMasterScoreboardWin(MLBListWin):
         for game in self.sb:
             gid = game.keys()[0]
             status = game[gid]['status']
-            if status in ( 'In Progress', 'Delayed' ):
+            if status in ( 'In Progress', 'Delayed', 'Suspended' ):
                 self.parseInGameData(game)
             elif status in ( 'Game Over' , 'Final', 'Completed Early' ):
                 self.parseFinalGameData(game)
@@ -68,8 +68,8 @@ class MLBMasterScoreboardWin(MLBListWin):
             away_str = ' P: %s; %s-%s, %s outs' % \
                 ( game[gid]['in_game']['pitcher']['name_display_roster'],
                   game[gid]['b'], game[gid]['s'], game[gid]['o'] )
-        if status in ( 'Delayed', ):
-            inning_str = 'Delayed'
+        if status in ( 'Delayed', 'Suspended' ):
+            inning_str = status
         else:
             inning_str = '%s %s' % ( game[gid]['inning_state'],
                                      game[gid]['inning'] )
@@ -79,7 +79,7 @@ class MLBMasterScoreboardWin(MLBListWin):
                   game[gid]['totals']['h']['away'],
                   game[gid]['totals']['e']['away'],
                   away_str ) )
-        if status in ( 'Delayed', ):
+        if status in ( 'Delayed', 'Suspended' ):
             home_pad = '%s %s' % ( game[gid]['inning_state'],
                                    game[gid]['inning'] )
         else:
