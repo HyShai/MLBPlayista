@@ -43,7 +43,7 @@ class MLBMasterScoreboardWin(MLBListWin):
                 self.parseFinalGameData(game)
             elif status in ( 'Preview', 'Pre-Game', 'Warmup', 'Delayed Start' ):
                 self.parsePreviewGameData(game)
-            elif status in ( 'Postponed' ):
+            elif status in ( 'Postponed', 'Suspended' ):
                 self.parsePostponedGameData(game)
             else:
                 raise Exception,"What to do with this status? "+status
