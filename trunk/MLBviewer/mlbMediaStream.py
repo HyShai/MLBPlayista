@@ -390,12 +390,15 @@ class MediaStream:
 
     def prepareMediaStreamer(self,game_url):
         if self.streamtype == 'condensed':
-            return 'rtmpdump -r %s' % game_url
+            if self.cfg.get('use_librtmp'):
+                return self.prepareFmsUrl(game_url)
+            else:
+                return 'rtmpdump -r %s' % game_url
         elif self.cfg.get('use_nexdef') and self.streamtype != 'audio':
             self.nexdef_media_url = game_url
             return self.prepareHlsCmd(game_url)
         else:
-            if self.streamtype in ( 'video' , 'condensed'):
+            if self.streamtype in ( 'video', ):
                 game_url = self.parseFmsCloudResponse(game_url)
             return self.prepareFmsUrl(game_url)
 
@@ -475,7 +478,7 @@ class MediaStream:
             self.filename += '.mp4'
         recorder = DEFAULT_F_RECORD
         if self.use_librtmp:
-            self.rec_cmd_str = self.prepareMplayerCmd(recorder,self.filename,game_url)
+            self.rec_cmd_str = self.prepareLibrtmpCmd(recorder,self.filename,game_url)
         else:
             self.rec_cmd_str = self.prepareRtmpdumpCmd(recorder,self.filename,game_url)
         return self.rec_cmd_str
@@ -535,7 +538,7 @@ class MediaStream:
         self.log.write("\nDEBUG>> rec_cmd_str" + '\n' + rec_cmd_str + '\n\n')
         return rec_cmd_str
 
-    def prepareMplayerCmd(self,rec_cmd_str,filename,streamurl):
+    def prepareLibrtmpCmd(self,rec_cmd_str,filename,streamurl):
         mplayer_str = '"' + streamurl
         if self.play_path is not None:
             mplayer_str += ' playpath=' + self.play_path
@@ -559,13 +562,18 @@ class MediaStream:
             if player == '':
                 player = self.cfg.get('video_player')
         if '%s' in player:
-            if self.cfg.get('use_librtmp') or streamtype == 'highlight':
+            if streamtype == 'video' and self.cfg.get('use_nexdef'):
+                cmd_str = player.replace('%s', '-')
+                cmd_str  = media_url + ' | ' + cmd_str
+            elif self.cfg.get('use_librtmp') or streamtype == 'highlight':
                 cmd_str = player.replace('%s', media_url)
             else:
                 cmd_str = player.replace('%s', '-')
                 cmd_str  = media_url + ' | ' + cmd_str
         else:
-            if self.cfg.get('use_librtmp') or streamtype == 'highlight':
+            if streamtype == 'video' and self.cfg.get('use_nexdef'):
+                cmd_str = media_url + ' | ' + player + ' - '
+            elif self.cfg.get('use_librtmp') or streamtype == 'highlight':
                 cmd_str = player + ' ' + media_url
             elif streamtype == 'condensed' and self.cfg.get('free_condensed'):
                 cmd_str = player + ' ' + media_url

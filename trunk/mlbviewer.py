@@ -298,13 +298,13 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin == topwin:
                 gameid = mywin.records[topwin.current_cursor][4]
             else:
-                gameid = mywin.records[listwin.current_cursor][6]
+                gameid = listwin.records[listwin.current_cursor][6]
             myscr.clear()
             mywin.titlewin.clear()
             mywin.titlewin.addstr(0,0,'LISTINGS DEBUG FOR ' + gameid)
             mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
             myscr.addstr(2,0,'getListings() for current_cursor:')
-            if mywin in ( sbwin , ):
+            if mywin in ( sbwin , boxwin ):
                 myscr.addstr(3,0,repr(listwin.records[listwin.current_cursor]))
             else:
                 myscr.addstr(3,0,repr(mywin.records[mywin.current_cursor]))

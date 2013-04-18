@@ -82,11 +82,11 @@ class MLBInningWin(MLBListWin):
                 if i == 0:
                     continue
                 if self.innings.has_key(i): 
+                    if i > 9:
+                       if i > latest:
+                           latest = i
+                       continue
                     if self.innings[i].has_key(city):
-                        if i > 9:
-                           if i > latest:
-                               latest = i
-                           continue
                         # no spoilers for home victories
                         if i == 9 and city == 'home':
                             city_str[city] += ' [?]'
