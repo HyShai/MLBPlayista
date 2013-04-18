@@ -11,7 +11,8 @@ class MLBOptWin(MLBListWin):
     def __init__(self,myscr,mycfg):
         self.mycfg = mycfg
         self.data = []
-        for key in mycfg.data.keys():
+        sorted_keys = sorted(mycfg.data.keys(), key=str)
+        for key in sorted_keys:
             if key not in ( 'pass' , 'cookies', 'cookie_jar', ):
                 self.data.append((key, self.mycfg.get(key)))
         # data is everything, records is only what's visible
