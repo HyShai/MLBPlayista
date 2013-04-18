@@ -504,22 +504,6 @@ def mainloop(myscr,mycfg,mykeys):
             speeds.sort()
             newspeed = (speeds.index(int(mycfg.get('speed')))+1) % len(speeds)
             mycfg.set('speed', str(speeds[newspeed]))
-            #mywin.statuswin.clear()
-            #mywin.statuswin.addstr(0,0,'Refreshing listings...')
-            #mywin.statuswin.refresh()
-            #try:
-            #    available = mysched.getListings(mycfg.get('speed'),
-            #                                    mycfg.get('blackout'))
-            #except Exception,detail:
-            #    myscr.clear()
-            #    myscr.addstr(0,0,'ERROR: %s' % str(detail))
-            #    myscr.addstr(3,0,'See %s for more details.'%LOGFILE)
-            #    myscr.refresh()
-            #    time.sleep(2)
-            #    continue
-            #mywin.data = available
-            #mywin.records = available[0:curses.LINES-4]
-            #mywin.record_cursor = 0
 
         if c in mykeys.get('DEBUG'):
             if mycfg.get('debug'):
