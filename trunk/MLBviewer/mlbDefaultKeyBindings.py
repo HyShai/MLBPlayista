@@ -18,6 +18,7 @@ DEFAULT_KEYBINDINGS = {
     'MASTER_SCOREBOARD'  : [ ord('m') ],
     'HIGHLIGHTS'         : [ ord('t') ],
     'HIGHLIGHTS_PLAYLIST': [ ord('y') ],
+    'STANDINGS'          : [ ord('g') ],
     'INNINGS'            : [ ord('i') ],
     'LISTINGS'           : [ ord('l') ],
     'REFRESH'            : [ ord('r') ],
