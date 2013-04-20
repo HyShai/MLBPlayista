@@ -3,7 +3,7 @@
 __author__ = "Matthew Levine"
 __email__ = "straycat000@yahoo.com"
 
-VERSION ="2013rev421+"
+VERSION ="2013-sf-3"
 URL = "http://sourceforge.net/projects/mlbviewer"
 
 AUTHDIR = '.mlb'
@@ -34,3 +34,5 @@ from mlbMasterScoreboard import MLBMasterScoreboard
 from mlbMasterScoreboardWin import MLBMasterScoreboardWin
 from mlbBoxScore import MLBBoxScore
 from mlbBoxScoreWin import MLBBoxScoreWin
+from mlbStandings import MLBStandings
+from mlbStandingsWin import MLBStandingsWin

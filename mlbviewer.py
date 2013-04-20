@@ -108,6 +108,7 @@ def mainloop(myscr,mycfg,mykeys):
     sbwin = None
     linewin = None
     boxwin = None
+    stdwin = None
     mywin = listwin
     mywin.Splash()
     mywin.statusWrite('Logging into mlb.com...',wait=0)
@@ -293,7 +294,7 @@ def mainloop(myscr,mycfg,mykeys):
 
         # DEBUG : NEEDS ATTENTION FOR SCROLLING
         if c in mykeys.get('MEDIA_DEBUG'):
-            if mywin in ( optwin, helpwin ):
+            if mywin in ( optwin, helpwin, stdwin ):
                 continue
             if mywin == topwin:
                 gameid = mywin.records[topwin.current_cursor][4]
@@ -326,6 +327,14 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('OPTIONS'):
             mywin = optwin
 
+        if c in mykeys.get('STANDINGS'):
+            mywin.statusWrite('Retrieving standings...')
+            standings = MLBStandings()
+            standings.getStandingsData()
+            stdwin = MLBStandingsWin(myscr,mycfg,standings.data,
+                                     standings.last_update)
+            mywin = stdwin
+
         if c in mykeys.get('MASTER_SCOREBOARD'):
             listwin.PgUp()
             GAMEID = listwin.records[listwin.current_cursor][6]
@@ -350,7 +359,7 @@ def mainloop(myscr,mycfg,mykeys):
             mywin = linewin
 
         if c in mykeys.get('HIGHLIGHTS'):
-            if mywin in ( optwin, helpwin ):
+            if mywin in ( optwin, helpwin, stdwin ):
                 continue
             try:
                 GAMEID = listwin.records[listwin.current_cursor][6]
@@ -372,7 +381,7 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.record_cursor = 0
 
         if c in mykeys.get('HIGHLIGHTS_PLAYLIST'):
-            if mywin in ( optwin, helpwin ):
+            if mywin in ( optwin, helpwin, stdwin ):
                 continue
             try:
                 GAMEID = listwin.records[listwin.current_cursor][6]
@@ -415,7 +424,7 @@ def mainloop(myscr,mycfg,mykeys):
 
         # NEEDS ATTENTION FOR SCROLLING
         if c in mykeys.get('INNINGS'):
-            if mywin in ( optwin, helpwin ):
+            if mywin in ( optwin, helpwin, stdwin ):
                 continue
             if mycfg.get('use_nexdef') or \
                listwin.records[listwin.current_cursor][5] in ('F', 'CG')  or \
@@ -517,7 +526,7 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('VIDEO') or \
            c in mykeys.get('AUDIO') or \
            c in mykeys.get('CONDENSED_GAME'):
-            if mywin in ( optwin , helpwin ):
+            if mywin in ( optwin , helpwin, stdwin ):
                 continue
             if c in mykeys.get('AUDIO'):
                 if mywin == topwin:

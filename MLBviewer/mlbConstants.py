@@ -13,8 +13,9 @@
 # Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 # 02111-1307 USA
 
-VERSION ="2013rev421+"
+VERSION ="2013-sf-3"
 URL = "http://sourceforge.net/projects/mlbviewer"
+EMAIL = "straycat000@yahoo.com"
 
 import os
 import subprocess
@@ -253,6 +254,7 @@ KEYBINDINGS_1 = {
     'COVERAGE'            : 'Toggle coverage for HOME or AWAY stream',
     'HIGHLIGHTS'          : 'Display top plays listing for current game',
     'HIGHLIGHTS_PLAYLIST' : 'Play all highlights as a playlist',
+    'STANDINGS'           : 'View standings (not real-time; updated once a day)',
     }
 
 HELPBINDINGS = (
@@ -260,7 +262,7 @@ HELPBINDINGS = (
                   'COVERAGE', 'HIGHLIGHTS_PLAYLIST', 'INNINGS') ),
     ('LISTINGS', ('UP', 'DOWN', 'LEFT', 'RIGHT', 'JUMP', 'SPEED', 'REFRESH' )),
     ('SCREENS', ('HIGHLIGHTS', 'HELP', 'LISTINGS', 'LINE_SCORE', 'BOX_SCORE',
-     'MASTER_SCOREBOARD' ) ),
+     'MASTER_SCOREBOARD', 'STANDINGS' ) ),
     ('DEBUG', ( 'OPTIONS', 'DEBUG', 'MEDIA_DEBUG' )),
     )
 
@@ -331,5 +333,14 @@ RUNNERS_ONBASE_STRINGS = {
     'runner_on_1b': 'Runner on 1B',
     'runner_on_2b': 'Runner on 2B',
     'runner_on_3b': 'Runner on 3B',
+}
+
+STANDINGS_DIVISIONS = {
+    'MLB.AL.E':  'AL East',
+    'MLB.AL.C':  'AL Central',
+    'MLB.AL.W':  'AL West',
+    'MLB.NL.E':  'NL East',
+    'MLB.NL.C':  'NL Central',
+    'MLB.NL.W':  'NL West',
 }
 
