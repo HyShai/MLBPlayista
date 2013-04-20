@@ -37,7 +37,7 @@ class MLBLineScore:
         except:
             self.linescore['innings'] = None
         status = self.linescore['game']['status']
-        if status in ('Final', 'Game Over'):
+        if status in ('Final', 'Game Over', 'Completed Early'):
             self.linescore['pitchers'] = self.parseWinLossPitchers(xp)
         elif status in ( 'In Progress', 'Delayed' ):
             self.linescore['pitchers'] = self.parseCurrentPitchers(xp)
