@@ -42,7 +42,7 @@ class MLBMasterScoreboard:
             except:
                 tmp['totals'] = None
             status = tmp[gid]['status']
-            if status in ('Final', 'Game Over'):
+            if status in ('Final', 'Game Over', 'Completed Early'):
                 tmp[gid]['pitchers'] = self.parseWinLossPitchers(game)
             elif status in ( 'In Progress', 'Delayed', 'Suspended' ):
                 tmp[gid]['pitchers'] = self.parseCurrentPitchers(game)

@@ -144,7 +144,11 @@ class MLBMasterScoreboardWin(MLBListWin):
     def parseFinalGameData(self,game):
         gid = game.keys()[0]
         status = game[gid]['status']
-        status_str = status
+        if status in ( 'Completed Early', ):
+            reason = game[gid]['reason']
+            status_str = 'Early: ' + reason
+        else:
+            status_str = status
         if int(game[gid]['inning']) != 9:
             status_str += '/%s' % game[gid]['inning']
         if game[gid]['totals']['r']['away'] > game[gid]['totals']['r']['home']:
@@ -163,11 +167,14 @@ class MLBMasterScoreboardWin(MLBListWin):
                          game[gid]['pitchers']['losing_pitcher'][3],
                          game[gid]['pitchers']['losing_pitcher'][4] )
         else:
-            away_str = ' LP: %s (%s-%s %s)' % \
+            try:
+                away_str = ' LP: %s (%s-%s %s)' % \
                        ( game[gid]['pitchers']['losing_pitcher'][1],
                          game[gid]['pitchers']['losing_pitcher'][2],
                          game[gid]['pitchers']['losing_pitcher'][3],
                          game[gid]['pitchers']['losing_pitcher'][4] )
+            except:
+                raise Exception,gid
             home_str = ' WP: %s (%s-%s %s)' % \
                        ( game[gid]['pitchers']['winning_pitcher'][1],
                          game[gid]['pitchers']['winning_pitcher'][2],
