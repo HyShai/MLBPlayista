@@ -111,7 +111,7 @@ class MLBLineScoreWin(MLBListWin):
                                      self.data['game']['inning'] )
         elif status in ( 'Final', 'Game Over' , 'Completed Early' ):
             status_str = status
-            if self.data['game']['reason'] != "":
+            if status == 'Completed Early' and self.data['game']['reason'] != "":
                 status_str += ": %s" % self.data['game']['reason'] 
             # handle extra innings
             if self.data['game']['inning'] != '9':
