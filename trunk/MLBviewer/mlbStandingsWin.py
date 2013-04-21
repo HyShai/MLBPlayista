@@ -48,7 +48,7 @@ class MLBStandingsWin(MLBListWin):
         self.myscr.refresh()
 
     def prepareStandings(self):
-        std_fmt = "%-16s %5s %5s %5s %5s %5s %5s %5s %5s"
+        std_fmt = "%-14s %5s %5s %5s %5s %5s %4s %6s %6s %4s %4s %4s"
         for standing in self.stdata:
             division = standing[0]
             standings = standing[1]
@@ -59,10 +59,13 @@ class MLBStandingsWin(MLBListWin):
             self.data.append((division,curses.A_BOLD))
             header_str = std_fmt % \
                        ( 'TEAM', 'W', 'L', 'WP', 'GB','L10', 'STRK',
-                         'HOME', 'ROAD' )
+                         'HOME', 'ROAD', 'RS', 'RA', '+/-')
             self.data.append((header_str,curses.A_BOLD))
             
             for team in standings:
+                rs = "%.1f" % ( float(team['RS']) / float(team['G']) )
+                ra = "%.1f" % ( float(team['RA']) / float(team['G']) )
+                dif = "%.1f" % ( float(rs) - float(ra) )
                 team_str = std_fmt % \
                        ( team['first'],
                          team['W'], team['L'], team['WP'],
@@ -70,7 +73,8 @@ class MLBStandingsWin(MLBListWin):
                          team['L10_W']+ '-' +team['L10_L'],
                          team['STRK'],
                          team['HW']+'-'+team['HL'],
-                         team['AW']+'-'+team['AL'] )
+                         team['AW']+'-'+team['AL'] ,
+                         str(rs), str(ra), str(dif) )
                 self.data.append((team_str,0))
 
     def titleRefresh(self,mysched):
