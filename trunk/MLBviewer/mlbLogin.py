@@ -144,6 +144,9 @@ class MLBSession:
         txheaders = {'User-agent' : USERAGENT}
         data = None
         req = urllib2.Request(login_url,data,txheaders)
+        # we might have cookie info by now??
+        if self.user=="":
+            return
 
         try:
             handle = urllib2.urlopen(req)
@@ -218,6 +221,8 @@ class MLBSession:
             if self.logged_in is None:
                 login_count = 0
                 while not self.logged_in:
+                    if self.user=="":
+                        break
                     try:
                         self.login()
                     except:
@@ -229,7 +234,7 @@ class MLBSession:
                             #raise Exception,self.error_str
                 # clear any login unsuccessful messages from previous failures
                 if login_count > 0:
-                    self.error_str = "What happened here?\nPlease enable debug with the d key and try your request again."
+                    self.error_str = "Not logged in."
 
         wf_url = "http://www.mlb.com/enterworkflow.do?" +\
             "flowId=media.media"
@@ -246,7 +251,7 @@ class MLBSession:
                 self.log.write('getSessionData:\n')
             self.extractCookies()
         except Exception,detail:
-            self.error_str = 'Error occurred in HTTP request to workflow page:' + str(detail)
+            self.error_str = 'Not logged in'
             raise Exception, self.error_str
         url_data = handle.read()
         #if self.debug:
