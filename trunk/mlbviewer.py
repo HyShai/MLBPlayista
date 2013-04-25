@@ -341,6 +341,16 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
             sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
             mywin = sbwin
+            # And also refresh the listings
+            listwin.statusWrite('Refreshing listings...',wait=1)
+
+            try:
+                available = mysched.getListings(mycfg.get('speed'),
+                                                mycfg.get('blackout'))
+            except:
+                pass
+            listwin.data = available
+            listwin.records = available[listwin.record_cursor:listwin.record_cursor+curses.LINES-4]
 
         if c in mykeys.get('BOX_SCORE'):
             GAMEID = listwin.records[listwin.current_cursor][6]
@@ -371,6 +381,8 @@ def mainloop(myscr,mycfg,mykeys):
             try:
                 available = mysched.getTopPlays(GAMEID)
             except:
+                if mycfg.get('debug'):
+                    raise
                 listwin.statusWrite('Could not fetch highlights.',wait=2)
                 available = listwin.data
                 continue
