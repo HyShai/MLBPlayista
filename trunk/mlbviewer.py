@@ -5,6 +5,7 @@ import curses.textpad
 import datetime
 import re
 import select
+import errno
 import sys
 import time
 from MLBviewer import *
@@ -166,7 +167,13 @@ def mainloop(myscr,mycfg,mykeys):
             prefer = mysched.getPreferred(listwin.records[listwin.current_cursor], mycfg)
 
         # And now we do input.
-        inputs, outputs, excepts = select.select(inputlst, [], [])
+        try:
+            inputs, outputs, excepts = select.select(inputlst, [], [])
+        except select.error, e:
+            if e[0] != errno.EINTR:
+                raise
+            else:
+                continue
         
         if sys.stdin in inputs:
             c = myscr.getch()
