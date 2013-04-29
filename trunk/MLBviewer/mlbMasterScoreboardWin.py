@@ -268,6 +268,7 @@ class MLBMasterScoreboardWin(MLBListWin):
         self.myscr.refresh()
                 
     def titleRefresh(self,mysched):
+        self.titlewin.clear()
         titlestr = "MASTER SCOREBOARD VIEW FOR " +\
                 str(mysched.month) + '/' +\
                 str(mysched.day) + '/' +\

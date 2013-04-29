@@ -173,6 +173,14 @@ def mainloop(myscr,mycfg,mykeys):
             if e[0] != errno.EINTR:
                 raise
             else:
+                ( y , x ) = mywin.getsize()
+                curses.resizeterm(y, x)
+                mywin.resize()
+                listwin.resize()
+                if mywin in ( sbwin, listwin ):
+                    # reset all the cursors when screen size changes
+                    listwin.PgUp()
+                    mywin.PgUp()
                 continue
         
         if sys.stdin in inputs:
@@ -327,11 +335,13 @@ def mainloop(myscr,mycfg,mykeys):
 
         # SCREENS - NEEDS WORK FOR SCROLLING
         if c in mykeys.get('HELP'):
+            helpwin = MLBHelpWin(myscr,mykeys)
             mywin = helpwin
             #mywin.helpScreen()
 
         # NEEDS ATTENTION FOR SCROLLING
         if c in mykeys.get('OPTIONS'):
+            optwin = MLBOptWin(myscr,mycfg)
             mywin = optwin
 
         if c in mykeys.get('STANDINGS'):
@@ -382,6 +392,7 @@ def mainloop(myscr,mycfg,mykeys):
                 GAMEID = listwin.records[listwin.current_cursor][6]
             except IndexError:
                 continue
+            topwin = MLBTopWin(myscr,mycfg,available)
             #topwin.data = available
             topwin.data = listwin.records
             listwin.statusWrite('Fetching Top Plays list...')
