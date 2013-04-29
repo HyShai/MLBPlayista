@@ -56,12 +56,14 @@ class MLBOptWin(MLBListWin):
 
         self.myscr.refresh()
 
+
     def titleRefresh(self,mysched):
         titlestr = "CURRENT OPTIONS SETTINGS"
 
         padding = curses.COLS - (len(titlestr) + 6)
         titlestr += ' '*padding
         pos = curses.COLS - 6
+        self.titlewin.clear()
         self.titlewin.addstr(0,0,titlestr)
         self.titlewin.addstr(0,pos,'H', curses.A_BOLD)
         self.titlewin.addstr(0,pos+1, 'elp')

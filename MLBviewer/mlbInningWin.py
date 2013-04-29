@@ -34,6 +34,12 @@ class MLBInningWin(MLBListWin):
         self.titlewin.refresh()
         self.myscr.getch()
         
+    def resize(self):
+        self.statuswin.mvwin(curses.LINES-1,0)
+        self.statuswin.resize(1,curses.COLS-1)
+        self.titlewin.mvwin(0, 0)
+        self.titlewin.resize(2,curses.COLS-1)
+
 
     def Refresh(self):
         streamtype = 'video'

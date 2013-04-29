@@ -3,6 +3,7 @@
 import curses
 import curses.textpad
 import time
+import os
 #from listwin import ListWin
 from mlbConstants import *
 
@@ -20,6 +21,25 @@ class MLBListWin:
         self.statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
         self.titlewin = curses.newwin(2,curses.COLS-1,0,0)
 
+    def getsize(self):
+        ( y , x ) = os.popen('stty size', 'r').read().split()
+        curses.LINES = int(y)
+        curses.COLS = int(x) 
+        return ( curses.LINES , curses.COLS )
+
+    def resize(self):
+        
+        try:
+            self.statuswin.clear()
+            self.statuswin.mvwin(curses.LINES-1,0)
+            self.statuswin.resize(1,curses.COLS-1)
+            self.titlewin.mvwin(0,0)
+            self.titlewin.resize(2,curses.COLS-1)
+        except Exception,e:
+            raise Exception,repr(e)
+            raise Exception,"y , x = %s, %s" % ( curses.LINES-1 , 0 )
+        self.records = self.data[0:curses.LINES-4]
+        
     def prompter(self,win,prompt):
         win.clear()
         win.addstr(0,0,prompt,curses.A_BOLD)
