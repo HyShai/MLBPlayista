@@ -25,13 +25,29 @@ class MLBMasterScoreboardWin(MLBListWin):
         self.scoreboard = MLBMasterScoreboard(gid)
         self.sb = self.scoreboard.getScoreboardData()
         self.parseScoreboardData()
-        wlen = curses.LINES-4
-        if wlen % 2 > 0:
-            wlen -= 1
-        self.records = self.data[:wlen]
+        # this is all just initialization ; setCursors should be called to
+        # align with listings position
         self.game_cursor = 0
         self.current_cursor = 0
         self.record_cursor = 0
+        viewable = curses.LINES-4
+        if viewable % 2 > 0:
+            viewable -= 1
+        self.records = self.data[:viewable]
+
+    def setCursors(self,current_cursor,record_cursor):
+        self.game_cursor = current_cursor + record_cursor
+        # scoreboard scrolls two lines at a time
+        absolute_cursor = self.game_cursor * 2
+        viewable = curses.LINES-4
+        if viewable % 2 > 0:
+            viewable -= 1
+        # integer division will give us the correct top record position
+        self.record_cursor = ( absolute_cursor / viewable ) * viewable
+        # and find the current position in the viewable screen
+        self.current_cursor = absolute_cursor - self.record_cursor
+        # and finally collect the viewable records
+        self.records = self.data[self.record_cursor:self.record_cursor+viewable]
 
     def parseScoreboardData(self):
         for game in self.sb:
@@ -292,15 +308,16 @@ class MLBMasterScoreboardWin(MLBListWin):
     def statusRefresh(self):
         game_cursor = ( self.current_cursor + self.record_cursor ) / 2
         # BEGIN curses debug code
-        #wlen=curses.LINES-4
-        #if wlen % 2 > 0:
-        #    wlen -= 1
-        #status_str = "game_cursor=%s, wlen=%s, current_cursor=%s, record_cursor=%s, len(records)=%s" %\
-        #              ( game_cursor, wlen, self.current_cursor, self.record_cursor, len(self.records) )
-        #self.statuswin.clear()
-        #self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
-        #self.statuswin.refresh()
-        #return
+        if self.mycfg.get('curses_debug'):
+            wlen=curses.LINES-4
+            if wlen % 2 > 0:
+                wlen -= 1
+            status_str = "game_cursor=%s, wlen=%s, current_cursor=%s, record_cursor=%s, len(records)=%s" %\
+                      ( game_cursor, wlen, self.current_cursor, self.record_cursor, len(self.records) )
+            self.statuswin.clear()
+            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.refresh()
+            return
         # END curses debug code
         gid = self.sb[game_cursor].keys()[0]
         status = self.sb[game_cursor][gid]['status']
