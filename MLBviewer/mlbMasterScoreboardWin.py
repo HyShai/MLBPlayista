@@ -200,13 +200,18 @@ class MLBMasterScoreboardWin(MLBListWin):
     def Up(self):
         if self.current_cursor - 2 < 0 and self.record_cursor - 2 > 0:
             self.current_cursor = curses.LINES-4-2
+            if self.current_cursor % 2 > 0:
+                self.current_cursor -= 1
             if self.record_cursor - curses.LINES -4 < 0:
                 self.record_cursor = 0
             else:
                 self.record_cursor -= curses.LINES-4
                 if self.record_cursor % 2 > 0:
                     self.record_cursor -= 1
-            self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-4]
+            wlen = curses.LINES-4
+            if wlen % 2 > 0:
+                wlen -= 1
+            self.records = self.data[self.record_cursor:self.record_cursor+wlen]
         elif self.current_cursor > 0:
             self.current_cursor -= 2
 
@@ -218,7 +223,7 @@ class MLBMasterScoreboardWin(MLBListWin):
             if self.record_cursor + curses.LINES - 4 % 2 > 0:
                 self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-3]
             else:
-                self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-3]
+                self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-4]
         # Elif not at bottom of window
         elif self.current_cursor + 2 < self.records  and\
              self.current_cursor + 2  < curses.LINES-4:
@@ -286,6 +291,17 @@ class MLBMasterScoreboardWin(MLBListWin):
 
     def statusRefresh(self):
         game_cursor = ( self.current_cursor + self.record_cursor ) / 2
+        # BEGIN curses debug code
+        #wlen=curses.LINES-4
+        #if wlen % 2 > 0:
+        #    wlen -= 1
+        #status_str = "game_cursor=%s, wlen=%s, current_cursor=%s, record_cursor=%s, len(records)=%s" %\
+        #              ( game_cursor, wlen, self.current_cursor, self.record_cursor, len(self.records) )
+        #self.statuswin.clear()
+        #self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+        #self.statuswin.refresh()
+        #return
+        # END curses debug code
         gid = self.sb[game_cursor].keys()[0]
         status = self.sb[game_cursor][gid]['status']
         status_str = 'Status: %s' % status

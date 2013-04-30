@@ -28,7 +28,6 @@ class MLBListWin:
         return ( curses.LINES , curses.COLS )
 
     def resize(self):
-        
         try:
             self.statuswin.clear()
             self.statuswin.mvwin(curses.LINES-1,0)
@@ -38,7 +37,11 @@ class MLBListWin:
         except Exception,e:
             raise Exception,repr(e)
             raise Exception,"y , x = %s, %s" % ( curses.LINES-1 , 0 )
-        self.records = self.data[0:curses.LINES-4]
+        viewlen = curses.LINES-4
+        # even out the viewable region if odd number of lines for scoreboard 
+        if viewlen % 2 > 0:
+            viewlen -= 1
+        self.records = self.data[:viewlen]
         
     def prompter(self,win,prompt):
         win.clear()
@@ -103,7 +106,11 @@ class MLBListWin:
     def PgUp(self):
         self.current_cursor = 0
         self.record_cursor = 0
-        self.records = self.data[0:curses.LINES-4]
+        viewlen = curses.LINES-4
+        # tweak for scoreboard
+        if viewlen % 2 > 0:
+            viewlen -= 1
+        self.records = self.data[:viewlen]
 
     def PgDown(self):
         # assuming we scrolled down, we'll have len(data) % ( curses.LINES-4 )

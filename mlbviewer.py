@@ -6,9 +6,15 @@ import datetime
 import re
 import select
 import errno
+import signal
 import sys
 import time
 from MLBviewer import *
+
+# used for ignoring sigwinch signal
+def donothing(sig, frame):
+    pass
+
 
 def doinstall(config,dct,dir=None):
     print "Creating configuration files"
@@ -173,6 +179,9 @@ def mainloop(myscr,mycfg,mykeys):
             if e[0] != errno.EINTR:
                 raise
             else:
+                signal.signal(signal.SIGWINCH, signal.SIG_IGN)
+                time.sleep(0.5)
+                signal.signal(signal.SIGWINCH, donothing)
                 ( y , x ) = mywin.getsize()
                 curses.resizeterm(y, x)
                 mywin.resize()
