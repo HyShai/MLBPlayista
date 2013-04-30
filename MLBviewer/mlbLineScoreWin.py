@@ -333,10 +333,14 @@ class MLBLineScoreWin(MLBListWin):
             for player in self.data['hr'][team]:
                 hr = len(self.data['hr'][team][player])
                 if hr > 1:
-                    hr_str = "%s %s (%s), " %\
-                        ( self.data['hr'][team][player][hr][1],
+                    try:
+                        latest = self.data['hr'][team][player].keys()[-1]
+                        hr_str = "%s %s (%s), " %\
+                        ( self.data['hr'][team][player][latest][1],
                           str(hr),
-                          self.data['hr'][team][player][hr][4] )
+                          self.data['hr'][team][player][latest][4] )
+                    except:
+                        raise Exception,repr(self.data['hr'][team][player])
                 else:
                     hr_str = "%s (%s), " %\
                         ( self.data['hr'][team][player][hr][1],
