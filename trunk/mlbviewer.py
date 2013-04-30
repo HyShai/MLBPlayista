@@ -180,16 +180,20 @@ def mainloop(myscr,mycfg,mykeys):
                 raise
             else:
                 signal.signal(signal.SIGWINCH, signal.SIG_IGN)
-                time.sleep(0.5)
+                wiggle_timer = float(mycfg.get('wiggle_timer'))
+                time.sleep(wiggle_timer)
                 signal.signal(signal.SIGWINCH, donothing)
                 ( y , x ) = mywin.getsize()
                 curses.resizeterm(y, x)
                 mywin.resize()
                 listwin.resize()
-                if mywin in ( sbwin, listwin ):
+                if mywin in ( sbwin, ):
                     # reset all the cursors when screen size changes
-                    listwin.PgUp()
-                    mywin.PgUp()
+                    #listwin.PgUp()
+                    #mywin.PgUp()
+                    # align the cursors between scoreboard and listings
+                    sbwin.setCursors(listwin.record_cursor, 
+                                     listwin.current_cursor)
                 continue
         
         if sys.stdin in inputs:
@@ -247,6 +251,9 @@ def mainloop(myscr,mycfg,mykeys):
                 if mywin in ( sbwin, ):
                     GAMEID = listwin.records[listwin.current_cursor][6]
                     sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                    # align the cursors between scoreboard and listings
+                    sbwin.setCursors(listwin.record_cursor, 
+                                     listwin.current_cursor)
                     mywin = sbwin
                 continue
             pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})(/)([0-9]{2})')
@@ -278,6 +285,8 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin in ( sbwin, ):
                 GAMEID = listwin.records[listwin.current_cursor][6]
                 sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                sbwin.setCursors(listwin.record_cursor, 
+                                 listwin.current_cursor)
                 mywin = sbwin
             
 
@@ -286,7 +295,8 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
             if mywin in ( listwin, sbwin ):
                 listwin.statusWrite('Refreshing listings...',wait=1)
-            # handle linescore separately
+            # handle linescore separately - this is for scrolling through 
+            # extra innings
             if mywin in ( linewin, ):
                 if c in mykeys.get('LEFT'):
                     linewin.Left()
@@ -314,6 +324,8 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin in ( sbwin, ):
                 GAMEID = listwin.records[listwin.current_cursor][6]
                 sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                sbwin.setCursors(listwin.record_cursor, 
+                                 listwin.current_cursor)
                 mywin = sbwin
 
         # DEBUG : NEEDS ATTENTION FOR SCROLLING
@@ -362,10 +374,12 @@ def mainloop(myscr,mycfg,mykeys):
             mywin = stdwin
 
         if c in mykeys.get('MASTER_SCOREBOARD'):
-            listwin.PgUp()
+            #listwin.PgUp()
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
             sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+            sbwin.setCursors(listwin.record_cursor, 
+                             listwin.current_cursor)
             mywin = sbwin
             # And also refresh the listings
             listwin.statusWrite('Refreshing listings...',wait=1)
@@ -693,6 +707,8 @@ if __name__ == "__main__":
                   'bg_color': 'xterm',
                   'show_player_command': 0,
                   'debug': 0,
+                  'curses_debug': 0,
+                  'wiggle_timer': 0.5,
                   'x_display': '',
                   'top_plays_player': '',
                   'time_offset': '',

@@ -33,7 +33,7 @@ class MLBConfig:
                              'live_from_start', 'use_nexdef', 
                              'adaptive_stream', 'show_inning_frames', 
                              'postseason', 'use_librtmp', 'no_lirc', 
-                             'use_wired_web' ):
+                             'curses_debug', 'use_wired_web' ):
                     if val.isdigit():
                         self.data[key] = bool(int(val))
                     else:
