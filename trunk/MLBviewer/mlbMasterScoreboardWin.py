@@ -214,36 +214,37 @@ class MLBMasterScoreboardWin(MLBListWin):
                   home_str ) )
 
     def Up(self):
-        if self.current_cursor - 2 < 0 and self.record_cursor - 2 > 0:
-            self.current_cursor = curses.LINES-4-2
-            if self.current_cursor % 2 > 0:
-                self.current_cursor -= 1
-            if self.record_cursor - curses.LINES -4 < 0:
+        if self.current_cursor - 2 < 0 and self.record_cursor - 2 >= 0:
+            viewable = curses.LINES-4
+            if viewable % 2 > 0:
+                viewable -= 1
+            self.current_cursor = viewable-2
+            #if self.current_cursor % 2 > 0:
+            #    self.current_cursor -= 1
+            if self.record_cursor - viewable < 0:
                 self.record_cursor = 0
             else:
-                self.record_cursor -= curses.LINES-4
-                if self.record_cursor % 2 > 0:
-                    self.record_cursor -= 1
-            wlen = curses.LINES-4
-            if wlen % 2 > 0:
-                wlen -= 1
-            self.records = self.data[self.record_cursor:self.record_cursor+wlen]
+                self.record_cursor -= viewable
+                #if self.record_cursor % 2 > 0:
+                #    self.record_cursor -= 1
+            self.records = self.data[self.record_cursor:self.record_cursor+viewable]
         elif self.current_cursor > 0:
             self.current_cursor -= 2
 
     def Down(self):
+        viewable=curses.LINES-4
         if self.current_cursor + 2 >= len(self.records) and\
-           self.record_cursor + self.current_cursor + 2 < len(self.data):
+           ( self.record_cursor + self.current_cursor + 2 ) < len(self.data):
             self.record_cursor += self.current_cursor + 2
             self.current_cursor = 0
-            if ( self.record_cursor + curses.LINES - 4 ) % 2 > 0:
-                self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-3]
+            if ( self.record_cursor + viewable ) % 2 > 0:
+                self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-5]
             else:
                 self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-4]
         # Elif not at bottom of window
         elif self.current_cursor + 2 < self.records  and\
              self.current_cursor + 2  < curses.LINES-4:
-            if self.current_cursor + 2 + self.record_cursor < len(self.data):
+            if (self.current_cursor + 2 + self.record_cursor) < len(self.data):
                 self.current_cursor += 2
         # Silent else do nothing at bottom of window and bottom of records
 

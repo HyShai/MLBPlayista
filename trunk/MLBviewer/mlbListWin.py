@@ -199,6 +199,19 @@ class MLBListWin:
         self.titlewin.refresh()
 
     def statusRefresh(self):
+        # BEGIN curses debug code
+        game_cursor = ( self.current_cursor + self.record_cursor )
+        if self.mycfg.get('curses_debug'):
+            wlen=curses.LINES-4
+            if wlen % 2 > 0:
+                wlen -= 1
+            status_str = "game_cursor=%s, wlen=%s, current_cursor=%s, record_cursor=%s, len(records)=%s" %\
+                      ( game_cursor, wlen, self.current_cursor, self.record_cursor, len(self.records) )
+            self.statuswin.clear()
+            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.refresh()
+            return
+        # END curses debug code
         n = self.current_cursor
         if len(self.records) == 0:
             status_str = "No listings available for this day."
