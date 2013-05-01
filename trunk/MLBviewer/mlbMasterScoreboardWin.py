@@ -53,7 +53,7 @@ class MLBMasterScoreboardWin(MLBListWin):
         for game in self.sb:
             gid = game.keys()[0]
             status = game[gid]['status']
-            if status in ( 'In Progress', 'Delayed', 'Suspended' ):
+            if status in ( 'In Progress', 'Delayed', 'Suspended', 'Replay' ):
                 self.parseInGameData(game)
             elif status in ( 'Game Over' , 'Final', 'Completed Early' ):
                 self.parseFinalGameData(game)
@@ -271,7 +271,7 @@ class MLBMasterScoreboardWin(MLBListWin):
                         cursesflags |= curses.A_UNDERLINE|curses.A_REVERSE
                     else:
                         cursesflags = curses.A_UNDERLINE
-                    if status in ( 'In Progress', ):
+                    if status in ( 'In Progress', 'Replay' ):
                         cursesflags |= cursesflags | curses.A_BOLD
                 else:
                     pad = curses.COLS -1 - len(self.records[n])
@@ -280,7 +280,7 @@ class MLBMasterScoreboardWin(MLBListWin):
                         cursesflags |= curses.A_REVERSE
                     else:
                         cursesflags = 0
-                    if status in ( 'In Progress', ):
+                    if status in ( 'In Progress', 'Replay' ):
                         cursesflags |= cursesflags | curses.A_BOLD
                 self.myscr.addstr(n+2,0,s,cursesflags)
             else:
