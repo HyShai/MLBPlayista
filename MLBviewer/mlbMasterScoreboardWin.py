@@ -3,6 +3,7 @@
 from mlbConstants import *
 from mlbListWin import MLBListWin
 from mlbMasterScoreboard import MLBMasterScoreboard
+from mlbError import *
 from mlbSchedule import gameTimeConvert
 import datetime
 import curses
@@ -43,7 +44,10 @@ class MLBMasterScoreboardWin(MLBListWin):
         if viewable % 2 > 0:
             viewable -= 1
         # integer division will give us the correct top record position
-        self.record_cursor = ( absolute_cursor / viewable ) * viewable
+        try:
+            self.record_cursor = ( absolute_cursor / viewable ) * viewable
+        except:
+            raise MLBCursesError,"Screen too small."
         # and find the current position in the viewable screen
         self.current_cursor = absolute_cursor - self.record_cursor
         # and finally collect the viewable records
@@ -283,10 +287,10 @@ class MLBMasterScoreboardWin(MLBListWin):
                         cursesflags = 0
                     if status in ( 'In Progress', 'Replay' ):
                         cursesflags |= cursesflags | curses.A_BOLD
-                self.myscr.addstr(n+2,0,s,cursesflags)
+                self.myscr.addnstr(n+2,0,s,curses.COLS-2,cursesflags)
             else:
                 s = ' '*(curses.COLS-1)
-                self.myscr.addstr(n+2,0,s)
+                self.myscr.addnstr(n+2,0,s,curses.COLS-2)
         self.myscr.refresh()
                 
     def titleRefresh(self,mysched):
@@ -316,7 +320,7 @@ class MLBMasterScoreboardWin(MLBListWin):
             status_str = "game_cursor=%s, wlen=%s, current_cursor=%s, record_cursor=%s, len(records)=%s" %\
                       ( game_cursor, wlen, self.current_cursor, self.record_cursor, len(self.records) )
             self.statuswin.clear()
-            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)
             self.statuswin.refresh()
             return
         # END curses debug code
@@ -345,5 +349,5 @@ class MLBMasterScoreboardWin(MLBListWin):
             hdstr = SSTOGGLE.get(False)
         status_str += ' '*padding + debug_str +  coveragestr + speedstr + hdstr
 
-        self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+        self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)
         self.statuswin.refresh()

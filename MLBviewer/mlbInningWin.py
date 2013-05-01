@@ -22,11 +22,13 @@ class MLBInningWin(MLBListWin):
 
     def Debug(self):
         self.statuswin.clear()
-        self.statuswin.addstr(0,0,'Press any key to return to listings...',curses.A_BOLD)
+        self.statuswin.addnstr(0,0,'Press any key to return to listings...',
+                               curses.COLS-2, curses.A_BOLD)
         self.myscr.clear()
         this_event = self.data[2][0][3]
         self.titlewin.clear()
-        self.titlewin.addstr(0,0,'INNINGS DEBUG FOR %s'%this_event)
+        self.titlewin.addnstr(0,0,'INNINGS DEBUG FOR %s'%this_event, 
+                              curses.COLS-2)
         self.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
         self.myscr.addstr(2,0,repr(self.innings))
         self.myscr.refresh()
@@ -44,12 +46,14 @@ class MLBInningWin(MLBListWin):
     def Refresh(self):
         streamtype = 'video'
         if len(self.data) == 0:
-            self.statuswin.addstr(0,0,'No innings data available for this game')
+            self.statuswin.addnstr(0,0,
+                                   'No innings data available for this game',
+                                   curses.COLS-2)
             self.statuswin.refresh()
             return
 
         self.statuswin.clear()
-        self.statuswin.addstr(0,0,'Fetching innings index...')
+        self.statuswin.addnstr(0,0,'Fetching innings index...',curses.COLS-2)
         self.statuswin.refresh()
         self.myscr.clear()
         try:
@@ -62,7 +66,7 @@ class MLBInningWin(MLBListWin):
         except Exception,detail:
             #raise
             self.myscr.clear()
-            self.myscr.addstr(2,0,'Could not parse innings: ')
+            self.myscr.addnstr(2,0,'Could not parse innings: ',curses.COLS-2)
             self.myscr.addstr(3,0,str(detail))
             self.myscr.refresh()
             #time.sleep(3)
@@ -72,10 +76,10 @@ class MLBInningWin(MLBListWin):
         self.myscr.clear()
 
         # skip a line
-        self.myscr.addstr(2,0,'Enter T or B for top or bottom plus inning to jump to.')
-        self.myscr.addstr(3,0,'Example: T6 to jump to Top of 6th inning.')
-        self.myscr.addstr(4,0,'Enter E for Extra Innings.')
-        self.myscr.addstr(5,0,'Press <Enter> to return to listings.')
+        self.myscr.addnstr(2,0,'Enter T or B for top or bottom plus inning to jump to.',curses.COLS-2)
+        self.myscr.addnstr(3,0,'Example: T6 to jump to Top of 6th inning.',curses.COLS-2)
+        self.myscr.addnstr(4,0,'Enter E for Extra Innings.',curses.COLS-2)
+        self.myscr.addnstr(5,0,'Press <Enter> to return to listings.',curses.COLS-2)
         # skip a line, print top half innings
         inn_str = ' '*5 + '[1] [2] [3] [4] [5] [6] [7] [8] [9]'
         latest = 0
@@ -105,12 +109,12 @@ class MLBInningWin(MLBListWin):
                 else:
                     city_str[city] += ' [-]'
         if self.mycfg.get('show_inning_frames'):
-            self.myscr.addstr(7,0,'[+] = Half inning is available')
-            self.myscr.addstr(8,0,'[-] = Half inning is not available')
-            self.myscr.addstr(9,0,'[?] = Bottom of 9th availability is never shown to avoid spoilers')
-            self.myscr.addstr(12,0,inn_str)
-            self.myscr.addstr(14,0,city_str['away'])
-            self.myscr.addstr(16,0,city_str['home'])
+            self.myscr.addnstr(7,0,'[+] = Half inning is available',curses.COLS-2)
+            self.myscr.addnstr(8,0,'[-] = Half inning is not available',curses.COLS-2)
+            self.myscr.addnstr(9,0,'[?] = Bottom of 9th availability is never shown to avoid spoilers',curses.COLS-2)
+            self.myscr.addnstr(12,0,inn_str,curses.COLS-2)
+            self.myscr.addnstr(14,0,city_str['away'],curses.COLS-2)
+            self.myscr.addnstr(16,0,city_str['home'],curses.COLS-2)
         latest_str = 'Last available half inning is: '
         if latest == 0:
             latest_str += 'None'
@@ -121,7 +125,7 @@ class MLBInningWin(MLBListWin):
             latest_str += 'Top ' + str(latest)
         else:
             latest_str += 'Bot ' + str(latest)
-        self.myscr.addstr(curses.LINES-3,0,latest_str)
+        self.myscr.addnstr(curses.LINES-3,0,latest_str,curses.COLS-2)
         self.myscr.refresh()
 
     def selectToPlay(self):
@@ -162,7 +166,7 @@ class MLBInningWin(MLBListWin):
             start_time = self.innings[inning][half]
         except KeyError:
             self.statuswin.clear()
-            self.statuswin.addstr(0,0,'You have entered an invalid half inning.',curses.A_BOLD)
+            self.statuswin.addnstr(0,0,'You have entered an invalid half inning.',curses.COLS-2,curses.A_BOLD)
             self.statuswin.refresh()
             time.sleep(3)
             return
@@ -196,7 +200,7 @@ class MLBInningWin(MLBListWin):
 
         # And write the status
         try:
-            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.addnstr(0,0,status_str,curses.A_BOLD,curses.COLS-2)
         except:
             rows = curses.LINES
             cols = curses.COLS

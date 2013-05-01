@@ -62,9 +62,10 @@ class MLBBoxScoreWin(MLBListWin):
                 pad = curses.COLS-1 - len(text)
                 if pad > 0:
                     text += ' '*pad
-                self.myscr.addstr(n+2,0,text,s[1]|curses.A_REVERSE)
+                self.myscr.addnstr(n+2,0,text,curses.COLS-2,
+                                   s[1]|curses.A_REVERSE)
             else:
-                self.myscr.addstr(n+2,0,text,s[1])
+                self.myscr.addnstr(n+2,0,text,curses.COLS-2,s[1])
             n+=1
         self.myscr.refresh()
 
@@ -80,8 +81,6 @@ class MLBBoxScoreWin(MLBListWin):
                 str(mysched.year) + ' ' +\
                 ')'
 
-        #titlestr += "[TESTING]"
-
         padding = curses.COLS - (len(titlestr) + 6)
         titlestr += ' '*padding
         pos = curses.COLS - 6
@@ -94,16 +93,16 @@ class MLBBoxScoreWin(MLBListWin):
     def statusRefresh(self):
         n = self.current_cursor
 
-        #status_str = '[TESTING] Press L to return to listings...'
         status_str = 'Press L to return to listings...'
-        #status_str = 'd_len=%s, r_len=%s, cc=%s, rc=%s, cl_-4: %s' %\
-        #    ( str(len(self.data)), str(len(self.records)),
-        #      str(self.current_cursor), str(self.record_cursor),
-        #      str(curses.LINES-4) )
+        if self.mycfg.get('curses_debug'):
+            status_str = 'd_len=%s, r_len=%s, cc=%s, rc=%s, cl_-4: %s' %\
+                 ( str(len(self.data)), str(len(self.records)),
+                   str(self.current_cursor), str(self.record_cursor),
+                   str(curses.LINES-4) )
 
         # And write the status
         try:
-            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)
         except:
             rows = curses.LINES
             cols = curses.COLS

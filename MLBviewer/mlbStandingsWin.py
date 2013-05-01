@@ -39,11 +39,12 @@ class MLBStandingsWin(MLBListWin):
                 if pad > 0:
                     text += ' '*pad
                 try:
-                    self.myscr.addstr(n+2,0,text,s[1]|curses.A_REVERSE)
+                    self.myscr.addnstr(n+2,0,text,curses.COLS-2,
+                                       s[1]|curses.A_REVERSE)
                 except:
                     raise Exception,repr(s)
             else:
-                self.myscr.addstr(n+2,0,text,s[1])
+                self.myscr.addnstr(n+2,0,text,curses.COLS-2,s[1])
             n+=1
         self.myscr.refresh()
 
@@ -99,15 +100,15 @@ class MLBStandingsWin(MLBListWin):
         n = self.current_cursor
 
         status_str = 'Press L to return to listings...'
-        # DEBUG CODE IN CASE THE SCROLLING IS NOT BEHAVING
-        #status_str = 'd_len=%s, r_len=%s, cc=%s, rc=%s, cl_-4: %s' %\
-        #    ( str(len(self.data)), str(len(self.records)),
-        #      str(self.current_cursor), str(self.record_cursor),
-        #      str(curses.LINES-4) )
+        if self.mycfg.get('curses_debug'):
+            status_str = 'd_len=%s, r_len=%s, cc=%s, rc=%s, cl_-4: %s' %\
+                ( str(len(self.data)), str(len(self.records)),
+                  str(self.current_cursor), str(self.record_cursor),
+                  str(curses.LINES-4) )
 
         # And write the status
         try:
-            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)
         except:
             rows = curses.LINES
             cols = curses.COLS

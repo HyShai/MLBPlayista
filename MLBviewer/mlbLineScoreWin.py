@@ -67,9 +67,11 @@ class MLBLineScoreWin(MLBListWin):
         self.prepareHrLine()
         n = 2
         for s in self.records:
-            self.myscr.addstr(n,0,s)
+            if n < curses.LINES-4:
+                self.myscr.addnstr(n,0,s,curses.COLS-2)
+            else:
+                continue
             n+=1
-
         self.myscr.refresh()
 
     def titleRefresh(self,mysched):
@@ -100,7 +102,7 @@ class MLBLineScoreWin(MLBListWin):
 
         # And write the status
         try:
-            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)
         except:
             rows = curses.LINES
             cols = curses.COLS
