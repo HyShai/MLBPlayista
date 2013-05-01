@@ -236,7 +236,7 @@ class MLBMasterScoreboardWin(MLBListWin):
            self.record_cursor + self.current_cursor + 2 < len(self.data):
             self.record_cursor += self.current_cursor + 2
             self.current_cursor = 0
-            if self.record_cursor + curses.LINES - 4 % 2 > 0:
+            if ( self.record_cursor + curses.LINES - 4 ) % 2 > 0:
                 self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-3]
             else:
                 self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-4]
