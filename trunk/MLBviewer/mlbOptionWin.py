@@ -50,9 +50,9 @@ class MLBOptWin(MLBListWin):
                 if n < len(self.records):
                     cursesflags = 0
             if n < len(self.records):
-                self.myscr.addstr(n+2, 0, s[:curses.COLS-1], cursesflags)
+                self.myscr.addnstr(n+2, 0, s, curses.COLS-2, cursesflags)
             else:
-                self.myscr.addstr(n+2, 0, s)
+                self.myscr.addnstr(n+2, 0, s, curses.COLS-2)
 
         self.myscr.refresh()
 
@@ -74,13 +74,14 @@ class MLBOptWin(MLBListWin):
         n = self.current_cursor
 
         status_str = 'Press L to return to listings...'
-        debug_str = "nlines=%s, dlen=%s, rlen=%s, cc=%s, rc=%s" % \
-                     ( ( curses.LINES-4), len(self.data), len(self.records),
-                       self.current_cursor, self.record_cursor )
+        if self.mycfg.get('curses_debug'):
+            status_str = "nlines=%s, dlen=%s, rlen=%s, cc=%s, rc=%s" % \
+                         ( ( curses.LINES-4), len(self.data), len(self.records),
+                           self.current_cursor, self.record_cursor )
 
         # And write the status
         try:
-            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)
         except:
             raise Exception, debug_str
         self.statuswin.refresh()

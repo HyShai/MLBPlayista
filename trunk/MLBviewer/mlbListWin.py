@@ -6,6 +6,7 @@ import time
 import os
 #from listwin import ListWin
 from mlbConstants import *
+from mlbError import *
 
 class MLBListWin:
 
@@ -45,7 +46,10 @@ class MLBListWin:
         # 1. first figure out absolute cursor value
         absolute_cursor = self.record_cursor + self.current_cursor
         # 2. top of viewable is record_cursor, integer divison of viewable
-        self.record_cursor = ( absolute_cursor / viewable ) * viewable
+        try:
+            self.record_cursor = ( absolute_cursor / viewable ) * viewable
+        except:
+            raise MLBCursesError, "Screen too small."
         # 3. current position in viewable screen
         self.current_cursor = absolute_cursor - self.record_cursor
         # finally adjust the viewable region
@@ -65,7 +69,7 @@ class MLBListWin:
     def Splash(self):
         lines = ('mlbviewer', VERSION, URL)
         for i in xrange(len(lines)):
-            self.myscr.addstr(curses.LINES/2+i, (curses.COLS-len(lines[i]))/2, lines[i])
+            self.myscr.addnstr(curses.LINES/2+i, (curses.COLS-len(lines[i]))/2,                                lines[i],curses.COLS-2)
         self.myscr.refresh()
 
     def Up(self):
@@ -172,9 +176,9 @@ class MLBListWin:
                         cursesflags = cursesflags |curses.color_pair(1)
                     else:
                         cursesflags = cursesflags | curses.A_UNDERLINE
-                self.myscr.addstr(n+2, 0, s, cursesflags)
+                self.myscr.addnstr(n+2, 0, s, curses.COLS-2, cursesflags)
             else:
-                self.myscr.addstr(n+2, 0, s)
+                self.myscr.addnstr(n+2, 0, s, curses.COLS-2)
 
         self.myscr.refresh()
 
@@ -205,7 +209,7 @@ class MLBListWin:
             status_str = "game_cursor=%s, wlen=%s, current_cursor=%s, record_cursor=%s, len(records)=%s" %\
                       ( game_cursor, wlen, self.current_cursor, self.record_cursor, len(self.records) )
             self.statuswin.clear()
-            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)
             self.statuswin.refresh()
             return
         # END curses debug code
@@ -213,7 +217,7 @@ class MLBListWin:
         if len(self.records) == 0:
             status_str = "No listings available for this day."
             self.statuswin.clear()
-            self.statuswin.addstr(0,0,status_str)
+            self.statuswin.addnstr(0,0,status_str,curses.COLS-2)
             self.statuswin.refresh()
             return
 
@@ -253,7 +257,7 @@ class MLBListWin:
         status_str += ' '*padding + debug_str +  coveragestr + speedstr + hdstr
         # And write the status
         try:
-            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)
         except:
             rows = curses.LINES
             cols = curses.COLS
@@ -268,24 +272,25 @@ class MLBListWin:
         self.myscr.addstr(0,20,URL)
         n = 1
 
-        # TODO: Implement a HelpWin(MLBListWin) class to take advantage of 
-        # scrolling
         for heading in HELPFILE:
            if n < curses.LINES-4:
-               self.myscr.addstr(n,0,heading[0],curses.A_UNDERLINE)
+               self.myscr.addnstr(n,0,heading[0],curses.COLS-2,
+                                                 curses.A_UNDERLINE)
            else:
                continue
            n += 1
            for helpkeys in heading[1:]:
                for k in helpkeys:
                    if n < curses.LINES-4:
-                       self.myscr.addstr(n,0,k)
-                       self.myscr.addstr(n,20, ': ' + KEYBINDINGS[k])
+                       helpstr = "%-20s: %s" % ( k , KEYBINDINGS[k] )
+                       #self.myscr.addstr(n,0,k)
+                       #self.myscr.addstr(n,20, ': ' + KEYBINDINGS[k])
+                       self.myscr.addnstr(n,0,helpstr,curses.COLS-2)
                    else:
                        continue
                    n += 1
         self.statuswin.clear()
-        self.statuswin.addstr(0,0,'Press a key to continue...')
+        self.statuswin.addnstr(0,0,'Press a key to continue...',curses.COLS-2)
         self.myscr.refresh()
         self.statuswin.refresh()
         self.myscr.getch()
@@ -294,17 +299,17 @@ class MLBListWin:
         if self.mycfg.get('debug'):
             raise
         self.myscr.clear()
-        self.myscr.addstr(0,0,errMsg)
-        self.myscr.addstr(2,0,'See %s for more details.' % LOGFILE)
+        self.myscr.addnstr(0,0,errMsg,curses.COLS-2)
+        self.myscr.addnstr(2,0,'See %s for more details.'%LOGFILE,curses.COLS-2)
         self.myscr.refresh()
         self.statuswin.clear()
-        self.statuswin.addstr(0,0,'Press a key to continue...')
+        self.statuswin.addnstr(0,0,'Press a key to continue...',curses.COLS-2)
         self.statuswin.refresh()
         self.myscr.getch()
 
     def statusWrite(self, statusMsg, wait=0):
         self.statuswin.clear()
-        self.statuswin.addstr(0,0, str(statusMsg)[:curses.COLS-1],curses.A_BOLD)
+        self.statuswin.addnstr(0,0,str(statusMsg),curses.COLS-2,curses.A_BOLD)
         self.statuswin.refresh()
         if wait < 0:
             self.myscr.getch()

@@ -25,3 +25,5 @@ class MLBXmlError(Error):
 class MLBAuthError(Error):
     pass
 
+class MLBCursesError(Error):
+    pass

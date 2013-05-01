@@ -52,9 +52,9 @@ class MLBTopWin(MLBListWin):
                     else:
                         cursesflags = 0
             if n < len(self.records):
-                self.myscr.addstr(n+2, 0, s, cursesflags)
+                self.myscr.addnstr(n+2, 0, s, curses.COLS-2, cursesflags)
             else:
-                self.myscr.addstr(n+2, 0, s)
+                self.myscr.addnstr(n+2, 0, s, curses.COLS-2 )
 
         self.myscr.refresh()
 
@@ -86,7 +86,7 @@ class MLBTopWin(MLBListWin):
 
         # And write the status
         try:
-            self.statuswin.addstr(0,0,status_str,curses.A_BOLD)
+            self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)
         except:
             rows = curses.LINES
             cols = curses.COLS
