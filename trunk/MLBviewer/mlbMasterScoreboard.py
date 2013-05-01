@@ -1,6 +1,7 @@
 from xml.dom.minidom import parse
 from xml.dom.minidom import parseString
 from xml.dom import *
+from mlbError import *
 import urllib2
 import datetime
 import time
@@ -14,6 +15,7 @@ class MLBMasterScoreboard:
         ( year, month, day ) = self.gameid.split('_')[:3]
         self.sbUrl = 'http://gdx.mlb.com/components/game/mlb/year_%s/month_%s/day_%s/master_scoreboard.xml' % ( year, month, day )
         #self.hrUrl = self.boxUrl.replace('linescore.xml','miniscoreboard.xml')
+        self.error_str = "Could not retrieve master_scoreboard.xml file"
         self.scoreboard = []
 
 
@@ -21,16 +23,14 @@ class MLBMasterScoreboard:
         try: 
             req = urllib2.Request(self.sbUrl)
             rsp = urllib2.urlopen(req)
-        except:
-            raise
+        except urllib2.URLError:
+            self.error_str = "Could not retrieve master_scoreboard.xml file"
+            raise MLBUrlError, self.error_str
         try:
             xp = parse(rsp)
-        except urllib2.URLError:
-            #self.myscr.clear()
-            self.statuswin.clear()
-            self.statuswin.addstr(0,0,'Could not retrieve master_scoreboard.xml',curses.A_BOLD)
-            time.sleep(2)
-            return
+        except:
+            self.error_str = "Could not parse master_scoreboard.xml file"
+            raise MLBXmlError, self.error_str
         # if we got this far, initialize the data structure
         for game in xp.getElementsByTagName('game'):
             tmp = dict()
