@@ -44,17 +44,20 @@ class MLBMasterScoreboard:
             status = tmp[gid]['status']
             if status in ('Final', 'Game Over', 'Completed Early'):
                 tmp[gid]['pitchers'] = self.parseWinLossPitchers(game)
-            elif status in ( 'In Progress', 'Delayed', 'Suspended' ):
+            elif status in ( 'In Progress', 'Delayed', 'Suspended', 'Replay' ):
                 tmp[gid]['pitchers'] = self.parseCurrentPitchers(game)
             else:
                 tmp[gid]['pitchers'] = self.parseProbablePitchers(game)
             if tmp[gid]['status'] in ( 'In Progress', 'Delayed', 'Suspended',
+                                                 'Replay',
                                                  'Completed Early',
                                                  'Game Over',
                                                  'Final' ):
                 tmp[gid]['hr'] = dict()
                 tmp[gid]['hr'] = self.parseHrData(game)
-                if tmp[gid]['status'] in ( 'In Progress', 'Delayed', 'Suspended' ):
+                if tmp[gid]['status'] in ( 'In Progress', 'Delayed', 
+                                           'Replay',
+                                           'Suspended' ):
                     tmp[gid]['in_game'] = dict()
                     tmp[gid]['in_game'] = self.parseInGameData(game)
             self.scoreboard.append(tmp)

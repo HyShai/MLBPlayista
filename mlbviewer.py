@@ -170,8 +170,7 @@ def mainloop(myscr,mycfg,mykeys):
         mywin.titleRefresh(mysched)
         mywin.statusRefresh()
         if mywin in ( listwin, sbwin ):
-            game_cursor = listwin.record_cursor + listwin.current_cursor
-            prefer = mysched.getPreferred(listwin.data[game_cursor], mycfg)
+            prefer = mysched.getPreferred(listwin.records[listwin.current_cursor], mycfg)
 
         # And now we do input.
         try:
