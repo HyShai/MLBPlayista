@@ -170,7 +170,8 @@ def mainloop(myscr,mycfg,mykeys):
         mywin.titleRefresh(mysched)
         mywin.statusRefresh()
         if mywin in ( listwin, sbwin ):
-            prefer = mysched.getPreferred(listwin.records[listwin.current_cursor], mycfg)
+            game_cursor = listwin.record_cursor + listwin.current_cursor
+            prefer = mysched.getPreferred(listwin.data[game_cursor], mycfg)
 
         # And now we do input.
         try:
@@ -188,9 +189,6 @@ def mainloop(myscr,mycfg,mykeys):
                 mywin.resize()
                 listwin.resize()
                 if mywin in ( sbwin, ):
-                    # reset all the cursors when screen size changes
-                    #listwin.PgUp()
-                    #mywin.PgUp()
                     # align the cursors between scoreboard and listings
                     sbwin.setCursors(listwin.record_cursor, 
                                      listwin.current_cursor)

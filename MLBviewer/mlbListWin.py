@@ -37,11 +37,19 @@ class MLBListWin:
         except Exception,e:
             raise Exception,repr(e)
             raise Exception,"y , x = %s, %s" % ( curses.LINES-1 , 0 )
-        viewlen = curses.LINES-4
+        viewable = curses.LINES-4
         # even out the viewable region if odd number of lines for scoreboard 
-        if viewlen % 2 > 0:
-            viewlen -= 1
-        self.records = self.data[:viewlen]
+        if viewable % 2 > 0:
+            viewable -= 1
+        # adjust the cursors to adjust for viewable changing
+        # 1. first figure out absolute cursor value
+        absolute_cursor = self.record_cursor + self.current_cursor
+        # 2. top of viewable is record_cursor, integer divison of viewable
+        self.record_cursor = ( absolute_cursor / viewable ) * viewable
+        # 3. current position in viewable screen
+        self.current_cursor = absolute_cursor - self.record_cursor
+        # finally adjust the viewable region
+        self.records = self.data[self.record_cursor:self.record_cursor+viewable]
         
     def prompter(self,win,prompt):
         win.clear()
