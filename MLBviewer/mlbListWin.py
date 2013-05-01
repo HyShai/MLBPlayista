@@ -69,20 +69,17 @@ class MLBListWin:
         self.myscr.refresh()
 
     def Up(self):
-        # old basic behavior
-        #if self.current_cursor > 0:
-        #    self.current_cursor -= 1
-        
         # Are we at the top of the window 
         # Do we have more records below record cursor?
         # Move up a window in the records.
-        if self.current_cursor -1 < 0 and self.record_cursor - 1 > 0:
-            self.current_cursor = curses.LINES-4-1
-            if self.record_cursor - curses.LINES -4 < 0:
+        if self.current_cursor -1 < 0 and self.record_cursor - 1 >= 0:
+            viewable= curses.LINES-4
+            self.current_cursor = viewable - 1
+            if self.record_cursor - viewable < 0:
                 self.record_cursor = 0
             else:
-                self.record_cursor -= curses.LINES-4
-            self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-4]
+                self.record_cursor -= viewable
+            self.records = self.data[self.record_cursor:self.record_cursor+viewable]
             #raise Exception,repr(self.records)
         # Elif we are not yet at top of window
         elif self.current_cursor > 0:
