@@ -8,6 +8,7 @@ import StringIO
 import gzip
 from xml.dom.minidom import parseString
 from mlbConstants import STANDINGS_DIVISIONS
+from mlbError import *
 
 class MLBStandings:
 
@@ -39,7 +40,11 @@ class MLBStandings:
         request.add_header('Accept-encoding', 'gzip')
         request.add_header('User-agent', 'mlbviewer/2013sf3 https://sourceforge.net/projects/mlbviewer/   (straycat000@yahoo.com)')
         opener = urllib2.build_opener()
-        f = opener.open(request)
+        try:
+            f = opener.open(request)
+        except urllib2.URLError:
+            self.error_str = "UrlError: Could not retrieve standings."
+            raise MLBUrlError
         compressedData = f.read()
         compressedStream = StringIO.StringIO(compressedData)
         gzipper = gzip.GzipFile(fileobj=compressedStream)

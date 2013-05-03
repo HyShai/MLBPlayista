@@ -132,6 +132,7 @@ class MLBSchedule:
             fp = urllib2.urlopen(req)
             return fp
         except urllib2.HTTPError:
+            self.error_str = "UrlError: Could not retrieve listings."
             raise MLBUrlError
 
     def getMultiAngleFromXml(self,event_id):
