@@ -152,9 +152,11 @@ def mainloop(myscr,mycfg,mykeys):
     try:
         available = mysched.getListings(mycfg.get('speed'),
                                         mycfg.get('blackout'))
-    except (KeyError, MLBXmlError), detail:
+    except (KeyError, MLBXmlError,MLBUrlError), detail:
         if mycfg.get('debug'):
             raise Exception, detail
+        else:
+            listwin.statusWrite(mysched.error_str,wait=2)
         available = []
 
     mywin.data = available
@@ -170,7 +172,13 @@ def mainloop(myscr,mycfg,mykeys):
         mywin.titleRefresh(mysched)
         mywin.statusRefresh()
         if mywin in ( listwin, sbwin ):
-            prefer = mysched.getPreferred(listwin.records[listwin.current_cursor], mycfg)
+            try:
+                prefer = mysched.getPreferred(
+                         listwin.records[listwin.current_cursor], mycfg)
+            except IndexError:
+                # this can fail if mysched.getSchedule() fails
+                # that failure already prints out an error, so skip this
+                pass
 
         # And now we do input.
         try:
@@ -248,6 +256,11 @@ def mainloop(myscr,mycfg,mykeys):
                 if mywin in ( sbwin, ):
                     GAMEID = listwin.records[listwin.current_cursor][6]
                     sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                    try:
+                        sbwin.getScoreboardData()
+                    except MLBUrlError:
+                        sbwin.statusWrite(self.error_str,wait=2)
+                        continue
                     # align the cursors between scoreboard and listings
                     sbwin.setCursors(listwin.record_cursor, 
                                      listwin.current_cursor)
@@ -282,6 +295,11 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin in ( sbwin, ):
                 GAMEID = listwin.records[listwin.current_cursor][6]
                 sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                try:
+                    sbwin.getScoreboardData()
+                except MLBUrlError:
+                    sbwin.statusWrite(self.error_str,wait=2)
+                    continue
                 sbwin.setCursors(listwin.record_cursor, 
                                  listwin.current_cursor)
                 mywin = sbwin
@@ -321,6 +339,11 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin in ( sbwin, ):
                 GAMEID = listwin.records[listwin.current_cursor][6]
                 sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                try:
+                    sbwin.getScoreboardData()
+                except MLBUrlError:
+                    sbwin.statusWrite(self.error_str,wait=2)
+                    continue
                 sbwin.setCursors(listwin.record_cursor, 
                                  listwin.current_cursor)
                 mywin = sbwin
@@ -330,9 +353,17 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin in ( optwin, helpwin, stdwin ):
                 continue
             if mywin == topwin:
-                gameid = mywin.records[topwin.current_cursor][4]
+                try:
+                    gameid = mywin.records[topwin.current_cursor][4]
+                except IndexError:
+                    listwin.statusWrite("No media debug available.",wait=2)
+                    continue
             else:
-                gameid = listwin.records[listwin.current_cursor][6]
+                try:
+                    gameid = listwin.records[listwin.current_cursor][6]
+                except IndexError:
+                    listwin.statusWrite("No media debug available.",wait=2)
+                    continue
             myscr.clear()
             mywin.titlewin.clear()
             mywin.titlewin.addnstr(0,0,'LISTINGS DEBUG FOR ' + gameid,
@@ -366,7 +397,11 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('STANDINGS'):
             mywin.statusWrite('Retrieving standings...')
             standings = MLBStandings()
-            standings.getStandingsData()
+            try:
+                standings.getStandingsData()
+            except MLBUrlError:
+                mywin.statusWrite(standings.error_str,wait=2)
+                continue
             stdwin = MLBStandingsWin(myscr,mycfg,standings.data,
                                      standings.last_update)
             mywin = stdwin
@@ -376,6 +411,11 @@ def mainloop(myscr,mycfg,mykeys):
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
             sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+            try:
+                sbwin.getScoreboardData()
+            except MLBUrlError:
+                sbwin.statusWrite(sbwin.error_str,wait=2)
+                continue
             sbwin.setCursors(listwin.record_cursor, 
                              listwin.current_cursor)
             mywin = sbwin
@@ -394,15 +434,25 @@ def mainloop(myscr,mycfg,mykeys):
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving box score for %s...' % GAMEID)
             boxscore=MLBBoxScore(GAMEID)
-            data = boxscore.getBoxData()
+            try:
+                data = boxscore.getBoxData()
+            except MLBUrlError:
+                listwin.statusWrite(boxscore.error_str,wait=2)
+                continue
             boxwin = MLBBoxScoreWin(myscr,mycfg,data)
             mywin = boxwin
 
         if c in mykeys.get('LINE_SCORE'):
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving linescore for %s...' % GAMEID)
+            # TODO: might want to embed linescore code in MLBLineScoreWin
+            # and create a MLBLineScoreWin.getLineData() method like scoreboard
             linescore = MLBLineScore(GAMEID)
-            data = linescore.getLineData()
+            try:
+                data = linescore.getLineData()
+            except MLBUrlError:
+                listwin.statusWrite(linescore.error_str,wait=2)
+                continue
             linewin = MLBLineScoreWin(myscr,mycfg,data)
             mywin = linewin
 

@@ -16,6 +16,7 @@ class MLBMasterScoreboardWin(MLBListWin):
         # any gid will do
         # TODO: Change from gid to datetime, e.g. mysched.data[0][1]
         #( self.year, self.month, self.day ) = mysched.data[0][1]
+        self.gid = gid
         self.gameid = gid
         self.gameid = self.gameid.replace('/','_')
         self.gameid = self.gameid.replace('-','_')
@@ -23,8 +24,19 @@ class MLBMasterScoreboardWin(MLBListWin):
         self.statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
         self.titlewin = curses.newwin(2,curses.COLS-1,0,0)
         self.data = []
-        self.scoreboard = MLBMasterScoreboard(gid)
-        self.sb = self.scoreboard.getScoreboardData()
+        self.records = []
+        self.current_cursor = 0
+        self.record_cursor = 0
+        self.game_cursor = 0
+
+    def getScoreboardData(self):
+        self.scoreboard = MLBMasterScoreboard(self.gid)
+        #self.sb = self.scoreboard.getScoreboardData()
+        try:
+            self.sb = self.scoreboard.getScoreboardData()
+        except:
+            self.error_str = "UrlError: Could not retrieve scoreboard."
+            raise MLBUrlError
         self.parseScoreboardData()
         # this is all just initialization ; setCursors should be called to
         # align with listings position

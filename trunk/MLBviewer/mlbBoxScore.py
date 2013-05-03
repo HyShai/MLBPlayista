@@ -3,6 +3,7 @@ from xml.dom.minidom import parseString
 from xml.dom import *
 import urllib2
 import datetime
+from mlbError import *
 
 class MLBBoxScore:
 
@@ -19,8 +20,9 @@ class MLBBoxScore:
         try: 
             req = urllib2.Request(self.boxUrl)
             rsp = urllib2.urlopen(req)
-        except:
-            return {}
+        except urllib2.URLError:
+            self.error_str = "UrlError: Could not retrieve box score."
+            raise MLBUrlError
         try:
             xp = parse(rsp)
         except:

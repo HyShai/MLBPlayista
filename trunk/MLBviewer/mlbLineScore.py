@@ -3,6 +3,7 @@ from xml.dom.minidom import parseString
 from xml.dom import *
 import urllib2
 import datetime
+from mlbError import *
 
 class MLBLineScore:
 
@@ -20,12 +21,14 @@ class MLBLineScore:
         try: 
             req = urllib2.Request(self.boxUrl)
             rsp = urllib2.urlopen(req)
-        except:
-            raise
+        except urllib2.URLError:
+            self.error_str = "UrlError: Could not retrieve linescore."
+            raise MLBUrlError
         try:
             xp = parse(rsp)
         except:
-            raise
+            self.error_str = "XmlError: Could not parse linescore."
+            raise MLBXmlError
         # if we got this far, initialize the data structure
         self.linescore = dict()
         self.linescore['game'] = dict()
@@ -63,11 +66,13 @@ class MLBLineScore:
             req = urllib2.Request(self.hrUrl)
             rsp = urllib2.urlopen(req)
         except:
-            raise
+            self.error_str = "UrlError: Could not retrieve home run data."
+            raise MLBUrlError
         try:
             xp = parse(rsp)
         except:
-            raise
+            self.error_str = "XmlError: Could not parse home run data."
+            raise MLBXmlError
         # initialize the structure
         return xp
         
