@@ -644,7 +644,7 @@ class MLBSchedule:
                                               cfg.get('use_nexdef'))
         except:
             return None
-        if listing[5] in ('I', 'D') and start_time == 0:
+        if listing[5] in ('I', 'D', 'NB' ) and start_time == 0:
             if cfg.get('live_from_start') and cfg.get('use_nexdef'):
                 if innings is not None:
                     start_time = innings[0]
