@@ -679,7 +679,7 @@ def mainloop(myscr,mycfg,mykeys):
                     mywin.statusWrite('Press any key to continue',wait=-1)
                     continue
                 mediaUrl = mediaStream.prepareMediaStreamer(mediaUrl)
-                # TODO: With scrolling change, is this 'available' or 'records'?
+                # DONE: using direct address into listwin.records
                 eventId  = listwin.records[listwin.current_cursor][6]
 
             cmdStr = mediaStream.preparePlayerCmd(mediaUrl, eventId,streamtype)
