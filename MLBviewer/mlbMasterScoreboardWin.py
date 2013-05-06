@@ -14,7 +14,7 @@ class MLBMasterScoreboardWin(MLBListWin):
         self.myscr = myscr
         self.mycfg = mycfg
         # any gid will do
-        # TODO: Change from gid to datetime, e.g. mysched.data[0][1]
+        # DONE: Leave it as gid ; necessary to align with listings view
         #( self.year, self.month, self.day ) = mysched.data[0][1]
         self.gid = gid
         self.gameid = gid
@@ -311,7 +311,7 @@ class MLBMasterScoreboardWin(MLBListWin):
                 str(mysched.month) + '/' +\
                 str(mysched.day) + '/' +\
                 str(mysched.year)
-                # TODO: '(Use arrow keys to change days)'
+                # DONE: '(Use arrow keys to change days)'
 
         padding = curses.COLS - (len(titlestr) + 6)
         titlestr += ' '*padding

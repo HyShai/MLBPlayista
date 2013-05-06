@@ -144,7 +144,7 @@ class MLBLineScoreWin(MLBListWin):
 
         # header string has inning numbers and R H E headers
         header_str = team_sfmt % ( ' '*team_strlen )
-        # TODO: fixing it to 9 innings until we figure a better way to handle
+        # DONE: Extras are supported with Left/Right :)
         # extras
         end_inning=start_inning+9
         try:
