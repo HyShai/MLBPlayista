@@ -236,8 +236,13 @@ def mainloop(myscr,mycfg,mykeys):
             if query == '':
                 listwin.statusWrite('Jumping back to today',wait=1)
                 listwin.statusWrite('Refreshing listings...',wait=1)
+                # Really jump to today and not mysched date
+                now = datetime.datetime.now()
+                dif = datetime.timedelta(1)
+                if now.hour < 9:
+                    now = now - dif
+                ymd_tuple = (now.year, now.month, now.day)
                 try:
-                    ymd_tuple = (today_year, today_month, today_day)
                     available = mysched.Jump(ymd_tuple,
                                              mycfg.get('speed'),
                                              mycfg.get('blackout'))
