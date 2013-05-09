@@ -3,6 +3,7 @@
 import curses
 
 DEFAULT_KEYBINDINGS = {
+    'RSS'                : [ ord('w') ],
     'UP'                 : [ curses.KEY_UP, ],
     'DOWN'               : [ curses.KEY_DOWN, ],
     'LEFT'               : [ curses.KEY_LEFT, ],
