@@ -254,6 +254,7 @@ KEYBINDINGS_1 = {
     'COVERAGE'            : 'Toggle coverage for HOME or AWAY stream',
     'HIGHLIGHTS'          : 'Display top plays listing for current game',
     'HIGHLIGHTS_PLAYLIST' : 'Play all highlights as a playlist',
+    'RSS'                 : 'RSS feed for MLB (or select team feed)',
     'STANDINGS'           : 'View standings (not real-time; updated once a day)',
     }
 
@@ -262,7 +263,7 @@ HELPBINDINGS = (
                   'COVERAGE', 'HIGHLIGHTS_PLAYLIST', 'INNINGS') ),
     ('LISTINGS', ('UP', 'DOWN', 'LEFT', 'RIGHT', 'JUMP', 'SPEED', 'REFRESH' )),
     ('SCREENS', ('HIGHLIGHTS', 'HELP', 'LISTINGS', 'LINE_SCORE', 'BOX_SCORE',
-     'MASTER_SCOREBOARD', 'STANDINGS' ) ),
+     'MASTER_SCOREBOARD', 'STANDINGS', 'RSS' ) ),
     ('DEBUG', ( 'OPTIONS', 'DEBUG', 'MEDIA_DEBUG' )),
     )
 
