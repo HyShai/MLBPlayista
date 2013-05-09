@@ -112,6 +112,7 @@ def mainloop(myscr,mycfg,mykeys):
     topwin = MLBTopWin(myscr,mycfg,available)
     optwin = MLBOptWin(myscr,mycfg)
     helpwin = MLBHelpWin(myscr,mykeys)
+    rsswin = MLBRssWin(myscr,mycfg)
     sbwin = None
     linewin = None
     boxwin = None
@@ -411,6 +412,13 @@ def mainloop(myscr,mycfg,mykeys):
                                      standings.last_update)
             mywin = stdwin
 
+        if c in mykeys.get('RSS'):
+            if mywin == rsswin:
+                rsswin.getFeedFromUser()
+                continue
+            rsswin.getRssData()
+            mywin = rsswin
+
         if c in mykeys.get('MASTER_SCOREBOARD'):
             #listwin.PgUp()
             GAMEID = listwin.records[listwin.current_cursor][6]
@@ -627,6 +635,21 @@ def mainloop(myscr,mycfg,mykeys):
                 mycfg.set('debug', True)
 
         # ACTIONS
+        # Override of Enter for RSS
+        if c in ( 'Enter', 10 ):
+            # implicit else allows Big Daddy Action to use Enter for video
+            if mywin == rsswin:
+                url = rsswin.data[(rsswin.current_cursor+rsswin.record_cursor)/2][1]
+                browser = mycfg.get('rss_browser')
+                try:
+                    cmdStr = browser.replace('%s',"'" + url + "'")
+                except:
+                    cmdStr = browser + " '" + url + "'"
+                proc = MLBprocess(cmdStr,retries=0)
+                proc.open()
+                proc.wait()
+                continue
+
         # The Big Daddy Action  
         # With luck, it can handle audio, video, condensed, and highlights
         if c in mykeys.get('VIDEO') or \
@@ -777,6 +800,7 @@ if __name__ == "__main__":
                   'no_lirc': 0,
                   'postseason': 0,
                   'free_condensed': 0,
+                  'rss_browser': 'firefox -new-tab %s',
                   'flash_browser': DEFAULT_FLASH_BROWSER}
     
     try:

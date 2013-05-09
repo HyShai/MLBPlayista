@@ -36,3 +36,4 @@ from mlbBoxScore import MLBBoxScore
 from mlbBoxScoreWin import MLBBoxScoreWin
 from mlbStandings import MLBStandings
 from mlbStandingsWin import MLBStandingsWin
+from mlbRssWin import MLBRssWin
