@@ -93,8 +93,12 @@ if len(sys.argv) > 1:
             print "can't parse : " + sys.argv[n]
             sys.exit()
         split = parsed.groups()
+        # Event-id: e=<event-id>, can be found from mlblistings or z=1
+        if split[0] in ( 'event_id' , 'e' ):
+            mycfg.set('event_id', split[1])
+
         # Condensed game:  c=<teamcode> 
-        if split[0] in ( 'condensed', 'c'):
+        elif split[0] in ( 'condensed', 'c'):
             streamtype='condensed'
             mycfg.set('condensed', True)
             teamcode = split[1]
@@ -195,7 +199,7 @@ if teamcode is not None:
         print 'Invalid teamcode: ' + teamcode
         print teamcodes_help
         sys.exit()
-    media = None
+    media = []
     for n in range(len(available)):
         home = available[n][0]['home']
         away = available[n][0]['away']
@@ -203,31 +207,38 @@ if teamcode is not None:
             listing = available[n]
             gameid = available[n][6].replace('/','-')
             if streamtype ==  'video':
-                media = available[n][2]
+                media.append(available[n][2])
             elif streamtype == 'condensed':
                 media = available[n][2]
                 condensed_media = available[n][4]
             else:
-                media = available[n][3]
+                media.append(available[n][3])
             eventId = available[n][6]
 
 # media assigned above will be a list of both home and away media tuples
 # This next section determines which media tuple to use (home or away)
 # and assign it to a stream tuple.
 
-if media is not None:
+# Added to support requesting specific games of a double-header
+cli_event_id = mycfg.get('event_id')
+
+if len(media) > 0:
     stream = None
-    for n in range(len(media)):
-        ( call_letters,
-          code,
-          content_id,
-          event_id ) = media[n]
-        if code == TEAMCODES[teamcode][0] or code == '0':
-            if streamtype == 'condensed':
-                stream = condensed_media[0]
-            else:
-                stream = media[n]
-            break
+    for m in media:
+        for n in range(len(m)):
+            ( call_letters,
+              code,
+              content_id,
+              event_id ) = m[n]
+            if cli_event_id is not None:
+                if cli_event_id != event_id:
+                    continue
+            if code == TEAMCODES[teamcode][0] or code == '0':
+                if streamtype == 'condensed':
+                    stream = condensed_media[0]
+                else:
+                    stream = m[n]
+                break
 else:
     print 'Could not find media for teamcode: ' + teamcode
     sys.exit()
@@ -335,6 +346,8 @@ mediaUrl = m.prepareMediaStreamer(mediaUrl)
 
 # preparePlayerCmd is the second half of the pipe using *_player to play
 # media from stdin
+if cli_event_id is not None:
+    eventId = cli_event_id
 cmdStr   = m.preparePlayerCmd(mediaUrl,eventId,streamtype)
 
 if mycfg.get('show_player_command'):
