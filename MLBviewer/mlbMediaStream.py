@@ -610,7 +610,10 @@ class MediaStream:
             self.log.write('locateCondensedMedia: %s\n' % cvUrl)
             self.log.write(str(detail))
             raise Exception,self.error_str
-        playback_scenario = 'FLASH_1200K_640X360'
+        if int(self.cfg.get('speed')) >= 1800:
+            playback_scenario = 'FLASH_1800K_960X540'
+        else:
+            playback_scenario = 'FLASH_1200K_640X360'
         for url in media.getElementsByTagName('url'):
             if url.getAttribute('playback_scenario') == playback_scenario:
 
