@@ -54,6 +54,9 @@ class MLBSession:
 
     def __init__(self,user,passwd,debug=False):
         self.user = user
+        if self.user is None:
+            # if user= is commented out, cfg.get() returns None, normalize this
+            self.user = ""
         self.passwd = passwd
         self.auth = True
         self.logged_in = None
