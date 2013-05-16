@@ -28,12 +28,14 @@ class MLBRssWin(MLBListWin):
     def getFeedFromUser(self):
         feed = self.prompter(self.statuswin,'Enter teamcode of feed:')
         feed = feed.strip()
-        if feed == "":
+        if feed == "" or feed == "mlb":
             feed = 'mlb'
         elif feed not in TEAMCODES.keys():
             self.statusWrite('Invalid teamcode: '+feed,wait=2)
             return
         self.statusWrite('Retrieving feed for %s...'%feed,wait=1)
+        # in this case, overwrite rather than aggregate
+        self.data = []
         self.getRssData(team=feed)
 
     def getRssData(self,team='mlb'):
@@ -51,7 +53,8 @@ class MLBRssWin(MLBListWin):
         except:
             self.error_str = "XmlError: Could not parse RSS."
             raise MLBXmlError
-        self.data = []
+        # append rather than overwrite to allow multiple feeds to be aggregated
+        #self.data = []
         self.parseRssData(xp)
         # this is all just initialization ; setCursors should be called to
         # align with listings position
