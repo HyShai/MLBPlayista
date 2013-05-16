@@ -416,7 +416,18 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin == rsswin:
                 rsswin.getFeedFromUser()
                 continue
-            rsswin.getRssData()
+            rsswin.data = []
+            feeds = []
+            if len(mycfg.get('favorite')) > 0:
+                for team in mycfg.get('favorite'):
+                    if team in TEAMCODES.keys():
+                        feeds.append(team)
+                if len(feeds) < 1:
+                    feeds.append('mlb')
+            else:
+                feeds.append('mlb')
+            for team in feeds:
+                rsswin.getRssData(team=team)
             mywin = rsswin
 
         if c in mykeys.get('MASTER_SCOREBOARD'):

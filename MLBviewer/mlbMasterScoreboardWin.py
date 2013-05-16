@@ -278,6 +278,8 @@ class MLBMasterScoreboardWin(MLBListWin):
                 cursesflags = 0
                 game_cursor = ( n + self.record_cursor ) / 2
                 gid = self.sb[game_cursor].keys()[0]
+                home = self.sb[game_cursor][gid]['home_file_code']
+                away = self.sb[game_cursor][gid]['away_file_code']
                 status = self.sb[game_cursor][gid]['status']
                 if n % 2 > 0:
                     # second line of the game, underline it for division
