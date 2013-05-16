@@ -53,10 +53,15 @@ class MediaStream:
         self.postseason    = self.cfg.get('postseason')
         self.use_librtmp   = self.cfg.get('use_librtmp')
         self.use_wired_web = self.cfg.get('use_wired_web')
-        self.max_bps       = self.cfg.get('max_bps')
-        self.min_bps       = self.cfg.get('min_bps')
+        self.max_bps       = int(self.cfg.get('max_bps'))
+        self.min_bps       = int(self.cfg.get('min_bps'))
+        # allow max_bps and min_bps to be specified in kbps
+        if self.min_bps < 128000:
+            self.min_bps *= 1000
+        if self.max_bps < 128000:
+            self.max_bps *= 1000
         self.speed         = self.cfg.get('speed')
-        self.adaptive      = self.cfg.get('adaptive')
+        self.adaptive      = self.cfg.get('adaptive_stream')
 
        
         # Install the cookie received from MLBLogin and used for subsequent 
