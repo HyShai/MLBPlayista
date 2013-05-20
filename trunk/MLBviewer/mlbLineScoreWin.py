@@ -161,7 +161,10 @@ class MLBLineScoreWin(MLBListWin):
     
         # now to fill out the actual frames
         for team in ( 'away', 'home' ):
-            team_str = TEAMCODES[self.data['game']['%s'%team+"_file_code"]][1]
+            if self.mycfg.get('milbtv'):
+                team_str = TEAMCODES[self.data['game']['%s'%team+"_code"]][1]
+            else:
+                team_str = TEAMCODES[self.data['game']['%s'%team+"_file_code"]][1]
             team_str += " (%s-%s)" %\
                 ( self.data['game']["%s_win"%team], 
                   self.data['game']["%s_loss"%team] )
@@ -322,8 +325,12 @@ class MLBLineScoreWin(MLBListWin):
             self.records.append("")
             self.records.append("HR: None")
             return
-        ( away , home ) = ( self.data['game']['away_file_code'].upper(),
-                            self.data['game']['home_file_code'].upper() )
+        if self.mycfg.get('milbtv'):
+            ( away , home ) = ( self.data['game']['away_code'].upper(),
+                                self.data['game']['home_code'].upper() )
+        else:
+            ( away , home ) = ( self.data['game']['away_file_code'].upper(),
+                                self.data['game']['home_file_code'].upper() )
         # start with a blank line before
         self.records.append("")
         self.records.append("HR:")
