@@ -82,10 +82,15 @@ class MiLBSchedule:
             # update TEAMCODES dynamically
             for team in ( 'home' , 'away' ):
                 teamcode=str(game['%s_code'%team])
+                teamfilecode = str(game['%s_file_code'%team])
                 if not TEAMCODES.has_key(teamcode):
                     TEAMCODES[teamcode] = ( str(game['%s_team_id'%team]),
                                 '%s %s' % ( str(game['%s_team_city'%team]),
                                             str(game['%s_team_name'%team])) )
+                    # also populate with file_code to make line scores work
+                    #TEAMCODES[teamfilecode] = ( str(game['%s_team_id'%team]),
+                    #            '%s %s' % ( str(game['%s_team_city'%team]),
+                    #                        str(game['%s_team_name'%team])) )
             out.append(gameinfo[id])
         return out
         

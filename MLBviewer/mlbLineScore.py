@@ -12,7 +12,8 @@ class MLBLineScore:
         self.gameid = self.gameid.replace('/','_')
         self.gameid = self.gameid.replace('-','_')
         ( year, month, day ) = self.gameid.split('_')[:3]
-        self.boxUrl = 'http://gdx.mlb.com/components/game/mlb/year_%s/month_%s/day_%s/gid_%s/linescore.xml' % ( year, month, day, self.gameid )
+        self.league = self.gameid.split('_')[4][-3:]
+        self.boxUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/gid_%s/linescore.xml' % ( self.league, year, month, day, self.gameid )
         self.hrUrl = self.boxUrl.replace('linescore.xml','miniscoreboard.xml')
         self.linescore = None
 
@@ -112,7 +113,10 @@ class MLBLineScore:
                     tmp[attr] = player.getAttribute(attr)
                 # if we already have the player, this is more than one hr
                 # this game
-                team = teamcodes[tmp['team_code']].upper()
+                if self.league != 'mlb':
+                    team = tmp['team_code'].upper()
+                else:
+                    team = teamcodes[tmp['team_code']].upper()
                 if not out.has_key(team):
                     out[team] = dict()
                 if out[team].has_key(tmp['id']):
