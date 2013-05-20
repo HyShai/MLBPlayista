@@ -30,4 +30,5 @@ DEFAULT_KEYBINDINGS = {
     'RELOAD_CONFIG'      : [ ord('R') ],
     'QUIT'               : [ ord('q') ],
     'DEBUG'              : [ ord('d') ],
+    'MILBTV'             : [ ord('M') ],
 }
