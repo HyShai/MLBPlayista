@@ -224,7 +224,14 @@ class MLBLineScoreWin(MLBListWin):
         else:
             ( pteam, bteam ) = ( 'away', 'home' )
         if status not in ( 'Suspended', ):
-            s = "Pitching: %s (%s); Batting: %s (%s)" % \
+            if self.mycfg.get('milbtv'):
+                s = "Pitching: %s (%s); Batting: %s (%s)" % \
+                ( self.data['pitchers']['current_pitcher'][1],
+                  self.data['game']["%s"%pteam+"_code"].upper(),
+                  self.data['pitchers']['current_batter'][1],
+                  self.data['game']["%s"%bteam+"_code"].upper() )
+            else:
+                s = "Pitching: %s (%s); Batting: %s (%s)" % \
                 ( self.data['pitchers']['current_pitcher'][1],
                   self.data['game']["%s"%pteam+"_file_code"].upper(),
                   self.data['pitchers']['current_batter'][1],
