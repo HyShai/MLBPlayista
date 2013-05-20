@@ -37,3 +37,6 @@ from mlbBoxScoreWin import MLBBoxScoreWin
 from mlbStandings import MLBStandings
 from mlbStandingsWin import MLBStandingsWin
 from mlbRssWin import MLBRssWin
+from milbSchedule import MiLBSchedule
+from milbMediaStream import MiLBMediaStream
+from milbLogin import MiLBSession

@@ -30,7 +30,7 @@ class MLBConfig:
                         self.data[key].append(val)
                 # These are the booleans:
                 elif key in ('show_player_command', 'debug', 'use_color', 
-                             'live_from_start', 'use_nexdef', 
+                             'live_from_start', 'use_nexdef', 'milbtv',
                              'adaptive_stream', 'show_inning_frames', 
                              'postseason', 'use_librtmp', 'no_lirc', 
                              'curses_debug', 'use_wired_web' ):

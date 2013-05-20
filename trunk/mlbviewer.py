@@ -142,13 +142,17 @@ def mainloop(myscr,mycfg,mykeys):
         log.write('no session-key found in cookie file\n')
 
     # Listings
-    mysched = MLBSchedule(ymd_tuple=startdate,
+    mlbsched = MLBSchedule(ymd_tuple=startdate,
                           time_shift=mycfg.get('time_offset'),
                           use_wired_web=mycfg.get('use_wired_web'))
+    milbsched = MiLBSchedule(ymd_tuple=startdate,
+                             time_shift=mycfg.get('time_offset'))
+    # default to MLB.TV
+    mysched = mlbsched
     # We'll make a note of the date, to return to it later.
-    today_year = mysched.year
-    today_month = mysched.month
-    today_day = mysched.day
+    today_year = mlbsched.year
+    today_month = mlbsched.month
+    today_day = mlbsched.day
 
     try:
         available = mysched.getListings(mycfg.get('speed'),
@@ -177,7 +181,7 @@ def mainloop(myscr,mycfg,mykeys):
                 prefer = mysched.getPreferred(
                          listwin.records[listwin.current_cursor], mycfg)
             except IndexError:
-                # this can fail if mysched.getSchedule() fails
+                # this can fail if mlbsched.getSchedule() fails
                 # that failure already prints out an error, so skip this
                 pass
 
@@ -237,7 +241,7 @@ def mainloop(myscr,mycfg,mykeys):
             if query == '':
                 listwin.statusWrite('Jumping back to today',wait=1)
                 listwin.statusWrite('Refreshing listings...',wait=1)
-                # Really jump to today and not mysched date
+                # Really jump to today and not mlbsched date
                 now = datetime.datetime.now()
                 dif = datetime.timedelta(1)
                 if now.hour < 9:
@@ -279,7 +283,6 @@ def mainloop(myscr,mycfg,mykeys):
 		continue
             listwin.statusWrite('Refreshing listings...',wait=1)
             split = parsed.groups()
-            prev_tuple = (mysched.year,mysched.month, mysched.day)
             mymonth = int(split[0])
             myday = int(split[2])
             myyear = int('20' + split[4])
@@ -431,7 +434,10 @@ def mainloop(myscr,mycfg,mykeys):
             mywin = rsswin
 
         if c in mykeys.get('MASTER_SCOREBOARD'):
-            #listwin.PgUp()
+            if mycfg.get('milbtv'):
+                # for now, not going to support master scoreboard for milb
+                mycfg.set('milbtv', False)
+                listwin.PgUp()
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
             sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
@@ -591,11 +597,38 @@ def mainloop(myscr,mycfg,mykeys):
                 play.open()
                 play.waitInteractive(myscr)
                 
-        if c in mykeys.get('LISTINGS') or c in mykeys.get('REFRESH'):
+        if c in mykeys.get('LISTINGS') or c in mykeys.get('REFRESH') or \
+           c in mykeys.get('MILBTV'):
             mywin = listwin
             # refresh
             mywin.statusWrite('Refreshing listings...',wait=1)
 
+            if c in mykeys.get('MILBTV'):
+                listwin.PgUp()
+                mycfg.set('milbtv', True)
+                try:
+                    milbsession
+                except:
+                    mywin.statusWrite('Logging into milb.com...',wait=0)
+                    milbsession = MiLBSession(user=mycfg.get('user'),
+                                             passwd=mycfg.get('pass'),
+                                             debug=mycfg.get('debug'))
+                    try:
+                        milbsession.getSessionData()
+                    except MLBAuthError:
+                        error_str = 'Login was unsuccessful.  Check user and pass in ' + myconf
+                        mywin.statusWrite(error_str,wait=2)
+                    except Exception,detail:
+                        error_str = str(detail)
+                        mywin.statusWrite(error_str,wait=2)
+                mysched = milbsched
+            elif c in mykeys.get('LISTINGS'):
+                if mycfg.get('milbtv'):
+                    mycfg.set('milbtv', False)
+                    listwin.PgUp()
+                    if sbwin is not None:
+                        sbwin.PgUp()
+                mysched = mlbsched
             try:
                 available = mysched.getListings(mycfg.get('speed'),
                                                 mycfg.get('blackout'))
@@ -686,14 +719,21 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.statusWrite('Retrieving requested media...')
 
             # for nexdef, use the innings list to find the correct start time
-            if mycfg.get('use_nexdef'):
-                start_time = mysched.getStartOfGame(listwin.records[listwin.current_cursor],mycfg)
+            if mycfg.get('use_nexdef') and not mycfg.get('milbtv'):
+                start_time = mlbsched.getStartOfGame(listwin.records[listwin.current_cursor],mycfg)
             else:
                 start_time = 0
             if prefer[streamtype] is None:
                 mywin.errorScreen('ERROR: Requested media not available.')
                 continue
-            mediaStream = MediaStream(prefer[streamtype], session, mycfg,
+            if mycfg.get('milbtv'):
+                mediaStream = MiLBMediaStream(prefer[streamtype], milbsession, 
+                                      mycfg,
+                                      prefer[streamtype][1], 
+                                      streamtype=streamtype,
+                                      start_time=start_time)
+            else:
+                mediaStream = MediaStream(prefer[streamtype], session, mycfg,
                                       prefer[streamtype][1], 
                                       streamtype=streamtype,
                                       start_time=start_time)
@@ -762,7 +802,7 @@ def mainloop(myscr,mycfg,mykeys):
                 mywin.statusWrite(s,wait=2)
 
             try:
-                available = mysched.getListings(mycfg.get('speed'),
+                available = mlbsched.getListings(mycfg.get('speed'),
                                                 mycfg.get('blackout'))
             except (KeyError,MLBXmlError),detail:
                 if mycfg.get('debug'):
@@ -811,6 +851,7 @@ if __name__ == "__main__":
                   'no_lirc': 0,
                   'postseason': 0,
                   'free_condensed': 0,
+                  'milbtv' : 0,
                   'rss_browser': 'firefox -new-tab %s',
                   'flash_browser': DEFAULT_FLASH_BROWSER}
     
