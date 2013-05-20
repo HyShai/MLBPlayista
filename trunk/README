@@ -90,8 +90,8 @@ This is still very generous of him as all other options for standings required
 a non-free subscription to a content feed provider.
 
 *MiLB.TV integration assumes the same email and password are used for both
-MLB.TV and MiLB.TV.  This will be enhanced in the future to expand the config
-to support separate credentials.
+MLB.TV and MiLB.TV.  If MiLB.TV uses different email and pass, specify the 
+MiLB.TV user and pass as milb_user= and milb_pass= in the ~/.mlb/config.
 
 
 Hot Keys
@@ -176,6 +176,9 @@ default values.
 user=        : MLB.TV username (the email address associated with subscription)
 pass=        : MLB.TV password
 
+milb_user=   : MiLB.TV username (if different than MLB.TV username)
+milb_pass=   : MiLB.TV password (if different than MLB.TV password)
+
 Highlights and condensed games can be accessed without an MLB.TV subscription.  
 If you are not an MLB.TV subscriber, just leave the user= and pass= blank. 
 (3/28/13 - You will get a login error but listings will appear and top plays
@@ -205,6 +208,9 @@ min_bps=         : Minimum quality stream to use for adaptive streaming
 max_bps=         : Maximum quality stream to use for adaptive streaming
 
 Specified in bps from 100000 for 100K to 4500000 (4500K)
+
+min_bps and max_bps can now be specified in kbps e.g. min_bps=4500 is 
+equivalent to min_bps=4500000
 
 adaptive_stream  : True/False for whether to let mlbhls adjust the stream
                    speed based on a running calculation of the delivery of 

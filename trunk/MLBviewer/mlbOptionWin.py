@@ -13,7 +13,7 @@ class MLBOptWin(MLBListWin):
         self.data = []
         sorted_keys = sorted(mycfg.data.keys(), key=str)
         for key in sorted_keys:
-            if key not in ( 'pass' , 'cookies', 'cookie_jar', ):
+            if key not in ( 'pass' , 'milb_pass', 'cookies', 'cookie_jar', ):
                 self.data.append((key, self.mycfg.get(key)))
         # data is everything, records is only what's visible
         self.records = self.data[0:curses.LINES-4]
