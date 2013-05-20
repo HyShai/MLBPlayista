@@ -67,6 +67,8 @@ FEATURES OF MLBVIEWER
 - Jump to specific innings
 - Start live games from beginning (premium service only)
 - Standings* (available to non-subscribers too; updated only once a day)
+- RSS feed aggregator
+- MiLB.TV integration* (requires MiLB.TV subscription)
 
 Features unique to mlbviewer:
 
@@ -86,6 +88,10 @@ Features unique to mlbviewer:
 http://erikberg.com.  They are not real-time, but only updated once a day.
 This is still very generous of him as all other options for standings required
 a non-free subscription to a content feed provider.
+
+*MiLB.TV integration assumes the same email and password are used for both
+MLB.TV and MiLB.TV.  This will be enhanced in the future to expand the config
+to support separate credentials.
 
 
 Hot Keys
@@ -119,8 +125,10 @@ b                   : View line score
 x                   : View box score
 m                   : Master scoreboard view
 g                   : View standings (not real-time; updated once a day)
+w                   : RSS feed for favorite team (or select teams)
 h                   : Display version and keybindings
-l (or Esc)          : Return to listings
+l (or Esc)          : Return to MLB listings
+M                   : Switch to MiLB listings
  
 
 Advanced Usage:
@@ -131,6 +139,19 @@ R                   : Reload the configuration
 
 LISTINGS
 p                   : In nexdef mode, p key toggles adaptive streaming
+
+RSS
+w                   : 1. By default, RSS opens to the team feed listed in the 
+                      favorite= configuration file option (see below.)  
+                      2. If no favorite is specified, the MLB league-wide feed 
+                      will be used.  
+                      3. If multiple favorite= options are specified, the feeds 
+                      will be aggregated.
+                      4. A specific team feed can be opened by pressing the 
+                      'w' key within the RSS window.  The prompt will ask
+                      for a teamcode.  Use the same teamcodes listed below
+                      as would be used for favorite and follow options (or
+                      the special 'mlb' code for the league-wide feed.)
 
 MPLAYER
 #                   : In nexdef streams, the # key in mplayer will select 
@@ -219,7 +240,9 @@ bg_color=       : Set the background color.  A value of xterm uses default
 favorite_color= : For teams marked as favorite, they will be highlighted in
                   this color to make them easier to find in listings
 
-favorite=       : Teams to highlight using favorite_color
+favorite=       : Teams to highlight using favorite_color or underline if
+                  use_color=0
+                  (also used for setting a default RSS feed.)
 
 If use_color is False (or 0), then favorite highlighting is only an underline
 and favorite_color and bg_color options are ignored.
@@ -227,7 +250,7 @@ and favorite_color and bg_color options are ignored.
 Valid colors are: black, red, green, yellow, blue, magenta, cyan, and white.
 A value of 'xterm' will use default terminal colors.
 
-Team codes for audio_follow, video_follow, and favorite are:
+Team codes for audio_follow, video_follow, favorite, and RSS are:
 
      'ana', 'ari', 'atl', 'bal', 'bos', 'chc', 'cin', 'cle', 'col',
      'cws', 'det', 'mia', 'hou', 'kc', 'la', 'mil', 'min', 'nym',
@@ -241,18 +264,18 @@ use_librtmp=        : True/False, if mplayer was built with librtmp support and
                       librtmp.so is installed, audio and video playback can
                       use librtmp in mplayer without requiring rtmpdump
 
-3/28/13 - This may not be working yet in 2013.  If you want it, ask for it
-in Linuxquestions forum (see below.)
-
 show_inning_frames= : Innings screen displays an innings frame showing 
                       which innings are available.  However, this can be 
                       very confusing when using a screen reader so this setting
                       disables that display. (True/False)
 
+rss_browwser=       : Command to open an RSS news item 
+                      (default: firefox -new-tab %s)
+
 flash_browser=      : Command to launch a browser to the flash url if 
                       for some strange reason that's desired over mlbviewer
 
-3/28/13 - This may not be working yet in 2013.  If you want it, ask for it
+3/28/13 - flash_browser is not used in 2013.  If you want it, ask for it
 in Linuxquestions forum (see below.)
 
 x_display=          : Ability to display the video_player to a remote display
@@ -327,10 +350,13 @@ These can be overridden:
     'LINE_SCORE'         : [ b ],
     'BOX_SCORE'          : [ x ],
     'MASTER_SCOREBOARD'  : [ m ],
+    'STANDINGS'          : [ g ],
+    'RSS'                : [ w ],
     'HIGHLIGHTS'         : [ t ],
     'HIGHLIGHTS_PLAYLIST': [ y ],
     'INNINGS'            : [ i ],
     'LISTINGS'           : [ l ],
+    'MILBTV'             : [ M ],
     'REFRESH'            : [ r ],
     'NEXDEF'             : [ n ],
     'COVERAGE'           : [ s ],
