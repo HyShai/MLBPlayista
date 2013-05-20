@@ -612,9 +612,13 @@ def mainloop(myscr,mycfg,mykeys):
                     milbsession
                 except:
                     mywin.statusWrite('Logging into milb.com...',wait=0)
-                    milbsession = MiLBSession(user=mycfg.get('user'),
-                                             passwd=mycfg.get('pass'),
-                                             debug=mycfg.get('debug'))
+                    milb_user=(mycfg.get('user') ,\
+                        mycfg.get('milb_user'))[mycfg.data.has_key('milb_user')]
+                    milb_pass=(mycfg.get('pass') ,\
+                        mycfg.get('milb_pass'))[mycfg.data.has_key('milb_pass')]
+                    milbsession = MiLBSession(user=milb_user,
+                                              passwd=milb_pass,
+                                              debug=mycfg.get('debug'))
                     try:
                         milbsession.getSessionData()
                     except MLBAuthError:
@@ -766,7 +770,8 @@ def mainloop(myscr,mycfg,mykeys):
             cmdStr = mediaStream.preparePlayerCmd(mediaUrl, eventId,streamtype)
             if mycfg.get('show_player_command'):
                 myscr.clear()
-                myscr.addstr(0,0,cmdStr)
+                chars=(curses.COLS-2) * (curses.LINES-1)
+                myscr.addstr(0,0,cmdStr[:chars])
                 if mycfg.get('use_nexdef') and streamtype != 'audio':
                    pos=6
                 else:
@@ -779,7 +784,8 @@ def mainloop(myscr,mycfg,mykeys):
                                         
             if mycfg.get('debug'):
                 myscr.clear()
-                myscr.addstr(0,0,cmdStr)
+                chars=(curses.COLS-2) * (curses.LINES-1)
+                myscr.addstr(0,0,cmdStr[:chars])
                 myscr.refresh()
                 mywin.statusWrite('DEBUG enabled: Displaying URL only.  Press any key to continue',wait=-1)
                 continue

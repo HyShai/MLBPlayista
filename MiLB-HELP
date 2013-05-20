@@ -1,9 +1,9 @@
 Quick Overview of MiLB.tv Integration
 =====================================
 
-user= and pass= in ~/.mlb/config currently limited to same user= and pass=
-as MLB.tv.  If this is not the case, raise an issue at the LinuxQuestions
-forum.
+MiLB.tv login can re-use user= and pass= settings if MiLB.tv credentials are 
+the same as MLB.tv.  If they are different, use milb_user= and milb_pass= 
+in ~/.mlb/config to set the MiLB.tv user and pass.
 
 'M' key switches mode to MiLB.tv.  
 
