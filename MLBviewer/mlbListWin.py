@@ -145,8 +145,11 @@ class MLBListWin:
                 home = str(self.records[n][0]['home'])
                 away = str(self.records[n][0]['away'])
                 s = self.records[n][1].strftime('%l:%M %p') + ': ' +\
-                    ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
-                    ' '.join(TEAMCODES[home][1:]).strip()
+                    TEAMCODES[away][1] + ' at ' +\
+                    TEAMCODES[home][1]
+                #s = self.records[n][1].strftime('%l:%M %p') + ': ' +\
+                #    ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
+                #    ' '.join(TEAMCODES[home][1:]).strip()
                 if self.records[n][7] == 'media_archive':
                     s += ' (Archived)'
 
