@@ -293,14 +293,18 @@ class MLBLineScoreWin(MLBListWin):
                   self.data['pitchers']['save_pitcher'][5] ) )
 
     def prepareActionPreview(self):
+        if self.mycfg.get('milbtv'):
+            code='code'
+        else:
+            code='file_code'
         hp_str = '%3s: %s (%s-%s %s)' %\
-            ( self.data['game']['home_file_code'].upper(),
+            ( self.data['game']['home_%s'%code].upper(),
               self.data['pitchers']['home_probable_pitcher'][1],
               self.data['pitchers']['home_probable_pitcher'][2],
               self.data['pitchers']['home_probable_pitcher'][3],
               self.data['pitchers']['home_probable_pitcher'][4] )
         ap_str = '%3s: %s (%s-%s %s)' %\
-            ( self.data['game']['away_file_code'].upper(),
+            ( self.data['game']['away_%s'%code].upper(),
               self.data['pitchers']['away_probable_pitcher'][1],
               self.data['pitchers']['away_probable_pitcher'][2],
               self.data['pitchers']['away_probable_pitcher'][3],
