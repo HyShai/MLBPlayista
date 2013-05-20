@@ -436,8 +436,10 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('MASTER_SCOREBOARD'):
             if mycfg.get('milbtv'):
                 # for now, not going to support master scoreboard for milb
-                mycfg.set('milbtv', False)
-                listwin.PgUp()
+                mywin.statusWrite('Master scoreboard not supported for MiLB.',wait=2)
+                continue
+                #mycfg.set('milbtv', False)
+                #listwin.PgUp()
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
             sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
