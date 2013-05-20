@@ -415,14 +415,14 @@ class MiLBMediaStream(MediaStream):
                     try:
                         live_sub_pat = re.compile(r'live\/milb_encap_rm(.*)')
                         self.sub_path = re.search(live_sub_pat,game_url).groups()[0]
-                        self.sub_path = 'milb_encap_rm' + self.sub_path + self.auth_chunk
+                        self.sub_path = 'milb_encap_rm' + self.sub_path
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream subscribe path: ' + str(detail)
                         raise Exception,self.error_str
                     try:
                         live_path_pat = re.compile(r'live\/milb_encap_rm(.*)$')
                         self.play_path = re.search(live_path_pat,game_url).groups()[0]
-                        self.play_path = 'milb_encap_rm' + self.play_path + self.auth_chunk
+                        self.play_path = 'milb_encap_rm' + self.play_path
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream play path: ' + str(detail)
                         raise Exception,self.error_str

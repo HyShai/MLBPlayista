@@ -86,11 +86,8 @@ class MiLBSchedule:
                 if not TEAMCODES.has_key(teamcode):
                     TEAMCODES[teamcode] = ( str(game['%s_team_id'%team]),
                                 '%s %s' % ( str(game['%s_team_city'%team]),
-                                            str(game['%s_team_name'%team])) )
-                    # also populate with file_code to make line scores work
-                    #TEAMCODES[teamfilecode] = ( str(game['%s_team_id'%team]),
-                    #            '%s %s' % ( str(game['%s_team_city'%team]),
-                    #                        str(game['%s_team_name'%team])) )
+                                            str(game['%s_team_name'%team])),
+                                            teamfilecode )
             out.append(gameinfo[id])
         return out
         

@@ -18,6 +18,7 @@ class MLBRssWin(MLBListWin):
         self.statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
         self.titlewin = curses.newwin(2,curses.COLS-1,0,0)
         self.rssUrl = 'http://mlb.mlb.com/partnerxml/gen/news/rss/mlb.xml'
+        self.milbRssUrl = 'http://www.milb.com/partnerxml/gen/news/rss/milb.xml'
         self.data = []
         self.records = []
         self.current_cursor = 0
@@ -28,7 +29,9 @@ class MLBRssWin(MLBListWin):
     def getFeedFromUser(self):
         feed = self.prompter(self.statuswin,'Enter teamcode of feed:')
         feed = feed.strip()
-        if feed == "" or feed == "mlb":
+        if self.mycfg.get('milbtv') and feed == "" or feed == "milb":
+            feed = "milb"
+        elif feed == "" or feed == "mlb":
             feed = 'mlb'
         elif feed not in TEAMCODES.keys():
             self.statusWrite('Invalid teamcode: '+feed,wait=2)
@@ -39,7 +42,14 @@ class MLBRssWin(MLBListWin):
         self.getRssData(team=feed)
 
     def getRssData(self,team='mlb'):
-        rssUrl = self.rssUrl.replace('mlb.xml','%s.xml'%team)
+        if self.mycfg.get('milbtv'):
+            try:
+                team = TEAMCODES[team][2]
+            except:
+                pass
+            rssUrl = self.milbRssUrl.replace('milb.xml','%s.xml'%team)
+        else:
+            rssUrl = self.rssUrl.replace('mlb.xml','%s.xml'%team)
         try:
             req = urllib2.Request(rssUrl)
             rsp = urllib2.urlopen(req)
@@ -91,7 +101,10 @@ class MLBRssWin(MLBListWin):
                 link  = self.htmlParser.unescape(link)
             except:
                 raise Exception,repr(link)
-            desc  = item.getElementsByTagName('description')[0].childNodes[0].data
+            try:
+                desc  = item.getElementsByTagName('description')[0].childNodes[0].data
+            except IndexError:
+                desc = ""
             self.data.append((title,link,desc))
 
 

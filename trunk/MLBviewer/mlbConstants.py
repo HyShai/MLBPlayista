@@ -132,8 +132,8 @@ TEAMCODES = {
     'tex': ('140', 'Texas Rangers', ''),
     'tor': ('141', 'Toronto Blue Jays', ''),
     'was': ('120', 'Washington Nationals', ''),
-    'wft': ('WFT', 'World', 'Futures', 'Team' ),
-    'uft': ('UFT', 'USA', 'Futures', 'Team' ),
+    'wft': ('WFT', 'World Futures Team' ),
+    'uft': ('UFT', 'USA Futures Team' ),
     'cif': ('CIF', 'Cincinnati Futures Team'),
     'nyf': ('NYF', 'New York Yankees Futures Team'),
     't3944': ( 'T3944', 'CPBL All-Stars' ),
@@ -185,7 +185,7 @@ TEAMCODES = {
     'fso' : ('FSO', 'Florida Southern College'),
     'fsu' : ('FSU', 'Florida State University'),
     'neu' : ('NEU',  'Northeastern University'),
-    'bc' : ('BC',  'Boston', 'College', ''),
+    'bc' : ('BC',  'Boston College', ''),
     }
 
 STREAM_SPEEDS = ( '300', '500', '1200', '1800', '2400' )
