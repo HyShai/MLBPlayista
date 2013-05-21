@@ -647,6 +647,8 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('NEXDEF'):
             if mywin not in ( listwin, sbwin ):
                 continue
+            if mycfg.get('milbtv'):
+                continue
             # there's got to be an easier way to do this
             if mycfg.get('use_nexdef'):
                 mycfg.set('use_nexdef', False)
@@ -655,6 +657,8 @@ def mainloop(myscr,mycfg,mykeys):
 
         if c in mykeys.get('COVERAGE'):
             if mywin not in ( listwin, sbwin ):
+                continue
+            if mycfg.get('milbtv'):
                 continue
             # there's got to be an easier way to do this
             temp = COVERAGETOGGLE.copy()
@@ -665,6 +669,8 @@ def mainloop(myscr,mycfg,mykeys):
 
         if c in mykeys.get('SPEED'):
             if mywin not in ( listwin, sbwin ):
+                continue
+            if mycfg.get('milbtv'):
                 continue
             # there's got to be an easier way to do this
             if mycfg.get('use_nexdef'):

@@ -236,9 +236,14 @@ class MLBListWin:
         elif len(self.records[n][3]) == 0:
             status_str += ' (No audio)'
 
-        speedstr = SPEEDTOGGLE.get(self.mycfg.get('speed'))
-        hdstr = SSTOGGLE.get(self.mycfg.get('adaptive_stream'))
-        coveragestr = COVERAGETOGGLE.get(self.mycfg.get('coverage'))
+        if self.mycfg.get('milbtv'):
+            speedstr = "[1000K]"
+            coveragestr="[MILB]"
+            hdstr=SSTOGGLE.get(False)
+        else:
+            speedstr = SPEEDTOGGLE.get(self.mycfg.get('speed'))
+            hdstr = SSTOGGLE.get(self.mycfg.get('adaptive_stream'))
+            coveragestr = COVERAGETOGGLE.get(self.mycfg.get('coverage'))
         status_str_len = len(status_str) +\
                             + len(speedstr) + len(hdstr) + len(coveragestr) + 2
         if self.mycfg.get('debug'):
@@ -252,7 +257,7 @@ class MLBListWin:
             debug_str = '[DEBUG]'
         else:
             debug_str = ''
-        if self.mycfg.get('use_nexdef'):
+        if self.mycfg.get('use_nexdef') and not self.mycfg.get('milbtv'):
             speedstr = '[NEXDF]'
         else:
             hdstr = SSTOGGLE.get(False)
