@@ -606,7 +606,10 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.statusWrite('Refreshing listings...',wait=1)
 
             if c in mykeys.get('MILBTV'):
-                listwin.PgUp()
+                # only need to reset listings to top first time
+                # else, remember our place
+                if not mycfg.get('milbtv'):
+                    listwin.PgUp()
                 mycfg.set('milbtv', True)
                 try:
                     milbsession
