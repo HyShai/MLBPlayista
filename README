@@ -254,7 +254,8 @@ If use_color is False (or 0), then favorite highlighting is only an underline
 and favorite_color and bg_color options are ignored.
 
 Valid colors are: black, red, green, yellow, blue, magenta, cyan, and white.
-A value of 'xterm' will use default terminal colors.
+A value of 'xterm' will use default terminal colors.  Generally, the bg_color
+should be set to xterm to allow the terminal to define the background.
 
 Team codes for audio_follow, video_follow, favorite, and RSS are:
 

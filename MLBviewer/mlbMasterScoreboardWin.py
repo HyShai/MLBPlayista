@@ -301,6 +301,10 @@ class MLBMasterScoreboardWin(MLBListWin):
                         cursesflags = 0
                     if status in ( 'In Progress', 'Replay' ):
                         cursesflags |= cursesflags | curses.A_BOLD
+                if home in self.mycfg.get('favorite') or \
+                   away in self.mycfg.get('favorite'):
+                    if self.mycfg.get('use_color'):
+                        cursesflags |= curses.color_pair(1)
                 self.myscr.addnstr(n+2,0,s,curses.COLS-2,cursesflags)
             else:
                 s = ' '*(curses.COLS-1)
