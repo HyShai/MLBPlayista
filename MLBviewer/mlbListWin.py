@@ -238,7 +238,7 @@ class MLBListWin:
 
         if self.mycfg.get('milbtv'):
             speedstr = "[1000K]"
-            coveragestr="[MILB]"
+            coveragestr="[MiLB]"
             hdstr=SSTOGGLE.get(False)
         else:
             speedstr = SPEEDTOGGLE.get(self.mycfg.get('speed'))
