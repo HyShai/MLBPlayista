@@ -138,7 +138,7 @@ class MiLBSchedule:
             dct['video']['milbtv'] = game['content']['video']['milbtv']
             dct['audio'] = []
             dct['condensed'] = None
-            dct['media_state'] = game['media_state']
+            dct['media_state'] = game['game_media']['homebase']['media'][0]['combined_media_state'].lower()
             out.append((dct['gameid'], dct))
         return out
 
