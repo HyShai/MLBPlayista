@@ -13,8 +13,8 @@ class MLBMasterScoreboard:
         self.gameid = self.gameid.replace('/','_')
         self.gameid = self.gameid.replace('-','_')
         ( year, month, day ) = self.gameid.split('_')[:3]
-        self.sbUrl = 'http://gdx.mlb.com/components/game/mlb/year_%s/month_%s/day_%s/master_scoreboard.xml' % ( year, month, day )
-        #self.hrUrl = self.boxUrl.replace('linescore.xml','miniscoreboard.xml')
+        league = self.gameid.split('_')[4][-3:]
+        self.sbUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/master_scoreboard.xml' % ( league, year, month, day )
         self.error_str = "Could not retrieve master_scoreboard.xml file"
         self.scoreboard = []
 
