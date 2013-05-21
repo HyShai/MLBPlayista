@@ -65,7 +65,7 @@ teamcodes_help = "\n" +\
 "Valid teamcodes are:" + "\n" +\
 "\n" +\
 "     'ana', 'ari', 'atl', 'bal', 'bos', 'chc', 'cin', 'cle', 'col',\n" +\
-"     'cws', 'det', 'fla', 'hou', 'kc', 'la', 'mil', 'min', 'nym',\n" +\
+"     'cws', 'det', 'mia', 'hou', 'kc', 'la', 'mil', 'min', 'nym',\n" +\
 "     'nyy', 'oak', 'phi', 'pit', 'sd', 'sea', 'sf', 'stl', 'tb',\n" +\
 "     'tex', 'tor', 'was'\n" +\
 "\n"
