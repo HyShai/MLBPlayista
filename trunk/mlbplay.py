@@ -338,7 +338,7 @@ if mycfg.get('nexdef_url'):
 if mycfg.get('debug'):
     print 'Media URL received: '
     print mediaUrl
-    sys.exit()
+    #sys.exit()
 
 # prepareMediaStreamer turns a raw url into either an mlbhls command or an 
 # rtmpdump command that pipes to stdout
@@ -350,8 +350,10 @@ if cli_event_id is not None:
     eventId = cli_event_id
 cmdStr   = m.preparePlayerCmd(mediaUrl,eventId,streamtype)
 
-if mycfg.get('show_player_command'):
+if mycfg.get('show_player_command') or mycfg.get('debug'):
     print cmdStr
+    if mycfg.get('debug'):
+        sys.exit()
 
 try:
     
