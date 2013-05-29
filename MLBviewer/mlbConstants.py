@@ -190,6 +190,8 @@ TEAMCODES = {
 
 STREAM_SPEEDS = ( '300', '500', '1200', '1800', '2400' )
 
+NEXDEF_SPEEDS = ( '128', '500', '800', '1200', '1800', '2400', '3000', '4500' )
+
 DEFAULT_SPEED = '1200'
 
 DEFAULT_V_PLAYER = 'mplayer -cache 2048 -really-quiet'

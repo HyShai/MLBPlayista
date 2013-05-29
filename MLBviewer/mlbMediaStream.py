@@ -136,7 +136,6 @@ class MediaStream:
             'eventId': self.event_id,
             'sessionKey': sessionKey,
             'fingerprint': urllib.unquote(self.session.cookies['fprt']),
-            'fingerprint': urllib.unquote(self.session.cookies['fprt']),
             'identityPointId': self.session.cookies['ipid'],
             'playbackScenario': self.scenario,
             'subject': self.subject
@@ -159,6 +158,11 @@ class MediaStream:
         # 3. Get the content_list that matches the requested stream
         # 4. Strip out blacked out content or content that is not authorized.
 
+        # if no user=, don't even attempt media requests for non-free
+        # media
+        if self.cfg.get('user') == "" or self.cfg.get('user') is None:
+            self.error_str = 'MLB.TV subscription is required for this media.'
+            raise MLBAuthError,self.error_str
         reply = self.createMediaRequest(self.stream)
         self.updateSession(reply)
         content_list = self.parseMediaReply(reply)
@@ -590,8 +594,33 @@ class MediaStream:
                 suf = '.mp3'
             else:
                 suf = '.mp4'
-            cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + self.call_letters + suf + "'")
+            fname = self.prepareFilename(gameid)
+            cmd_str = cmd_str.replace('%f', fname)
+            #cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + self.call_letters + suf + "'")
         return cmd_str
+
+    def prepareFilename(self,gameid):
+        filename_format = self.cfg.get('filename_format')
+        gameid = gameid.replace('/','-')
+        if filename_format is not None and filename_format != "":
+            fname = filename_format
+        else:
+            fname = '%g-%l.%m'
+        #supported_tokens =  ( '%g', '%l', '%t', '%c', '%e' , '%m'):
+        fname = fname.replace('%g',gameid)
+        fname = fname.replace('%l',self.stream[0])
+        fname = fname.replace('%t',self.stream[1])
+        fname = fname.replace('%c',self.stream[2])
+        fname = fname.replace('%e',self.stream[3])
+        if self.streamtype == 'audio':
+            suffix = 'mp3'
+        else:
+            suffix = 'mp4'
+        if fname.find('%m') < 0:
+            fname = fname + '.%s' % suffix
+        else:
+            fname = fname.replace('%m', suffix)
+        return fname
 
     def locateCondensedMedia(self):
         self.streamtype = 'condensed'
