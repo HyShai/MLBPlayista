@@ -589,16 +589,12 @@ class MediaStream:
             else:
                 cmd_str = media_url + ' | ' + player + ' - '
         if '%f' in player:
-            gameid = gameid.replace('/','-')
-            if self.streamtype == 'audio':
-                suf = '.mp3'
-            else:
-                suf = '.mp4'
             fname = self.prepareFilename(gameid)
             cmd_str = cmd_str.replace('%f', fname)
-            #cmd_str = cmd_str.replace('%f', "'" + gameid + '-' + self.call_letters + suf + "'")
         return cmd_str
 
+    # Still uncertain where recording falls in ToS but at least can give
+    # more options on filename if that's the route some will take.
     def prepareFilename(self,gameid):
         filename_format = self.cfg.get('filename_format')
         gameid = gameid.replace('/','-')
@@ -606,7 +602,14 @@ class MediaStream:
             fname = filename_format
         else:
             fname = '%g-%l.%m'
-        #supported_tokens =  ( '%g', '%l', '%t', '%c', '%e' , '%m'):
+        # Supported_tokens =  ( '%g', gameid, e.g. 2013-05-28-slnmlb-kcamlb-1
+        #                       '%l', call_letters, e.g. FSKC-HD
+        #                       '%t', team_id, e.g. 118 (mostly useless)
+        #                       '%c', content_id, e.g. 27310673
+        #                       '%e', event_id, e.g. 14-347519-2013-05-28
+        #                       '%m', suffix, e.g. 'mp3' or 'mp4')
+        # Default format above would translate to: 
+        # 2013-05-28-slnmlb-kcamlb-1-FSKC-HD.mp4
         fname = fname.replace('%g',gameid)
         fname = fname.replace('%l',self.stream[0])
         fname = fname.replace('%t',self.stream[1])
