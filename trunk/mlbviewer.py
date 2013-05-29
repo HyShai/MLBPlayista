@@ -404,6 +404,9 @@ def mainloop(myscr,mycfg,mykeys):
             mywin = optwin
 
         if c in mykeys.get('STANDINGS'):
+            if mycfg.get('milbtv'):
+                mywin.statusWrite('Standings are not supported for MiLB',wait=2)
+                continue
             mywin.statusWrite('Retrieving standings...')
             standings = MLBStandings()
             try:
@@ -589,7 +592,7 @@ def mainloop(myscr,mycfg,mykeys):
                 try:
                     mediaUrl = mediaStream.locateMedia()
                 except:
-                    mywin.errorScreen('An error occurred in locateMedia(): %s'%\
+                    mywin.errorScreen('ERROR: %s'%\
                                       mediaStream.error_str)
                     continue
                 mediaUrl = mediaStream.prepareMediaStreamer(mediaUrl)
