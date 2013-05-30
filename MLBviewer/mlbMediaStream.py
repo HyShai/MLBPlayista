@@ -402,7 +402,7 @@ class MediaStream:
             if self.cfg.get('use_librtmp'):
                 return self.prepareFmsUrl(game_url)
             else:
-                return 'rtmpdump -r %s' % game_url
+                return 'rtmpdump -o - -r %s' % game_url
         elif self.cfg.get('use_nexdef') and self.streamtype != 'audio':
             self.nexdef_media_url = game_url
             return self.prepareHlsCmd(game_url)
@@ -583,8 +583,6 @@ class MediaStream:
             if streamtype == 'video' and self.cfg.get('use_nexdef'):
                 cmd_str = media_url + ' | ' + player + ' - '
             elif self.cfg.get('use_librtmp') or streamtype == 'highlight':
-                cmd_str = player + ' ' + media_url
-            elif streamtype == 'condensed' and self.cfg.get('free_condensed'):
                 cmd_str = player + ' ' + media_url
             else:
                 cmd_str = media_url + ' | ' + player + ' - '

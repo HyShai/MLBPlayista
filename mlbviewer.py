@@ -560,6 +560,9 @@ def mainloop(myscr,mycfg,mykeys):
 
         # NEEDS ATTENTION FOR SCROLLING
         if c in mykeys.get('INNINGS'):
+            if mycfg.get('milbtv'):
+                mywin.statusWrite('Jump to inning not supported for MiLB.',wait=2)
+                continue
             if mywin in ( optwin, helpwin, stdwin ):
                 continue
             if mycfg.get('use_nexdef') or \
