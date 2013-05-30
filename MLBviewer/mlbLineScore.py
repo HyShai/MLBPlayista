@@ -120,6 +120,8 @@ class MLBLineScore:
                 if not out.has_key(team):
                     out[team] = dict()
                 if out[team].has_key(tmp['id']):
+                    # game_hr is local to this loop so look it up each time
+                    game_hr = out[team][tmp['id']].keys()[-1]
                     game_hr += 1
                 else:
                     game_hr = 1
