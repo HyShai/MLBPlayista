@@ -599,7 +599,11 @@ class MediaStream:
         if filename_format is not None and filename_format != "":
             fname = filename_format
         else:
-            fname = '%g-%l.%m'
+            if self.cfg.get('milbtv'):
+                # call letters is always blank for milbtv
+                fname = '%g.%m'
+            else:
+                fname = '%g-%l.%m'
         # Supported_tokens =  ( '%g', gameid, e.g. 2013-05-28-slnmlb-kcamlb-1
         #                       '%l', call_letters, e.g. FSKC-HD
         #                       '%t', team_id, e.g. 118 (mostly useless)
@@ -609,8 +613,13 @@ class MediaStream:
         # Default format above would translate to: 
         # 2013-05-28-slnmlb-kcamlb-1-FSKC-HD.mp4
         fname = fname.replace('%g',gameid)
-        fname = fname.replace('%l',self.stream[0])
-        fname = fname.replace('%t',self.stream[1])
+        if self.cfg.get('milbtv'):
+            # if call letters are really desired, make some up ;)
+            fname = fname.replace('%l', 'MiLB')
+        else:
+            fname = fname.replace('%l',self.stream[0])
+        # team is 0 for condensed, coerce it to str
+        fname = fname.replace('%t',str(self.stream[1]))
         fname = fname.replace('%c',self.stream[2])
         fname = fname.replace('%e',self.stream[3])
         if self.streamtype == 'audio':
