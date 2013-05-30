@@ -552,39 +552,11 @@ class MiLBMediaStream(MediaStream):
             else:
                 cmd_str = media_url + ' | ' + player + ' - '
         if '%f' in player:
+            # prepareFilename is inherited from MediaStream base class
             fname = self.prepareFilename(gameid)
             cmd_str = cmd_str.replace('%f', fname)
         return cmd_str
 
-    def prepareFilename(self,gameid):
-        filename_format = self.cfg.get('filename_format')
-        gameid = gameid.replace('/','-')
-        if filename_format is not None and filename_format != "":
-            fname = filename_format
-        else:
-            fname = '%g.%m'
-        # Supported_tokens =  ( '%g', gameid, e.g. 2013-05-28-slnmlb-kcamlb-1
-        #                       '%l', call_letters, e.g. FSKC-HD
-        #                       '%t', team_id, e.g. 118 (mostly useless)
-        #                       '%c', content_id, e.g. 27310673
-        #                       '%e', event_id, e.g. 14-347519-2013-05-28
-        #                       '%m', suffix, e.g. 'mp3' or 'mp4')
-        # Default format above would translate to:
-        # 2013-05-28-slnmlb-kcamlb-1-FSKC-HD.mp4
-        fname = fname.replace('%g',gameid)
-        fname = fname.replace('%l',self.stream[0])
-        fname = fname.replace('%t',self.stream[1])
-        fname = fname.replace('%c',self.stream[2])
-        fname = fname.replace('%e',self.stream[3])
-        if self.streamtype == 'audio':
-            suffix = 'mp3'
-        else:
-            suffix = 'mp4'
-        if fname.find('%m') < 0:
-            fname = fname + '.%s' % suffix
-        else:
-            fname = fname.replace('%m', suffix)
-        return fname
 
     def locateCondensedMedia(self):
         self.streamtype = 'condensed'
