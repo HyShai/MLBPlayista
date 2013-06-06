@@ -272,6 +272,9 @@ class MLBMasterScoreboardWin(MLBListWin):
         wlen = curses.LINES-4
         if wlen % 2 > 0:
             wlen -= 1
+        if len(self.sb) == 0:
+            self.myscr.refresh()
+            return
         for n in range(wlen):
             if n < len(self.records):
                 s = self.records[n]
@@ -329,6 +332,11 @@ class MLBMasterScoreboardWin(MLBListWin):
         self.titlewin.refresh()
 
     def statusRefresh(self):
+        if len(self.sb) == 0:
+            self.statuswin.addnstr(0,0,'No listings available for this day.',
+                                       curses.COLS-2)
+            self.statuswin.refresh()
+            return
         game_cursor = ( self.current_cursor + self.record_cursor ) / 2
         # BEGIN curses debug code
         if self.mycfg.get('curses_debug'):
