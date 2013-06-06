@@ -487,6 +487,8 @@ def mainloop(myscr,mycfg,mykeys):
             mywin = boxwin
 
         if c in mykeys.get('LINE_SCORE'):
+            if len(listwin.records) == 0:
+                continue
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving linescore for %s...' % GAMEID)
             # TODO: might want to embed linescore code in MLBLineScoreWin
@@ -731,6 +733,8 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('VIDEO') or \
            c in mykeys.get('AUDIO') or \
            c in mykeys.get('CONDENSED_GAME'):
+            if len(listwin.records) == 0:
+                continue
             if mywin in ( optwin , helpwin, stdwin ):
                 continue
             if c in mykeys.get('AUDIO'):
