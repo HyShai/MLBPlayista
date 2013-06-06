@@ -473,6 +473,8 @@ def mainloop(myscr,mycfg,mykeys):
             listwin.records = available[listwin.record_cursor:listwin.record_cursor+curses.LINES-4]
 
         if c in mykeys.get('BOX_SCORE'):
+            if len(listwin.records) == 0:
+                continue
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving box score for %s...' % GAMEID)
             boxscore=MLBBoxScore(GAMEID)
