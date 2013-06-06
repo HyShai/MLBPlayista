@@ -346,7 +346,11 @@ def mainloop(myscr,mycfg,mykeys):
             listwin.record_cursor = 0
             # recreate the master scoreboard view if current screen
             if mywin in ( sbwin, ):
-                GAMEID = listwin.records[listwin.current_cursor][6]
+                try:
+                    GAMEID = listwin.records[listwin.current_cursor][6]
+                except IndexError:
+                    sbwin.sb = []
+                    continue
                 sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
                 try:
                     sbwin.getScoreboardData()
@@ -443,7 +447,10 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
                 #mycfg.set('milbtv', False)
                 #listwin.PgUp()
-            GAMEID = listwin.records[listwin.current_cursor][6]
+            try:
+                GAMEID = listwin.records[listwin.current_cursor][6]
+            except IndexError:
+                continue
             mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
             sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
             try:
@@ -560,6 +567,8 @@ def mainloop(myscr,mycfg,mykeys):
 
         # NEEDS ATTENTION FOR SCROLLING
         if c in mykeys.get('INNINGS'):
+            if len(listwin.records) == 0:
+                continue
             if mycfg.get('milbtv'):
                 mywin.statusWrite('Jump to inning not supported for MiLB.',wait=2)
                 continue
