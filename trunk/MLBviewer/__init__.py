@@ -40,3 +40,7 @@ from mlbRssWin import MLBRssWin
 from milbSchedule import MiLBSchedule
 from milbMediaStream import MiLBMediaStream
 from milbLogin import MiLBSession
+from mlbDailyVideos import MLBDailyVideos
+from mlbDailyVideoWin import MLBDailyVideoWin
+from mlbDailyStream import MLBDailyStream
+from mlbDailyMenuWin import MLBDailyMenuWin

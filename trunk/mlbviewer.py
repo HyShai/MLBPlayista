@@ -76,9 +76,6 @@ def mainloop(myscr,mycfg,mykeys):
     DISABLED_FEATURES = []
     RESTORE_SPEED = mycfg.get('speed')
 
-    # DEPRECATE free_condensed as it is not needed for non-subscribers
-    mycfg.set('free_condensed', False)
-
     # not sure if we need this for remote displays but couldn't hurt
     if mycfg.get('x_display'):
         os.environ['DISPLAY'] = mycfg.get('x_display')

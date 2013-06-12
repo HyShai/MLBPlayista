@@ -57,7 +57,7 @@ class MLBOptWin(MLBListWin):
         self.myscr.refresh()
 
 
-    def titleRefresh(self,mysched):
+    def titleRefresh(self,mysched=None):
         titlestr = "CURRENT OPTIONS SETTINGS"
 
         padding = curses.COLS - (len(titlestr) + 6)
