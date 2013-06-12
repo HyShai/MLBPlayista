@@ -415,6 +415,7 @@ MLBCOM_VIDKEYS = {
     '1730'   : 'sf_the_franchise',
     '1740'   : '&mmtax_key=mlb_prod_player_poll',
     '9000'   : 'bb_moments',
+    '9010'   : 'mlb_draft&mmtax_key=2013&op=and',
 }
 
 MLBCOM_VIDTITLES = {
@@ -457,4 +458,5 @@ MLBCOM_VIDTITLES = {
     '1730'   : 'MLB Productions: The Franchise',
     '1740'   : 'MLB Productions: MLB Player Poll',
     '9000'   : "Baseball's Best Moments",
+    '9010'   : '2013 MLB Draft',
 }
