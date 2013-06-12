@@ -274,7 +274,7 @@ OPTIONS_DEBUG = ( 'video_player', 'audio_player', 'top_plays_player',
                   'speed', 'use_nexdef', 'use_wired_web', 'min_bps', 'max_bps',
                   'adaptive_stream', 'use_librtmp', 'live_from_start',
                   'video_follow', 'audio_follow', 'blackout', 'coverage',
-                  'free_condensed', 'show_player_command', 'user' )
+                  'show_player_command', 'user' )
 
 COLORS = { 'black'   : curses.COLOR_BLACK,
            'red'     : curses.COLOR_RED,
@@ -348,3 +348,113 @@ STANDINGS_DIVISIONS = {
     'MLB.NL.W':  'NL West',
 }
 
+# To Add New Sections for MLB.COM Video viewer:
+# 1. Use Firefox Web Console on the Results page to be added.
+# 2. Look for the request with a URL like:
+#    GET http://wapc.mlb.com/ws/search/MediaSearchService?start=1&hitsPerPage=200&type=json&sort=desc&sort_type=date&mlbtax_key=sf_the_franchise
+# 3. Use the &mlbtax_key= value, in this case, sf_the_franchise.
+# 4. Pick a menu location and assign this new entry a numerical ID.  This
+#    menu is sorted in numerical order.
+# 5. For example, choose 1190 to place this after the 2012 Postseason.  There
+#    is plenty of numerical space to squeeze in new entries or shift things 
+#    around.  So this could also be 1005 to place it right after FastCast.
+#    In the same way, if Game Recaps is desired at a higher position, change
+#    1210 to a lower number such as 1005 to place it after FastCast or 990
+#    to place it before FastCast, e.g. top of the menu.
+# 6. Some requests include an mmtax_key in addition to an mlbtax_key.  See
+#    1010 for an example of how to include that.
+# 7. Some requests include an mmtax_key instead of an mlbtax_key such as:
+#    GET http://wapc.mlb.com/ws/search/MediaSearchService?start=1&hitsPerPage=200&type=json&sort=desc&sort_type=date&mmtax_key=mlb_prod_player_poll
+#    See 1130 for an example of how to include an mmtax_key without an 
+#    mlbtax_key.  Or 1180 for an example without mmtax_key or mlbtax_key.
+# 8. After entering the request key in MLBCOM_VIDKEYS, create a matching
+#    entry in MLBCOM_VIDTITLES using the same numerical key with the 
+#    desired menu entry title.  When changing a numerical key in VIDKEYS,
+#    also change the corresponding numerical key in VIDTITLES too.
+#
+# The main video browser on mlb.com: http://wapc.mlb.com/play
+# TODO: Add the "More To Explore" subsections.
+
+MLBCOM_VIDKEYS = {
+    '1000'   : 'fastcast%2Bvtp_fastcast',
+    '1010'   : 'vtp_head_and_shoulders&mmtax_key=2013&op=and',
+    '1020'   : 'vtp_blackberry',
+    '1030'   : 'stand_up_to_cancer',
+    '1040'   : 'the_wall',
+    '1050'   : 'vtp_must_c',
+    '1060'   : 'vtp_jiffy_lube&mmtax_key=2013&op=and',
+    '1070'   : 'edward_jones%2Bvtp_manager_postgame&op=or',
+    '1100'   : 'world_series&mmtax_key=2012&op=and',
+    '1110'   : 'alcs&mmtax_key=2012&op=and',
+    '1120'   : 'nlcs&mmtax_key=2012&op=and',
+    '1130'   : '&mmtax_key=2012%2Balds_b&op=and',
+    '1140'   : '&mmtax_key=2012%2Balds_a&op=and',
+    '1150'   : '&mmtax_key=2012%2Bnlds_a&op=and',
+    '1160'   : '&mmtax_key=2012%2Bnlds_b&op=and',
+    '1170'   : '&game=345594',
+    '1180'   : '&game=345595',
+    '1200'   : 'meggie_zahneis',
+    '1210'   : 'mm_wrapup',
+    '1220'   : 'vtp_budweiser',
+    '1230'   : 'vtp_chatting_cage',
+    '1300'   : 'this_week_in_baseball',
+    '1310'   : 'mlb_network',
+    '1320'   : 'mlbn_diamond_demos',
+    '1330'   : 'prime9%2Bmlb_productions&op=and',
+    '1500'   : 'walk_off_rbi&op=or',
+    '1510'   : 'error',
+    '1520'   : 'home_run',
+    '1530'   : 'blooper',
+    '1540'   : 'defense',
+    '1550'   : 'no_hitter%2Bperfect_game&op=or',
+    '1600'   : 'vtp_fan_clips',
+    '1610'   : 'vtp_bucks',
+    '1700'   : 'mlb_productions',
+    '1710'   : 'mlb_productions_world_series',
+    '1720'   : 'sho_franchise&mmtax_key=2012&op=and',
+    '1730'   : 'sf_the_franchise',
+    '1740'   : '&mmtax_key=mlb_prod_player_poll',
+    '9000'   : 'bb_moments',
+}
+
+MLBCOM_VIDTITLES = {
+    '1000'   : 'MLB.com FastCast',
+    '1010'   : 'Top Pitching Performances',
+    '1020'   : 'The MLB.com Flow',
+    '1030'   : 'Stand Up To Cancer',
+    '1040'   : 'Cut4',
+    '1050'   : 'Must C',
+    '1060'   : 'Highly Trained Performances',
+    '1070'   : 'Edward Jones Face Time',
+    '1100'   : '2012 Postseason: 2012 World Series',
+    '1110'   : '2012 Postseason: ALCS',
+    '1120'   : '2012 Postseason: NLCS',
+    '1130'   : '2012 Postseason: ALDS: Athletics vs. Tigers',
+    '1140'   : '2012 Postseason: ALDS: Yankees vs. Orioles',
+    '1150'   : '2012 Postseason: NLDS: Nationals vs. Cards',
+    '1160'   : '2012 Postseason: NLDS: Reds vs. Giants',
+    '1170'   : '2012 Postseason: AL Wildcard',
+    '1180'   : '2012 Postseason: NL Wildcard',
+    '1200'   : 'Youth Reporter: Meggie Zahneis',
+    '1210'   : 'Daily Recaps',
+    '1220'   : '2013 MLB Walk-Offs',
+    '1230'   : 'Edward Jones Chatting Cage',
+    '1300'   : 'MLB Network: This Week In Baseball',
+    '1310'   : 'MLB Network: MLB Network',
+    '1320'   : 'MLB Network: Diamond Demos',
+    '1330'   : 'MLB Network: Prime 9',
+    '1500'   : 'Game Highlights: Walk-Offs',
+    '1510'   : 'Game Highlights: Errors',
+    '1520'   : 'Game Highlights: Home Runs',
+    '1530'   : 'Game Highlights: Baseball Oddities',
+    '1540'   : 'Game Highlights: Top Defensive Plays',
+    '1550'   : 'Game Highlights: No-Hitters & Perfect Games',
+    '1600'   : 'Fan Favorite Moments',
+    '1610'   : 'Bucks on the Pond',
+    '1700'   : 'MLB Productions: MLB Productions',
+    '1710'   : 'MLB Productions: World Series',
+    '1720'   : 'MLB Productions: The Franchise: Miami Marlins',
+    '1730'   : 'MLB Productions: The Franchise',
+    '1740'   : 'MLB Productions: MLB Player Poll',
+    '9000'   : "Baseball's Best Moments",
+}
