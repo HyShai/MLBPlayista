@@ -385,6 +385,8 @@ STANDINGS_JSON_DIVISIONS = {
 # TODO: Add the "More To Explore" subsections.
 
 MLBCOM_VIDKEYS = {
+    '900'    : 'vtp_daily_dash',
+    '910'    : 'top_5&mmtax_key=2013&op=and',
     '1000'   : 'fastcast%2Bvtp_fastcast',
     '1010'   : 'vtp_head_and_shoulders&mmtax_key=2013&op=and',
     '1020'   : 'vtp_blackberry',
@@ -428,6 +430,8 @@ MLBCOM_VIDKEYS = {
 }
 
 MLBCOM_VIDTITLES = {
+    '900'    : 'Daily Dash',
+    '910'    : 'Top 5 Plays Of The Day',
     '1000'   : 'MLB.com FastCast',
     '1010'   : 'Top Pitching Performances',
     '1020'   : 'The MLB.com Flow',
