@@ -66,7 +66,7 @@ FEATURES OF MLBVIEWER
 - Box scores (available for non-subscribers too)
 - Jump to specific innings
 - Start live games from beginning (premium service only)
-- Standings* (available to non-subscribers too; updated only once a day)
+- Standings (available to non-subscribers too)
 - RSS feed aggregator
 - MiLB.TV integration* (requires MiLB.TV subscription)
 
@@ -83,11 +83,6 @@ Features unique to mlbviewer:
   Post a request on Sourceforge or Linuxquestions forum.)
 - mlblistings and mlbplay tools that can be used to display listings or play
   media without using the curses gui
-
-*Standings are provided free of charge, courtesy of Erik Berg, 
-http://erikberg.com.  They are not real-time, but only updated once a day.
-This is still very generous of him as all other options for standings required
-a non-free subscription to a content feed provider.
 
 *MiLB.TV integration assumes the same email and password are used for both
 MLB.TV and MiLB.TV.  If MiLB.TV uses different email and pass, specify the 
@@ -124,7 +119,7 @@ y                   : Play all highlights as a playlist (mplayer-dependent)*
 b                   : View line score
 x                   : View box score
 m                   : Master scoreboard view
-g                   : View standings (not real-time; updated once a day)
+g                   : View standings
 w                   : RSS feed for favorite team (or select teams)
 h                   : Display version and keybindings
 l (or Esc)          : Return to MLB listings
