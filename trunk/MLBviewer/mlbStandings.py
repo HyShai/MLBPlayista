@@ -6,8 +6,11 @@
 import urllib2, httplib
 import StringIO
 import gzip
+import datetime
+import json
 from xml.dom.minidom import parseString
 from mlbConstants import STANDINGS_DIVISIONS
+from mlbConstants import STANDINGS_JSON_DIVISIONS
 from mlbError import *
 
 class MLBStandings:
@@ -16,8 +19,36 @@ class MLBStandings:
         self.data = []
         self.last_update = ""
         self.xml = ""
+        self.date = datetime.datetime.now()
         self.url = 'https://erikberg.com/mlb/standings.xml'
+        self.jUrl = 'http://mlb.mlb.com/lookup/json/named.standings_schedule_date.bam?&sit_code=%27h0%27&league_id=103&league_id=104&all_star_sw=%27N%27&version=2'
 
+    def getStandingsData(self,offline=False,datetime=None,format='json'):
+        if format == 'xml':
+            self.getStandingsXmlData(offline)
+        else:
+            self.getStandingsJsonData(offline)
+
+    def getStandingsJsonData(self,offline=False):
+        # this part needs to be added dynamically
+        #schedule_game_date.game_date=%272013/06/12%27&season=2013
+        # if not given a datetime, calculate it
+        now=datetime.datetime.now()
+        self.jUrl += '&season=%s&schedule_game_date.game_date=%%27%s%%27' % \
+                              ( now.year, now.strftime('%Y/%m/%d') )
+        request = urllib2.Request(self.jUrl)
+        request.add_header('Referer', 'http://mlb.com')
+        opener = urllib2.build_opener()
+        try:
+            f = opener.open(request)
+        except urllib2.URLError:
+            self.error_str = "UrlError: Could not retrieve standings."
+            raise MLBUrlError
+        try:
+            self.json = json.loads(f.read())
+        except:
+            raise Exception,MLBJsonError
+        self.parseStandingsJson()
 
     def getDataFromFile(self):
         # For development purposes, let's parse from a file (activate web
@@ -26,7 +57,7 @@ class MLBStandings:
         self.xml = f.read()
         f.close()
 
-    def getStandingsData(self,offline=False):
+    def getStandingsXmlData(self,offline=False):
         # To limit test requests until permission has been obtained
         # from data provider
         if offline:
@@ -51,6 +82,21 @@ class MLBStandings:
         self.xml = gzipper.read()
         self.parseStandingsXml()
 
+    def parseStandingsJson(self):
+        tmp = dict()
+        self.last_update = self.json['standings_schedule_date']['standings_all_date_rptr']['standings_all_date'][0]['queryResults']['created'] + '-04:00'
+        for league in self.json['standings_schedule_date']['standings_all_date_rptr']['standings_all_date']:
+            for div in STANDINGS_JSON_DIVISIONS.keys():
+                if not tmp.has_key(div):
+                    tmp[div] = []
+                for team in league['queryResults']['row']:
+                    if team['division_id'] == div:
+                        tmp[div].append(team)
+        for div in ( '201', '202', '200', '204', '205', '203' ):
+            if len(tmp[div]) > 0:
+                self.data.append( (STANDINGS_JSON_DIVISIONS[div],
+                                   self.parseDivisionJsonData(tmp[div])) )
+
     def parseStandingsXml(self):
         xp = parseString(self.xml)
         for metadata in xp.getElementsByTagName('sports-metadata'):
@@ -69,6 +115,28 @@ class MLBStandings:
             out.append(self.parseTeamData(tptr))
         return out
 
+    def parseDivisionJsonData(self,division):
+        out = []
+        for team in division:
+            out.append(self.parseTeamJsonData(team))
+        return out
+
+    def parseTeamJsonData(self,team):
+        tmp = dict()
+        tmp['first'] = team['team_short']
+        tmp['file_code'] = team['file_code']
+        tmp['G'] = int(team['w']) + int(team['l'])
+        tmp['W'] = team['w']
+        tmp['L'] = team['l']
+        tmp['GB'] = team['gb']
+        tmp['WP'] = team['pct']
+        tmp['STRK'] = team['streak']
+        tmp['RS'] = team['runs']
+        tmp['RA'] = team['opp_runs']
+        ( tmp['HW'], tmp['HL'] ) = team['home'].split('-')
+        ( tmp['AW'], tmp['AL'] ) = team['away'].split('-')
+        ( tmp['L10_W'], tmp['L10_L'] ) = team['last_ten'].split('-')
+        return tmp
 
     def parseTeamData(self,tptr):
         tmp = dict()

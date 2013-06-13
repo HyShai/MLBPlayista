@@ -348,6 +348,15 @@ STANDINGS_DIVISIONS = {
     'MLB.NL.W':  'NL West',
 }
 
+STANDINGS_JSON_DIVISIONS = {
+    '201' : 'AL East',
+    '202' : 'AL Central',
+    '200' : 'AL West',
+    '204' : 'NL East',
+    '205' : 'NL Central',
+    '203' : 'NL West',
+}
+
 # To Add New Sections for MLB.COM Video viewer:
 # 1. Use Firefox Web Console on the Results page to be added.
 # 2. Look for the request with a URL like:

@@ -76,7 +76,13 @@ class MLBStandingsWin(MLBListWin):
                          team['HW']+'-'+team['HL'],
                          team['AW']+'-'+team['AL'] ,
                          str(rs), str(ra), str(dif) )
-                self.data.append((team_str,0))
+                if team['file_code'] in self.mycfg.get('favorite'):
+                    if self.mycfg.get('use_color'):
+                        self.data.append((team_str,curses.color_pair(1)))
+                    #else:
+                    #    self.data.append((team_str,curses.A_UNDERLINE))
+                else:
+                    self.data.append((team_str,0))
 
     def titleRefresh(self,mysched):
         if len(self.stdata) == 0:
@@ -86,7 +92,7 @@ class MLBStandingsWin(MLBListWin):
             update_datetime = gameTimeConvert(upd)
             update_str = update_datetime.strftime('%Y-%m-%d %H:%M:%S')
             titlestr = "STANDINGS: Last updated: %s" % update_str
-            titlestr += " (updates only once a day)"
+            #titlestr += " (updates only once a day)"
         padding = curses.COLS - (len(titlestr) + 6)
         titlestr += ' '*padding
         pos = curses.COLS - 6
