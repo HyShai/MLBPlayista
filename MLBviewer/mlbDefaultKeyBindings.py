@@ -27,6 +27,7 @@ DEFAULT_KEYBINDINGS = {
     'COVERAGE'           : [ ord('s') ],
     'SPEED'              : [ ord('p') ],
     'STATS'              : [ ord('S') ],
+    'STATS_ORDER'        : [ ord('O') ],
     'CONDENSED_GAME'     : [ ord('c') ],
     'RELOAD_CONFIG'      : [ ord('R') ],
     'QUIT'               : [ ord('q') ],
