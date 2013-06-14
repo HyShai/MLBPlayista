@@ -258,7 +258,8 @@ KEYBINDINGS_1 = {
     'HIGHLIGHTS_PLAYLIST' : 'Play all highlights as a playlist',
     'RSS'                 : 'RSS feed for MLB (or select team feed)',
     'MILBTV'              : 'Switch to MiLB.TV listings',
-    'STANDINGS'           : 'View standings (not real-time; updated once a day)',
+    'STANDINGS'           : 'View standings',
+    'STATS'               : 'View hitting or pitching statistics',
     }
 
 HELPBINDINGS = (
@@ -266,7 +267,7 @@ HELPBINDINGS = (
                   'COVERAGE', 'HIGHLIGHTS_PLAYLIST', 'INNINGS') ),
     ('LISTINGS', ('UP', 'DOWN', 'LEFT', 'RIGHT', 'JUMP', 'SPEED', 'REFRESH' )),
     ('SCREENS', ('HIGHLIGHTS', 'HELP', 'LISTINGS', 'LINE_SCORE', 'BOX_SCORE',
-     'MASTER_SCOREBOARD', 'STANDINGS', 'RSS', 'MILBTV' ) ),
+     'MASTER_SCOREBOARD', 'STANDINGS', 'STATS', 'RSS', 'MILBTV' ) ),
     ('DEBUG', ( 'OPTIONS', 'DEBUG', 'MEDIA_DEBUG' )),
     )
 
