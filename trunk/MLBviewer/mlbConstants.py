@@ -357,6 +357,7 @@ STANDINGS_JSON_DIVISIONS = {
     '203' : 'NL West',
 }
 
+
 # To Add New Sections for MLB.COM Video viewer:
 # 1. Use Firefox Web Console on the Results page to be added.
 # 2. Look for the request with a URL like:
@@ -388,6 +389,8 @@ MLBCOM_VIDKEYS = {
     '900'    : 'vtp_daily_dash',
     '910'    : 'top_5&mmtax_key=2013&op=and',
     '1000'   : 'fastcast%2Bvtp_fastcast',
+    '1005'   : 'mm_wrapup',
+    '1008'   : 'all_star_game&mmtax_key=2013&op=and',
     '1010'   : 'vtp_head_and_shoulders&mmtax_key=2013&op=and',
     '1020'   : 'vtp_blackberry',
     '1030'   : 'stand_up_to_cancer',
@@ -405,7 +408,6 @@ MLBCOM_VIDKEYS = {
     '1170'   : '&game=345594',
     '1180'   : '&game=345595',
     '1200'   : 'meggie_zahneis',
-    '1210'   : 'mm_wrapup',
     '1220'   : 'vtp_budweiser',
     '1230'   : 'vtp_chatting_cage',
     '1300'   : 'this_week_in_baseball',
@@ -433,6 +435,8 @@ MLBCOM_VIDTITLES = {
     '900'    : 'Daily Dash',
     '910'    : 'Top 5 Plays Of The Day',
     '1000'   : 'MLB.com FastCast',
+    '1005'   : 'Daily Recaps',
+    '1008'   : '2013 MLB All-Star Game',
     '1010'   : 'Top Pitching Performances',
     '1020'   : 'The MLB.com Flow',
     '1030'   : 'Stand Up To Cancer',
@@ -450,7 +454,6 @@ MLBCOM_VIDTITLES = {
     '1170'   : '2012 Postseason: AL Wildcard',
     '1180'   : '2012 Postseason: NL Wildcard',
     '1200'   : 'Youth Reporter: Meggie Zahneis',
-    '1210'   : 'Daily Recaps',
     '1220'   : '2013 MLB Walk-Offs',
     '1230'   : 'Edward Jones Chatting Cage',
     '1300'   : 'MLB Network: This Week In Baseball',
