@@ -18,6 +18,8 @@ class MLBStats:
 
     def getStatsData(self,statType='pitching',sortColumn='era'):
         self.url = 'http://mlb.mlb.com/pubajax/wf/flow/stats.splayer?page_type=SortablePlayer&game_type=%27R%27&player_pool=QUALIFIER&season_type=ANY&sport_code=%27mlb%27&results=1000&recSP=1&recPP=50'
+        # TODO: This is how league is done.  Need to parameterize it.
+        #self.url += '&league_code=%27NL%27'
         self.type = statType
         self.sort = sortColumn
         self.url += '&stat_type=%s&sort_column=%%27%s%%27' % (statType,

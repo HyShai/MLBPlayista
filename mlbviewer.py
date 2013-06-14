@@ -577,12 +577,12 @@ def mainloop(myscr,mycfg,mykeys):
             if mycfg.get('show_player_command'):
                 myscr.clear()
                 myscr.addstr(0,0,cmdStr)
-                if mycfg.get('use_nexdef') and streamtype != 'audio':
-                   pos=6
-                else:
-                   pos=14
-                myscr.hline(pos,0,curses.ACS_HLINE, curses.COLS-1)
-                myscr.addstr(pos+1,0,'')
+                #if mycfg.get('use_nexdef') and streamtype != 'audio':
+                #   pos=6
+                #else:
+                #   pos=14
+                #myscr.hline(pos,0,curses.ACS_HLINE, curses.COLS-1)
+                #myscr.addstr(pos+1,0,'')
                 myscr.refresh()
                 time.sleep(1)
 
@@ -824,13 +824,13 @@ def mainloop(myscr,mycfg,mykeys):
                 myscr.clear()
                 chars=(curses.COLS-2) * (curses.LINES-1)
                 myscr.addstr(0,0,cmdStr[:chars])
-                if mycfg.get('use_nexdef') and streamtype != 'audio':
-                   pos=6
-                else:
-                   pos=14
-                if pos < curses.LINES-4:
-                    myscr.hline(pos,0,curses.ACS_HLINE, curses.COLS-1)
-                    myscr.addstr(pos+1,0,'')
+                #if mycfg.get('use_nexdef') and streamtype != 'audio':
+                #   pos=6
+                #else:
+                #   pos=14
+                #if pos < curses.LINES-4:
+                #    myscr.hline(pos,0,curses.ACS_HLINE, curses.COLS-1)
+                #    myscr.addstr(pos+1,0,'')
                 myscr.refresh()
                 time.sleep(1)
                                         
