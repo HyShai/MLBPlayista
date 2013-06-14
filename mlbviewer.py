@@ -114,6 +114,8 @@ def mainloop(myscr,mycfg,mykeys):
     linewin = None
     boxwin = None
     stdwin = None
+    statwin = None
+    stats = MLBStats()
     mywin = listwin
     mywin.Splash()
     mywin.statusWrite('Logging into mlb.com...',wait=0)
@@ -404,6 +406,25 @@ def mainloop(myscr,mycfg,mykeys):
             optwin = MLBOptWin(myscr,mycfg)
             mywin = optwin
 
+        if c in mykeys.get('STATS'):
+            if mycfg.get('milbtv'):
+                mywin.statusWrite("Stats are not supported for MiLB",wait=2)
+                continue
+            mywin.statusWrite('Retrieving stats...')
+            if stats.type == 'hitting':
+                stats.type = 'pitching'
+                stats.sort = 'era'
+            else:
+                stats.type = 'hitting'
+                stats.sort = 'avg'
+            try:
+                stats.getStatsData(stats.type,stats.sort)
+            except MLBUrlError:
+                raise
+            statwin = MLBStatsWin(myscr,mycfg,stats.data,stats.last_update,
+                                  stats.type,stats.sort)
+            mywin=statwin
+            
         if c in mykeys.get('STANDINGS'):
             if mycfg.get('milbtv'):
                 mywin.statusWrite('Standings are not supported for MiLB',wait=2)
@@ -472,6 +493,8 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('BOX_SCORE'):
             if len(listwin.records) == 0:
                 continue
+            if mywin in ( stdwin, statwin ):
+                continue
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving box score for %s...' % GAMEID)
             boxscore=MLBBoxScore(GAMEID)
@@ -485,6 +508,8 @@ def mainloop(myscr,mycfg,mykeys):
 
         if c in mykeys.get('LINE_SCORE'):
             if len(listwin.records) == 0:
+                continue
+            if mywin in ( stdwin, statwin ):
                 continue
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving linescore for %s...' % GAMEID)
@@ -732,7 +757,7 @@ def mainloop(myscr,mycfg,mykeys):
            c in mykeys.get('CONDENSED_GAME'):
             if len(listwin.records) == 0:
                 continue
-            if mywin in ( optwin , helpwin, stdwin ):
+            if mywin in ( optwin , helpwin, stdwin, statwin ):
                 continue
             if c in mykeys.get('AUDIO'):
                 if mywin == topwin:

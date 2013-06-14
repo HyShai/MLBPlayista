@@ -26,6 +26,7 @@ DEFAULT_KEYBINDINGS = {
     'NEXDEF'             : [ ord('n') ],
     'COVERAGE'           : [ ord('s') ],
     'SPEED'              : [ ord('p') ],
+    'STATS'              : [ ord('S') ],
     'CONDENSED_GAME'     : [ ord('c') ],
     'RELOAD_CONFIG'      : [ ord('R') ],
     'QUIT'               : [ ord('q') ],
