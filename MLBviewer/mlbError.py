@@ -27,3 +27,6 @@ class MLBAuthError(Error):
 
 class MLBCursesError(Error):
     pass
+
+class MLBJsonError(Error):
+    pass

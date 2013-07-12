@@ -25,6 +25,7 @@ import sys
 import curses
 #from __init__ import VERSION, URL
 from mlbDefaultKeyBindings import DEFAULT_KEYBINDINGS
+from mlbStatsKeyBindings import STATS_KEYBINDINGS
 
 # Set this to True if you want to see all the html pages in the logfile
 SESSION_DEBUG=True
@@ -109,7 +110,6 @@ TEAMCODES = {
     'kc':  ('118', 'Kansas City Royals', ''),
     'kca': ('118', 'Kansas City Royals', ''),
     'la':  ('119', 'Los Angeles Dodgers', ''),
-    'lan': ('119', 'Los Angeles Dodgers', ''),
     'mil': ('158', 'Milwaukee Brewers', ''),
     'min': ('142', 'Minnesota Twins', ''),
     'nl' : ( None, 'National League', ''),
@@ -262,6 +262,21 @@ KEYBINDINGS_1 = {
     'STATS'               : 'View hitting or pitching statistics',
     }
 
+STATKEYBINDINGS = {
+     'PITCHING'           : 'View pitching leaders',
+     'HITTING'            : 'View hitting leaders',
+     'PLAYER'             : 'View career stats for highlighted player',
+     'SEASON_TYPE'        : 'Toggles between all-time and current season leaders',
+     'ACTIVE'             : 'Toggles between all-time and active leaders',
+     'LEAGUE'             : 'Toggle between MLB, AL, and NL leaders',
+     'SORT_ORDER'         : 'Toggle between default, ascending, and descending sort order',
+     'SORT'               : 'Change the sort column',
+     'TEAM'               : 'Filter leaders by team',
+     'UP'                 : 'Move the cursor up a line',
+     'DOWN'               : 'Move the cursor down a line',
+     'STATS_DEBUG'        : 'View raw data for highlighted line',
+}
+
 HELPBINDINGS = (
     ('COMMANDS', ('VIDEO', 'AUDIO', 'CONDENSED_GAME', 'DEBUG', 'NEXDEF', 
                   'COVERAGE', 'HIGHLIGHTS_PLAYLIST', 'INNINGS') ),
@@ -269,6 +284,13 @@ HELPBINDINGS = (
     ('SCREENS', ('HIGHLIGHTS', 'HELP', 'LISTINGS', 'LINE_SCORE', 'BOX_SCORE',
      'MASTER_SCOREBOARD', 'STANDINGS', 'STATS', 'RSS', 'MILBTV' ) ),
     ('DEBUG', ( 'OPTIONS', 'DEBUG', 'MEDIA_DEBUG' )),
+    )
+
+STATHELPBINDINGS = (
+    ('SCREENS' , ('PITCHING', 'HITTING', 'PLAYER' ) ),
+    ('FILTERS' , ('SEASON_TYPE', 'LEAGUE', 'SORT_ORDER', 'SORT', 'ACTIVE', 'TEAM' ) ),
+    ('LISTINGS', ('UP', 'DOWN' ) ),
+    ('DEBUG'   , ( 'STATS_DEBUG', ) ),
     )
 
 OPTIONS_DEBUG = ( 'video_player', 'audio_player', 'top_plays_player',
@@ -476,4 +498,46 @@ MLBCOM_VIDTITLES = {
     '1970'   : '2012 Postseason: AL Wildcard',
     '1980'   : '2012 Postseason: NL Wildcard',
     '9000'   : "Baseball's Best Moments",
+}
+
+STATFILE = 'statconfig'
+
+STATS_LEAGUES = ( 'MLB', 'NL', 'AL' )
+
+STATS_SEASON_TYPES = ( 'ANY', 'ALL' )
+
+STATS_SORT_ORDER = ( 'default', 'asc', 'desc' )
+
+STATS_TEAMS = {
+      0 : 'mlb',
+    108 : 'ana',
+    109 : 'ari',
+    110 : 'bal',
+    111 : 'bos',
+    112 : 'chc',
+    113 : 'cin',
+    114 : 'cle',
+    115 : 'col',
+    116 : 'det',
+    117 : 'hou',
+    118 : 'kc',
+    119 : 'la',
+    120 : 'was',
+    121 : 'nym',
+    133 : 'oak',
+    134 : 'pit',
+    135 : 'sd',
+    136 : 'sea',
+    137 : 'sf',
+    138 : 'stl',
+    139 : 'tb',
+    140 : 'tex',
+    141 : 'tor',
+    142 : 'min',
+    143 : 'phi',
+    144 : 'atl',
+    145 : 'cws',
+    146 : 'mia',
+    147 : 'nyy',
+    158 : 'mil',
 }

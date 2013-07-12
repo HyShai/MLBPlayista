@@ -180,6 +180,8 @@ class MLBListWin:
                     else:
                         cursesflags = cursesflags | curses.A_UNDERLINE
                 self.myscr.addnstr(n+2, 0, s, curses.COLS-2, cursesflags)
+                #if n == 0:
+                #    self.myscr.addch(n+2, curses.COLS-2, curses.ACS_UARROW)
             else:
                 self.myscr.addnstr(n+2, 0, s, curses.COLS-2)
 

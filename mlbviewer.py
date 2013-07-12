@@ -115,7 +115,7 @@ def mainloop(myscr,mycfg,mykeys):
     boxwin = None
     stdwin = None
     statwin = None
-    stats = MLBStats()
+    stats = MLBStats(mycfg)
     mywin = listwin
     mywin.Splash()
     mywin.statusWrite('Logging into mlb.com...',wait=0)
@@ -407,22 +407,31 @@ def mainloop(myscr,mycfg,mykeys):
             mywin = optwin
 
         if c in mykeys.get('STATS'):
+            # until I have triple crown stats implemented, point them at 
+            # the mlbstats app
+            mywin.statusWrite('See mlbstats.py for statistics.',wait=2)
+            continue
             if mycfg.get('milbtv'):
                 mywin.statusWrite("Stats are not supported for MiLB",wait=2)
                 continue
             mywin.statusWrite('Retrieving stats...')
-            if stats.type == 'hitting':
-                stats.type = 'pitching'
-                stats.sort = 'era'
+            mycfg.set('league','MLB')
+            if mycfg.get('stat_type') is None or mycfg.get('stat_type') == 'hitting':
+                mycfg.set('stat_type','pitching')
+                mycfg.set('sort_column','era')
             else:
-                stats.type = 'hitting'
-                stats.sort = 'avg'
+                mycfg.set('stat_type','hitting')
+                mycfg.set('sort_column','avg')
+            mycfg.set('player_id',0)
+            mycfg.set('sort_team',0)
+            mycfg.set('active_sw',0)
+            mycfg.set('season_type','ANY')
+            mycfg.set('sort_order','default')
             try:
-                stats.getStatsData(stats.type,stats.sort)
+                stats.getStatsData()
             except MLBUrlError:
                 raise
-            statwin = MLBStatsWin(myscr,mycfg,stats.data,stats.last_update,
-                                  stats.type,stats.sort)
+            statwin = MLBStatsWin(myscr,mycfg,stats.data,stats.last_update)
             mywin=statwin
             
         if c in mykeys.get('STANDINGS'):
