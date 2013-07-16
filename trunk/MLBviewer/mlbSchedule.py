@@ -123,6 +123,7 @@ class MLBSchedule:
             + "/day_" + padstr(self.day) + "/multi_angle_epg.xml"
         self.log = MLBLog(LOGFILE)
         self.data = []
+        self.error_str = "Something went wrong.  A more descriptive error should be here."
 
     def __getSchedule(self):
         txheaders = {'User-agent' : USERAGENT}
@@ -307,7 +308,8 @@ class MLBSchedule:
         # This is the XML version of trimList
         # easier to write a new method than adapt the old one
         if not self.data:
-            raise MLBXmlError, "No games available today."
+            self.error_str = "Listings data empty."
+            raise MLBXmlError, self.error_str
         out = []
         for game in self.data:
             dct = {}
