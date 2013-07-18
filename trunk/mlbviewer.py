@@ -255,12 +255,14 @@ def mainloop(myscr,mycfg,mykeys):
                     listwin.record_cursor = 0
                     listwin.current_cursor = 0
                 except (KeyError,MLBXmlError),detail:
-                    if cfg['debug']:
+                    if mycfg.get('debug'):
                         raise Exception,detail
                     available = []
                     listwin.statusWrite("There was a parser problem with the listings page",wait=2)
                     listwin.data = []
                     listwin.current_cursor = 0
+                    mywin = listwin
+                    continue
                 # recreate master scoreboard if current screen
                 if mywin in ( sbwin, ):
                     GAMEID = listwin.records[listwin.current_cursor][6]
