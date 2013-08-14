@@ -85,6 +85,9 @@ def mainloop(myscr,mycfg,mykeys):
     except curses.error:
         pass
 
+    # mouse events
+    curses.mousemask(1)
+
     # initialize the color settings
     if hasattr(curses, 'use_default_colors'):
         try:
@@ -207,6 +210,11 @@ def mainloop(myscr,mycfg,mykeys):
         
         if sys.stdin in inputs:
             c = myscr.getch()
+
+        # DEBUG CODE FOR MOUSE
+        #if c == curses.KEY_MOUSE:
+        #    id, mx, my, mz, bstate  = curses.getmouse()
+        #    mywin.statusWrite("mx = %s, my = %s, cc=%s"%(mx,my,listwin.current_cursor),wait=2)
 
         # NAVIGATION
         if c in mykeys.get('UP'):
@@ -783,6 +791,16 @@ def mainloop(myscr,mycfg,mykeys):
                 except:
                     mywin.errorScreen('ERROR: Requested media not available.')
                     continue
+            elif c == curses.KEY_MOUSE:
+                id, mousex, mousey, mousez, bstate  = curses.getmouse()
+                try:
+                    prefer = mysched.getPreferred(
+                         listwin.records[mousey-2], mycfg)
+                except IndexError:
+                    continue
+                else:
+                    listwin.current_cursor = mousey - 2
+                streamtype = 'video'
             else:
                 streamtype = 'video'
             mywin.statusWrite('Retrieving requested media...')

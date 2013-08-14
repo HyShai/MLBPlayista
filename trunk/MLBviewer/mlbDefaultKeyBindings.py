@@ -8,7 +8,7 @@ DEFAULT_KEYBINDINGS = {
     'DOWN'               : [ curses.KEY_DOWN, ],
     'LEFT'               : [ curses.KEY_LEFT, ],
     'RIGHT'              : [ curses.KEY_RIGHT, ],
-    'VIDEO'              : [ 10, ],
+    'VIDEO'              : [ 10, curses.KEY_MOUSE ],
     'AUDIO'              : [ ord('a') ],
     'HELP'               : [ ord('h') ],
     'JUMP'               : [ ord('j') ],
