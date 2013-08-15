@@ -211,10 +211,36 @@ def mainloop(myscr,mycfg,mykeys):
         if sys.stdin in inputs:
             c = myscr.getch()
 
-        # DEBUG CODE FOR MOUSE
-        #if c == curses.KEY_MOUSE:
-        #    id, mx, my, mz, bstate  = curses.getmouse()
-        #    mywin.statusWrite("mx = %s, my = %s, cc=%s"%(mx,my,listwin.current_cursor),wait=2)
+        # MOUSE HANDLING
+        # Right now, only clicking on a listwin listing will act like a 
+        # VIDEO keypress.
+        # TODO:
+        # Check x,y values to see handle some of the toggles.
+        # Might even overload the "Help" region of interface to allow a 
+        # mouse-friendly overlay.
+        # Use a cfg setting to disable mouse support altogether so users 
+        # clicking on the window to raise it won't get unexpected results.
+        if c == curses.KEY_MOUSE:
+            if mywin != listwin:
+                continue
+            id, mousex, mousey, mousez, bstate  = curses.getmouse()
+            #mywin.statusWrite("mx = %s, my = %s, cc=%s, lr=%s"%(mousex,mousey,listwin.current_cursor,len(listwin.records)),wait=1)
+            mousecursor = mousey - 2
+            if mousey < 2:
+                continue
+            if mousecursor < len(listwin.records):
+                try:
+                    prefer = mysched.getPreferred(listwin.records[mousey-2], 
+                                                  mycfg)
+                except IndexError:
+                    continue
+                else:
+                    listwin.current_cursor = mousecursor
+                    # If mouse clicked on a valid listing, push the event
+                    # back to getch() as a VIDEO keypress.
+                    curses.ungetch(mykeys.get('VIDEO')[0])
+            else:
+                continue
 
         # NAVIGATION
         if c in mykeys.get('UP'):
@@ -791,16 +817,6 @@ def mainloop(myscr,mycfg,mykeys):
                 except:
                     mywin.errorScreen('ERROR: Requested media not available.')
                     continue
-            elif c == curses.KEY_MOUSE:
-                id, mousex, mousey, mousez, bstate  = curses.getmouse()
-                try:
-                    prefer = mysched.getPreferred(
-                         listwin.records[mousey-2], mycfg)
-                except IndexError:
-                    continue
-                else:
-                    listwin.current_cursor = mousey - 2
-                streamtype = 'video'
             else:
                 streamtype = 'video'
             mywin.statusWrite('Retrieving requested media...')
