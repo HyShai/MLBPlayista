@@ -453,9 +453,12 @@ class MediaStream:
                         self.sub_path = re.search(live_sub_pat,game_url).groups()[0]
                         #self.sub_path = 'mlb_c' + self.sub_path + self.auth_chunk
                         self.sub_path = 'mlb_c' + self.sub_path
+                        self.sub_path = self.sub_path.replace(self.auth_chunk,'')
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream subscribe path: ' + str(detail)
                         raise Exception,self.error_str
+                    else:
+                        game_url = game_url.replace(self.auth_chunk,'')
                     try:
                         live_path_pat = re.compile(r'live\/mlb_c(.*)$')
                         self.play_path = re.search(live_path_pat,game_url).groups()[0]
