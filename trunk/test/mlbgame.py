@@ -380,7 +380,7 @@ try:
         live_play_pat = re.compile(r'live\/mlb_c(.*)$')
         play_path = re.search(live_play_pat,game_url).groups()[0]
         play_path = 'mlb_c' + play_path
-        if re.search('mlbsecurelive(.*)', game_url).groups() is not None:
+        if re.search('mlbsecurelive(.*)', game_url) is not None:
             app = 'mlbsecurelive-live'
         else:
             app = "live?_fcs_vhost=cp65670.live.edgefcs.net&akmfv=1.6"
