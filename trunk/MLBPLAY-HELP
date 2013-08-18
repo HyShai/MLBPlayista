@@ -72,6 +72,9 @@ speed, p     : value is the speed of the stream to select in Kbps
 debug, d     : True/False (or 1/0) value that enables network debugging
 zdebug, z    : True/False (or 1/0) value that enables media listing debugging
 nexdef, n    : True/False (or 1/0) value, implies video_follow
+event_id, e  : value should be event-id which can be found from mlblistings.py
+inning, i    : value should be 't' (top) or 'b' (bottom) plus inning number
+               e.g., t9 for top of 9th or b5 for bottom of 5th
 
 
 Valid speeds are 200, 500, 1200, 1800, or 2400.  Additionally, nexdef provides
