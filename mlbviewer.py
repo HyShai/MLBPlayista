@@ -86,7 +86,8 @@ def mainloop(myscr,mycfg,mykeys):
         pass
 
     # mouse events
-    curses.mousemask(1)
+    if mycfg.get('enable_mouse'):
+        curses.mousemask(1)
 
     # initialize the color settings
     if hasattr(curses, 'use_default_colors'):

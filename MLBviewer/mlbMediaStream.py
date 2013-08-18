@@ -392,8 +392,9 @@ class MediaStream:
         for elem in rsp.getElementsByTagName('video'):
             speed = int(elem.getAttribute('system-bitrate'))/1000
             if int(self.speed) == int(speed):
-               vid_src = elem.getAttribute('src').replace('mp4:','/')
-               out = rtmp_base + vid_src
+               #vid_src = elem.getAttribute('src').replace('mp4:','/')
+               vid_src = elem.getAttribute('src')
+               out = rtmp_base + vid_src + self.auth_chunk
         return out
 
 
@@ -415,10 +416,10 @@ class MediaStream:
     # finally some url processing routines
     def prepareFmsUrl(self,game_url):
         try:
-            #play_path_pat = re.compile(r'ondemand\/(.*)\?')
-            play_path_pat = re.compile(r'ondemand\/(.*)$')
+            play_path_pat = re.compile(r'ondemand(.*)$')
+            #play_path_pat = re.compile(r'ondemand\/(.*)$')
             self.play_path = re.search(play_path_pat,game_url).groups()[0]
-            app_pat = re.compile(r'ondemand\/(.*)\?(.*)$')
+            app_pat = re.compile(r'ondemand(.*)\?(.*)$')
             querystring = re.search(app_pat,game_url).groups()[1]
             self.app = "ondemand?_fcs_vhost=cp65670.edgefcs.net&akmfv=1.6" + querystring
             # not sure if we need this
@@ -450,7 +451,8 @@ class MediaStream:
                     try:
                         live_sub_pat = re.compile(r'live\/mlb_c(.*)')
                         self.sub_path = re.search(live_sub_pat,game_url).groups()[0]
-                        self.sub_path = 'mlb_c' + self.sub_path + self.auth_chunk
+                        #self.sub_path = 'mlb_c' + self.sub_path + self.auth_chunk
+                        self.sub_path = 'mlb_c' + self.sub_path
                     except Exception,detail:
                         self.error_str = 'Could not parse the stream subscribe path: ' + str(detail)
                         raise Exception,self.error_str
