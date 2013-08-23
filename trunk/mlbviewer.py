@@ -75,6 +75,8 @@ def mainloop(myscr,mycfg,mykeys):
     log = open(LOGFILE, "a")
     DISABLED_FEATURES = []
     RESTORE_SPEED = mycfg.get('speed')
+    if SPEEDTOGGLE.get(RESTORE_SPEED) is None:
+        mycfg.set('speed','1200')
 
     # not sure if we need this for remote displays but couldn't hurt
     if mycfg.get('x_display'):
