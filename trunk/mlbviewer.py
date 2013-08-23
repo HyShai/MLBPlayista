@@ -75,8 +75,6 @@ def mainloop(myscr,mycfg,mykeys):
     log = open(LOGFILE, "a")
     DISABLED_FEATURES = []
     RESTORE_SPEED = mycfg.get('speed')
-    if SPEEDTOGGLE.get(RESTORE_SPEED) is None:
-        mycfg.set('speed','1200')
 
     # not sure if we need this for remote displays but couldn't hurt
     if mycfg.get('x_display'):
@@ -112,6 +110,9 @@ def mainloop(myscr,mycfg,mykeys):
 
     available = []
     listwin = MLBListWin(myscr,mycfg,available)
+    if SPEEDTOGGLE.get(RESTORE_SPEED) is None:
+        listwin.statusWrite("Invalid speed.  Switching to 1200...",wait=2)
+        mycfg.set('speed','1200')
     topwin = MLBTopWin(myscr,mycfg,available)
     optwin = MLBOptWin(myscr,mycfg)
     helpwin = MLBHelpWin(myscr,mykeys)
