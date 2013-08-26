@@ -105,7 +105,10 @@ class MLBInningWin(MLBListWin):
                         if i >= latest:
                             latest = i
                     else:
-                        city_str[city] += ' [-]'
+                        if i == 9 and city == 'home':
+                            city_str[city] += ' [?]'
+                        else:
+                            city_str[city] += ' [-]'
                 else:
                     city_str[city] += ' [-]'
         if self.mycfg.get('show_inning_frames'):
