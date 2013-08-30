@@ -129,6 +129,10 @@ class MLBStandings:
         tmp['W'] = team['w']
         tmp['L'] = team['l']
         tmp['GB'] = team['gb']
+        tmp['E'] = team['elim']
+        tmp['WCGB'] = team['gb_wildcard']
+        if tmp['WCGB'] == '':
+            tmp['WCGB'] = '-'
         tmp['WP'] = team['pct']
         tmp['STRK'] = team['streak']
         tmp['RS'] = team['runs']
