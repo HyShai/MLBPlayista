@@ -80,8 +80,8 @@ class MLBStandingsWin(MLBListWin):
                 if team['file_code'] in self.mycfg.get('favorite'):
                     if self.mycfg.get('use_color'):
                         self.data.append((team_str,curses.color_pair(1)))
-                    #else:
-                    #    self.data.append((team_str,curses.A_UNDERLINE))
+                    else:
+                        self.data.append((team_str,curses.A_UNDERLINE))
                 else:
                     self.data.append((team_str,0))
 
