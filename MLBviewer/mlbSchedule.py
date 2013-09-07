@@ -230,6 +230,7 @@ class MLBSchedule:
         content['video']['swarm'] = []
         content['condensed'] = []
         event_id = str(xp.getAttribute('calendar_event_id'))
+        content['free'] = False
         for media in xp.getElementsByTagName('media'):
            tmp = {}
            for attr in media.attributes.keys():
@@ -270,6 +271,13 @@ class MLBSchedule:
                        coverage = away
                    else:
                        coverage = home
+
+                   # free game of the day
+                   try:
+                       if tmp['free'] == 'ALL':
+                           content['free'] = True
+                   except:
+                       pass
 
                    # each listing is a tuple of display, coverage, content id
                    # and event-id
@@ -392,6 +400,7 @@ class MLBSchedule:
             if dct['condensed']:
                 dct['status'] = 'CG'
             dct['media_state'] = game['media_state']
+            dct['free'] = game['content']['free']
             out.append((dct['gameid'], dct))
         return out
 
@@ -594,7 +603,8 @@ class MLBSchedule:
                      elem[1]['status'],
                      elem[0],
                      elem[1]['media_state'],
-                     elem[1]['start_time'])\
+                     elem[1]['start_time'],
+                     elem[1]['free'])\
                          for elem in listings]
 
 

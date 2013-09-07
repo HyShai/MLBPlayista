@@ -150,6 +150,8 @@ class MLBListWin:
                 #s = self.records[n][1].strftime('%l:%M %p') + ': ' +\
                 #    ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
                 #    ' '.join(TEAMCODES[home][1:]).strip()
+                if self.records[n][9]:
+                    s += ' [FREE]'
                 if self.records[n][7] == 'media_archive':
                     s += ' (Archived)'
 
