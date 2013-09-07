@@ -165,7 +165,8 @@ def mainloop(myscr,mycfg,mykeys):
                                         mycfg.get('blackout'))
     except (KeyError, MLBXmlError,MLBUrlError), detail:
         if mycfg.get('debug'):
-            raise Exception, detail
+            #raise Exception, detail
+            raise
         else:
             listwin.statusWrite(mysched.error_str,wait=2)
         available = []
