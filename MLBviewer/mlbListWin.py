@@ -178,7 +178,12 @@ class MLBListWin:
                 if home in self.mycfg.get('favorite') or\
                    away in self.mycfg.get('favorite'):
                     if self.mycfg.get('use_color'):
-                        cursesflags = cursesflags |curses.color_pair(1)
+                        cursesflags = cursesflags |curses.color_pair(COLOR_FAVORITE)
+                    else:
+                        cursesflags = cursesflags | curses.A_UNDERLINE
+                elif self.records[n][9]:
+                    if self.mycfg.get('use_color'):
+                        cursesflags = cursesflags | curses.color_pair(COLOR_FREE)
                     else:
                         cursesflags = cursesflags | curses.A_UNDERLINE
                 self.myscr.addnstr(n+2, 0, s, curses.COLS-2, cursesflags)

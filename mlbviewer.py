@@ -97,8 +97,14 @@ def mainloop(myscr,mycfg,mykeys):
                 try:
                     if mycfg.get('fg_color'):
                         mycfg.set('favorite_color', mycfg.get('fg_color'))
-                    curses.init_pair(1, COLORS[mycfg.get('favorite_color')],
-                                        COLORS[mycfg.get('bg_color')])
+                    if mycfg.get('free_color') is None:
+                        mycfg.set('free_color', COLORS['green'])
+                    curses.init_pair(COLOR_FAVORITE, 
+                                     COLORS[mycfg.get('favorite_color')],
+                                     COLORS[mycfg.get('bg_color')])
+                    curses.init_pair(COLOR_FREE, 
+                                     COLORS[mycfg.get('free_color')],
+                                     COLORS[mycfg.get('bg_color')])
                 except KeyError:
                     mycfg.set('use_color', False)
                     curses.init_pair(1, -1, -1)
@@ -939,8 +945,9 @@ if __name__ == "__main__":
                   'video_follow': [],
                   'blackout': [],
                   'favorite': [],
-                  'use_color': 0,
+                  'use_color': 1,
                   'favorite_color': 'cyan',
+                  'free_color': 'green',
                   'bg_color': 'xterm',
                   'show_player_command': 0,
                   'debug': 0,
