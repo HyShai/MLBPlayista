@@ -166,8 +166,11 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
             if len(statwin.records) == 0:
                 continue
-            mycfg.set('player_id',int(statwin.records[statwin.current_cursor]['player_id']))
-            mycfg.set('player_name',statwin.records[statwin.current_cursor]['name_display_first_last'])
+            if int(mycfg.get('player_id')) > 0:
+                mycfg.set('player_id', 0)
+            else:
+                mycfg.set('player_id',int(statwin.records[statwin.current_cursor]['player_id']))
+                mycfg.set('player_name',statwin.records[statwin.current_cursor]['name_display_first_last'])
             statwin.statusWrite('Refreshing statistics...')
             stats.getStatsData()
             statwin.data = stats.data

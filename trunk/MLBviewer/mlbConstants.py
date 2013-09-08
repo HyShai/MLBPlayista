@@ -310,6 +310,10 @@ COLORS = { 'black'   : curses.COLOR_BLACK,
            'xterm'   : -1
          }
 
+# used for color pairs
+COLOR_FAVORITE = 1
+COLOR_FREE = 2
+
 STATUSLINE = {
         "E" : "Status: Completed Early",
         "C" : "Status: Cancelled",
