@@ -369,6 +369,13 @@ class MediaStream:
             game_url = reply.getElementsByTagName('url')[0].childNodes[0].data
         except:
             self.error_str = "Stream URL not found in reply.  Stream may not be available yet."
+            # check for notAuthorizedStatus
+            try:
+                authStatus = reply.getElementsByTagName('auth-status')[0].childNodes[0].nodeName
+                if authStatus == 'notAuthorizedStatus':
+                    self.error_str = "Media response contained a notAuthorizedStatus."
+            except:
+                pass
             df = open(ERRORLOG_2,'w')
             reply.writexml(df)
             df.close()
