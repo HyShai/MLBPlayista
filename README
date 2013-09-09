@@ -69,6 +69,8 @@ FEATURES OF MLBVIEWER
 - Standings (available to non-subscribers too)
 - RSS feed aggregator
 - MiLB.TV integration* (requires MiLB.TV subscription)
+- Support for MLB.TV Free Game Of The Day (requires mlb.com account but
+  does not require an MLB.TV subscription)
 
 Features unique to mlbviewer:
 
@@ -244,6 +246,8 @@ favorite_color= : For teams marked as favorite, they will be highlighted in
 favorite=       : Teams to highlight using favorite_color or underline if
                   use_color=0
                   (also used for setting a default RSS feed.)
+
+free_color=     : The color to highlight the MLB.TV Free Game Of The Day
 
 If use_color is False (or 0), then favorite highlighting is only an underline
 and favorite_color and bg_color options are ignored.
