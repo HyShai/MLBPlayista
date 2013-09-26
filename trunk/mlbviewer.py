@@ -123,6 +123,7 @@ def mainloop(myscr,mycfg,mykeys):
     optwin = MLBOptWin(myscr,mycfg)
     helpwin = MLBHelpWin(myscr,mykeys)
     rsswin = MLBRssWin(myscr,mycfg)
+    postwin = None
     sbwin = None
     linewin = None
     boxwin = None
@@ -192,10 +193,15 @@ def mainloop(myscr,mycfg,mykeys):
         if mywin in ( listwin, sbwin ):
             try:
                 prefer = mysched.getPreferred(
-                         listwin.records[listwin.current_cursor], mycfg)
+                    listwin.records[listwin.current_cursor], mycfg)
             except IndexError:
                 # this can fail if mlbsched.getSchedule() fails
                 # that failure already prints out an error, so skip this
+                pass
+        if mywin == postwin:
+            try:
+                prefer['video'] = mywin.records[mywin.current_cursor][2] 
+            except:
                 pass
 
         # And now we do input.
@@ -447,6 +453,15 @@ def mainloop(myscr,mycfg,mykeys):
             helpwin = MLBHelpWin(myscr,mykeys)
             mywin = helpwin
             #mywin.helpScreen()
+
+        # postseason
+        if c in mykeys.get('POSTSEASON'):
+            if mywin not in ( listwin, ):
+                continue
+            event_id = listwin.records[listwin.current_cursor][2][0][3]
+            cameras = mysched.getMultiAngleListing(event_id)
+            postwin = MLBPostseason(myscr,mycfg,cameras)
+            mywin = postwin
 
         # NEEDS ATTENTION FOR SCROLLING
         if c in mykeys.get('OPTIONS'):

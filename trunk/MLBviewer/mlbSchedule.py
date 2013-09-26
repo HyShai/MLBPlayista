@@ -180,7 +180,10 @@ class MLBSchedule:
         teams = dict()
         angles = []
         null = []
-        raw = self.getMultiAngleFromXml(event_id)[0]
+        try:
+            raw = self.getMultiAngleFromXml(event_id)[0]
+        except:
+            return out
         id = raw['id']
         desc = raw['description']
         teams['home'] = raw['home_file_code']
