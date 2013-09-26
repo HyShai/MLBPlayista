@@ -33,4 +33,5 @@ DEFAULT_KEYBINDINGS = {
     'QUIT'               : [ ord('q') ],
     'DEBUG'              : [ ord('d') ],
     'MILBTV'             : [ ord('M') ],
+    'POSTSEASON'         : [ ord('P') ],
 }
