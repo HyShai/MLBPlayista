@@ -456,9 +456,13 @@ def mainloop(myscr,mycfg,mykeys):
 
         # postseason
         if c in mykeys.get('POSTSEASON'):
-            if mywin not in ( listwin, ):
+            if mywin not in ( listwin, sbwin ):
                 continue
-            event_id = listwin.records[listwin.current_cursor][2][0][3]
+            try:
+                event_id = listwin.records[listwin.current_cursor][2][0][3]
+            except:
+                mywin.statusWrite('No postseason angles available.',wait=1)
+                continue
             cameras = mysched.getMultiAngleListing(event_id)
             postwin = MLBPostseason(myscr,mycfg,cameras)
             mywin = postwin
