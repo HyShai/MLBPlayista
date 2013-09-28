@@ -202,7 +202,7 @@ def mainloop(myscr,mycfg,mykeys):
             try:
                 prefer['video'] = mywin.records[mywin.current_cursor][2] 
             except:
-                pass
+                prefer['video'] = None
 
         # And now we do input.
         try:
@@ -463,7 +463,10 @@ def mainloop(myscr,mycfg,mykeys):
             except:
                 mywin.statusWrite('No postseason angles available.',wait=1)
                 continue
-            cameras = mysched.getMultiAngleListing(event_id)
+            try:
+                cameras = mysched.getMultiAngleListing(event_id)
+            except:
+                cameras = []
             postwin = MLBPostseason(myscr,mycfg,cameras)
             mywin = postwin
 
