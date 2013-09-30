@@ -38,56 +38,14 @@ except:
     print "Please read the REQUIREMENTS-2012.txt file."
     sys.exit()
 
+def gameTimeConvert(listdate, time_shift=None):
+    etoffset=datetime.timedelta(0,(18000,14400)[time.daylight])
+    utcdate=listdate + etoffset
+    myzone=(time.timezone,time.altzone)[time.daylight]
+    localoffset = datetime.timedelta(0,myzone)
+    localtime=utcdate-localoffset
+    return localtime
 
-def gameTimeConvert(datetime_tuple, time_shift=None):
-    """Convert from east coast time to local time. This either uses
-    the machine's localtime or if, it is given, an explicit timezone
-    shift. 
-    
-    The timezone shift should be of the form '-0500', '+0330'. If no
-    sign is given, it is assumed to be positive."""
-    DAYLIGHT = {
-        '2007': (datetime.datetime(2007,3,11),datetime.datetime(2007,11,4)),
-        '2008': (datetime.datetime(2008,3,9),datetime.datetime(2008,11,2)),
-        '2009': (datetime.datetime(2009,3,8),datetime.datetime(2009,11,1)),
-        '2010': (datetime.datetime(2010,3,14),datetime.datetime(2010,11,7)),
-        '2011': (datetime.datetime(2011,3,13),datetime.datetime(2011,11,6)),
-	'2012': (datetime.datetime(2012,3,11),datetime.datetime(2012,11,4)),
-	'2013': (datetime.datetime(2013,3,10),datetime.datetime(2013,11,3)),
-               }
-    now = datetime.datetime.now()            
-    if (now >= DAYLIGHT[str(now.year)][0]) \
-       and (now < DAYLIGHT[str(now.year)][1]):
-        dif = datetime.timedelta(0,14400)
-    else:
-        dif = datetime.timedelta(0,18000)
-
-    utc_tuple = datetime_tuple + dif
-
-    # We parse the explicit shift if there is one:
-    if time_shift:
-        pattern = re.compile(r'([+-]?)([0-9]{2})([0-9]{2})')
-        parsed = re.match(pattern,time_shift)
-        # So if we could parse it, we split it up.
-        if parsed:
-            mins = ( 60* int(parsed.groups()[1]) ) + int(parsed.groups()[2])
-            secs = 60 * mins
-            # here's the weird part: python does timezones in terms of
-            # a difference, so we have to reverse the signs. In other
-            # words, a '-' means that it's a positive difference.
-            if parsed.groups()[0] in ('+', ''):
-                secs *= -1
-            myzone = secs
-        # Otherwise we just go by the default machine time
-        else:
-            # If time.daylight returns 0 (false) it will choose the
-            # first element; if it returns 1 (true) it will return the
-            # second element.
-            myzone = (time.timezone, time.altzone)[time.daylight]
-    else:
-        myzone = (time.timezone, time.altzone)[time.daylight]
-
-    return utc_tuple - datetime.timedelta(0,myzone)
 
 def padstr(num):
     if len(str(num)) < 2: 
@@ -141,6 +99,7 @@ class MLBSchedule:
         camerainfo = dict()
         txheaders = {'User-agent' : USERAGENT}
         data = None
+        self.multiangle = self.grid.replace('grid.xml','multi_angle_epg.xml')
         req = urllib2.Request(self.multiangle,data,txheaders)
         try:
             fp = urllib2.urlopen(req)
@@ -172,7 +131,7 @@ class MLBSchedule:
                     cdict['name'] = 'Unknown Camera Angle'
                 camerainfo[id]['angles'].append(cdict)
             out.append(camerainfo[id])
-        #raise Exception,repr(out)
+        #raise Exception,repr((out,event_id,self.multiangle))
         return out
 
     def getMultiAngleListing(self,event_id):
@@ -214,6 +173,15 @@ class MLBSchedule:
             away = node.getAttribute('away_team_id')
             gameinfo[id]['content'] = self.parseMediaGrid(node,away,home)
             #raise Exception,repr(gameinfo[id]['content'])
+            # time to add unknown teamcodes dynamically rather than maintaining
+            # them in mlbConstants
+            for team in ( 'home', 'away' ):
+                teamcode = str(gameinfo[id]['%s_code'%team])
+                teamfilecode = str(gameinfo[id]['%s_file_code'%team])
+                if not TEAMCODES.has_key(teamfilecode):
+                    TEAMCODES[teamfilecode] = \
+                        ( str(gameinfo[id]['%s_team_id'%team]),
+                          str(gameinfo[id]['%s_team_name'%team]) )
             out.append(gameinfo[id])
         #raise Exception,repr(out)
         return out
