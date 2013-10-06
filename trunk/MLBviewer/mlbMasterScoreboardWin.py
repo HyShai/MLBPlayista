@@ -183,7 +183,7 @@ class MLBMasterScoreboardWin(MLBListWin):
             status_str = status
         if int(game[gid]['inning']) != 9:
             status_str += '/%s' % game[gid]['inning']
-        if game[gid]['totals']['r']['away'] > game[gid]['totals']['r']['home']:
+        if int(game[gid]['totals']['r']['away']) > int(game[gid]['totals']['r']['home']):
             away_str = ' WP: %s (%s-%s %s)' % \
                        ( game[gid]['pitchers']['winning_pitcher'][1],
                          game[gid]['pitchers']['winning_pitcher'][2],
