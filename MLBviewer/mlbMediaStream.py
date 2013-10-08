@@ -392,8 +392,13 @@ class MediaStream:
         auth_pat = re.compile(r'auth=(.*)')
         self.auth_chunk = '?auth=' + re.search(auth_pat,url).groups()[0]
         out = ''
-        req = urllib2.Request(url)
-        handle = urllib2.urlopen(req)
+        try:
+            req = urllib2.Request(url)
+            handle = urllib2.urlopen(req)
+        except:
+            self.error_str = \
+"An error occurred in the final request.\nThis is not a blackout or a media location error.\n\n\nIf the problem persists, try the non-Nexdef stream."
+            raise Exception,self.error_str
         rsp = parse(handle)
         rtmp_base = rsp.getElementsByTagName('meta')[0].getAttribute('base')
         for elem in rsp.getElementsByTagName('video'):

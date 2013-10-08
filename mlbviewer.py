@@ -463,6 +463,7 @@ def mainloop(myscr,mycfg,mykeys):
             except:
                 mywin.statusWrite('No postseason angles available.',wait=1)
                 continue
+            mywin.statusWrite('Retrieving postseason camera angles...')
             try:
                 cameras = mysched.getMultiAngleListing(event_id)
             except:
@@ -711,7 +712,12 @@ def mainloop(myscr,mycfg,mykeys):
                     mywin.errorScreen('ERROR: %s'%\
                                       mediaStream.error_str)
                     continue
-                mediaUrl = mediaStream.prepareMediaStreamer(mediaUrl)
+                try:
+                    mediaUrl = mediaStream.prepareMediaStreamer(mediaUrl)
+                except:
+                    mywin.errorScreen('ERROR: %s'%\
+                                      mediaStream.error_str)
+                    continue
                 cmdStr = mediaStream.preparePlayerCmd(mediaUrl,
                                      listwin.records[listwin.current_cursor][6])
                 play = MLBprocess(cmdStr)
@@ -884,6 +890,7 @@ def mainloop(myscr,mycfg,mykeys):
             else:
                 try:
                     mediaUrl = mediaStream.locateMedia()
+                    mediaUrl = mediaStream.prepareMediaStreamer(mediaUrl)
                 except Exception,detail:
                     if mycfg.get('debug'):
                         raise
@@ -893,7 +900,6 @@ def mainloop(myscr,mycfg,mykeys):
                     myscr.refresh()
                     mywin.statusWrite('Press any key to continue',wait=-1)
                     continue
-                mediaUrl = mediaStream.prepareMediaStreamer(mediaUrl)
                 # DONE: using direct address into listwin.records
                 eventId  = listwin.records[listwin.current_cursor][6]
 
