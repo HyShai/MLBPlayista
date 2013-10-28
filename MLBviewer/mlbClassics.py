@@ -9,6 +9,8 @@
 # On the whole, the GUI will be much more similar to mlbvideos.py than 
 # mlbviewer.py.
 
+import sys
+
 try:
     import gdata
     import gdata.youtube

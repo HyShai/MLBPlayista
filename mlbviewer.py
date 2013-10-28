@@ -766,10 +766,14 @@ def mainloop(myscr,mycfg,mykeys):
             try:
                 available = mysched.getListings(mycfg.get('speed'),
                                                 mycfg.get('blackout'))
-            except:
-                pass
-            mywin.data = available
-            mywin.records = available[mywin.record_cursor:mywin.record_cursor+curses.LINES-4]
+            except Exception,detail:
+                mywin.statusWrite('ERROR: %s'%detail,wait=2)
+                mywin.data = []
+                mywin.records = []
+                #pass
+            else:
+                mywin.data = available
+                mywin.records = available[mywin.record_cursor:mywin.record_cursor+curses.LINES-4]
 
         # TOGGLES
         if c in mykeys.get('NEXDEF'):
