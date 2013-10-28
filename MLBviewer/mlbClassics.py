@@ -11,12 +11,12 @@
 
 try:
     import gdata
+    import gdata.youtube
+    import gdata.youtube.service
 except:
     print "Missing dependency: python-gdata required for mlbclassics"
-    exit
+    sys.exit()
 
-import gdata.youtube
-import gdata.youtube.service
 
 class MLBClassics:
   
