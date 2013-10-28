@@ -62,6 +62,17 @@ free content.  You will get an authentication error at start up which you can
 ignore.  This login code may eventually be deactivated for configurations
 without authentication information (blank user= and pass=)
 
+MLB CLASSICS
+
+Watch classic games and episodes of This Week in Baseball with mlbclassics.py.
+
+Additional requirements for mlbclassics.py:
+
+python-gdata
+youtube-dl
+
+An MLB.com/MLB.TV account is not necessary for mlbclassics.
+
 
 MPLAYER2 VS MPLAYER
 
