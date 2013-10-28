@@ -20,6 +20,15 @@ except:
     sys.exit()
 
 
+# Filter out the Japanese results
+def only_roman_chars(s):
+    try:
+        s.encode("iso-8859-1")
+        return True
+    except UnicodeDecodeError:
+        return False
+
+
 class MLBClassics:
   
     def __init__(self):
@@ -44,10 +53,14 @@ class MLBClassics:
         tmp['entries'] = []
         feed = self.ytService.GetYouTubeVideoFeed(feedUrl)
         for entry in feed.entry:
-            tmp['entries'].append(self.getEntry(entry))
+            e = self.getEntry(entry)
+            if e is not None:
+                tmp['entries'].append(e)
         return tmp
 
     def getEntry(self,entry):
+        if not only_roman_chars(entry.title.text):
+            return None
         tmp = dict()
         tmp['title'] = entry.title.text
         tmp['url'] = entry.media.player.url
