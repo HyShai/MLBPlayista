@@ -48,3 +48,7 @@ from mlbDailyMenuWin import MLBDailyMenuWin
 from mlbStats import MLBStats
 from mlbStatsWin import MLBStatsWin
 from mlbPostseason import MLBPostseason
+from mlbClassicsMenuWin import MLBClassicsMenuWin
+from mlbClassicsPlistWin import MLBClassicsPlistWin
+from mlbClassics import MLBClassics
+from mlbClassicsStream import MLBClassicsStream

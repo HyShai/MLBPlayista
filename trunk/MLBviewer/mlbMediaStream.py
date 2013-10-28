@@ -416,6 +416,8 @@ class MediaStream:
                 return self.prepareFmsUrl(game_url)
             else:
                 return 'rtmpdump -o - -r %s' % game_url
+        elif self.streamtype == 'classics':
+            return 'youtube-dl -o - \'%s\'' % game_url
         elif self.cfg.get('use_nexdef') and self.streamtype != 'audio':
             self.nexdef_media_url = game_url
             return self.prepareHlsCmd(game_url)
@@ -583,7 +585,7 @@ class MediaStream:
             player = self.cfg.get('video_player')
         elif streamtype == 'audio':
             player = self.cfg.get('audio_player')
-        elif streamtype in ('highlight', 'condensed'):
+        elif streamtype in ('highlight', 'condensed', 'classics'):
             player = self.cfg.get('top_plays_player')
             if player == '':
                 player = self.cfg.get('video_player')

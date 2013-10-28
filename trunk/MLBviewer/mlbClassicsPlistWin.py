@@ -1,33 +1,20 @@
 #!/usr/bin/env python
 
-from mlbError import *
 from mlbConstants import *
 from mlbListWin import MLBListWin
-
 import curses
 
-SPEEDTOGGLE =  {
-    "1200" : "[1200K]",
-    "1800" : "[1800K]"}
+class MLBClassicsPlistWin(MLBListWin):
 
-class MLBDailyVideoWin(MLBListWin):
-
-    def __init__(self,myscr,mycfg,key,data):
-        self.key = key
-        self.data = data
-        self.records = self.data[0:curses.LINES-4]
+    def __init__(self,myscr,mycfg,data):
         self.myscr = myscr
         self.mycfg = mycfg
-        self.current_cursor = 0
+        self.data = data
+        self.records = self.data[0:curses.LINES-4]
         self.record_cursor = 0
+        self.current_cursor = 0
         self.statuswin = curses.newwin(1,curses.COLS-1,curses.LINES-1,0)
         self.titlewin = curses.newwin(2,curses.COLS-1,0,0)
-
-    def Splash(self):
-        lines = ('mlbvideos', VERSION, URL)
-        for i in xrange(len(lines)):
-            self.myscr.addnstr(curses.LINES/2+i, (curses.COLS-len(lines[i]))/2,                                lines[i],curses.COLS-2)
-        self.myscr.refresh()
 
 
     def Refresh(self):
@@ -40,7 +27,7 @@ class MLBDailyVideoWin(MLBListWin):
         self.myscr.clear()
         for n in range(curses.LINES-4):
             if n < len(self.records):
-                s = "[%s] %s" % (self.records[n][3], self.records[n][2])
+                s = self.records[n]['title']
                 padding = curses.COLS - ( len(s) + 1 )
                 if n == self.current_cursor:
                     s += ' '*padding
@@ -57,8 +44,9 @@ class MLBDailyVideoWin(MLBListWin):
                 self.myscr.addnstr(n+2, 0, s, curses.COLS-2, cursesflags)
         self.myscr.refresh()
 
+
     def titleRefresh(self,mysched=None):
-        titleStr = MLBCOM_VIDTITLES[self.key]
+        titleStr = 'MLB CLASSIC GAMES'
         padding = curses.COLS - (len(titleStr) + 6)
         titleStr += ' '*padding
         pos = curses.COLS - 6
@@ -68,30 +56,30 @@ class MLBDailyVideoWin(MLBListWin):
         self.titlewin.addstr(0,pos+1, 'enu')
         self.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
         self.titlewin.refresh()
-            
+
+
     def statusRefresh(self):
         if len(self.records) == 0:
-            status_str = "No listings available for this day."
+            status_str = "No listings available."
             self.statuswin.clear()
             self.statuswin.addnstr(0,0,status_str,curses.COLS-2)
             self.statuswin.refresh()
             return
-        statusStr = '[%3s of %3s] '%(self.current_cursor + self.record_cursor+1,
-                                      len(self.data))
-        statusStr += self.records[self.current_cursor][0]
-        speedStr = SPEEDTOGGLE.get(str(self.mycfg.get('speed')))
+        #statusStr = self.records[self.current_cursor]['desc'][:curses.COLS-2]
+        statusStr = 'Press m to return to playlist menu or ENTER to select game.'
+        #speedStr = SPEEDTOGGLE.get(str(self.mycfg.get('speed')))
         if self.mycfg.get('debug'):
             debugStr = '[DEBUG]'
         else:
             debugStr = ''
-        statusStrLen = len(statusStr) + len(speedStr) + len(debugStr) + 2
+        #statusStrLen = len(statusStr) + len(speedStr) + len(debugStr) + 2
+        statusStrLen = len(statusStr) +  len(debugStr) + 2
         padding = curses.COLS - statusStrLen
-        statusStr+=' '*padding + debugStr + speedStr
+        #statusStr+=' '*padding + debugStr + speedStr
+        statusStr+=' '*padding + debugStr
         if padding < 0:
             statusStr=statusStr[:padding]
         self.statuswin.addnstr(0,0,statusStr,curses.COLS-2,curses.A_BOLD)
         self.statuswin.refresh()
 
-        
-        
 
