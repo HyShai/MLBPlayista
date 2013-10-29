@@ -207,6 +207,7 @@ def mainloop(myscr,mycfg,mykeys):
                 try:
                     playlist = classics.getPlaylistEntries(mywin.records[mywin.current_cursor]['url'])
                 except:
+                    raise
                     mywin.statusWrite('An error occurred retrieving playlist.',wait=2)
                     continue
                 mlbClassicsPlistWin = MLBClassicsPlistWin(myscr,mycfg,playlist['entries'])
