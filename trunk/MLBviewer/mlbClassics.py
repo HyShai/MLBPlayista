@@ -52,10 +52,16 @@ class MLBClassics:
         tmp = dict()
         tmp['entries'] = []
         feed = self.ytService.GetYouTubeVideoFeed(feedUrl)
-        for entry in feed.entry:
-            e = self.getEntry(entry)
-            if e is not None:
-                tmp['entries'].append(e)
+        remaining=int(feed.total_results.text)
+        while remaining > 0:
+            if feed is None:
+                break
+            for entry in feed.entry:
+                e = self.getEntry(entry)
+                if e is not None:
+                    tmp['entries'].append(e)
+            remaining=int(feed.total_results.text)-len(feed.entry)
+            feed=self.ytService.GetNext(feed)
         return tmp
 
     def getEntry(self,entry):
