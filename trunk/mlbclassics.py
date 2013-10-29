@@ -116,6 +116,7 @@ def mainloop(myscr,mycfg,mykeys):
         available = classics.getFeed()      
         available = classics.getFeed(feed='ClassicMLB11')
         available = classics.getFeed(feed='TheMLBhistory')
+        available = classics.getFeed(feed='TheBaseballHall')
     except:
         optwin.statusWrite('ERROR: Could not retrieve playlist. Abort.',wait=2)
         curses.nocbreak()
