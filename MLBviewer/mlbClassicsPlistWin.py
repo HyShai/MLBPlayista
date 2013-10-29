@@ -46,7 +46,7 @@ class MLBClassicsPlistWin(MLBListWin):
 
 
     def titleRefresh(self,mysched=None):
-        titleStr = 'MLB CLASSIC GAMES'
+        titleStr = 'MLB CLASSIC CONTENT'
         padding = curses.COLS - (len(titleStr) + 6)
         titleStr += ' '*padding
         pos = curses.COLS - 6
@@ -65,18 +65,18 @@ class MLBClassicsPlistWin(MLBListWin):
             self.statuswin.addnstr(0,0,status_str,curses.COLS-2)
             self.statuswin.refresh()
             return
-        #statusStr = self.records[self.current_cursor]['desc'][:curses.COLS-2]
-        statusStr = 'Press m to return to playlist menu or ENTER to select game.'
-        #speedStr = SPEEDTOGGLE.get(str(self.mycfg.get('speed')))
+
+        posStr = "%s of %s" % ( self.current_cursor + self.record_cursor + 1, 
+                                len(self.data) )
+        durationStr = "[%s]" % self.records[self.current_cursor]['duration']
+        authorStr = "[%s]" % self.records[self.current_cursor]['author'] 
         if self.mycfg.get('debug'):
             debugStr = '[DEBUG]'
         else:
             debugStr = ''
-        #statusStrLen = len(statusStr) + len(speedStr) + len(debugStr) + 2
-        statusStrLen = len(statusStr) +  len(debugStr) + 2
+        statusStrLen = len(posStr) + len(durationStr) + len(authorStr) + len(debugStr) + 2
         padding = curses.COLS - statusStrLen
-        #statusStr+=' '*padding + debugStr + speedStr
-        statusStr+=' '*padding + debugStr
+        statusStr = posStr + ' '*padding + debugStr + authorStr + durationStr
         if padding < 0:
             statusStr=statusStr[:padding]
         self.statuswin.addnstr(0,0,statusStr,curses.COLS-2,curses.A_BOLD)
