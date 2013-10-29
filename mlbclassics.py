@@ -259,7 +259,7 @@ if __name__ == "__main__":
                   'audio_player': DEFAULT_A_PLAYER,
                   'audio_follow': [],
                   'video_follow': [],
-                  'classics_users': ['MLBClassics', 'ClassicMLB11', 'classicmlb1122', 'TheMLBhistory', 'TheBaseballHall'],
+                  'classics_users': ['MLBClassics', 'ClassicMLB11', 'classicmlb1122', 'TheMLBhistory', 'TheBaseballHall', 'PhilliesClassics'],
                   'blackout': [],
                   'favorite': [],
                   'use_color': 0,
