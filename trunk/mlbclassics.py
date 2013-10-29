@@ -113,11 +113,12 @@ def mainloop(myscr,mycfg,mykeys):
     optwin.statusWrite('Fetching YouTube feed and playlist data. Please wait.')
     try:
         # TODO: Handle multiple feed sources better.
-        available = classics.getFeed()      
-        available = classics.getFeed(feed='ClassicMLB11')
-        available = classics.getFeed(feed='TheMLBhistory')
-        available = classics.getFeed(feed='TheBaseballHall')
+        for user in mycfg.get('classics_users'):
+            # this is cumulative so only the last return matters
+            available = classics.getFeed(feed=user)      
     except:
+        if len(available) > 0:
+            pass
         optwin.statusWrite('ERROR: Could not retrieve playlist. Abort.',wait=2)
         curses.nocbreak()
         myscr.keypad(0)
@@ -258,6 +259,7 @@ if __name__ == "__main__":
                   'audio_player': DEFAULT_A_PLAYER,
                   'audio_follow': [],
                   'video_follow': [],
+                  'classics_users': ['MLBClassics', 'ClassicMLB11', 'classicmlb1122', 'TheMLBhistory', 'TheBaseballHall'],
                   'blackout': [],
                   'favorite': [],
                   'use_color': 0,

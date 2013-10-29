@@ -33,17 +33,18 @@ class MLBClassicsMenuWin(MLBListWin):
 
         self.myscr.clear()
         for n in range(curses.LINES-4):
+            cursesflags = 0
             if n < len(self.records):
                 s = self.records[n]['title']
                 padding = curses.COLS - ( len(s) + 1 )
                 if n == self.current_cursor:
                     s += ' '*padding
+                if self.records[n].has_key('all'):
+                    cursesflags |= curses.A_BOLD
             else:
                 s = ' '*(curses.COLS-1)
             if n == self.current_cursor:
-                cursesflags = curses.A_REVERSE
-            else:
-                cursesflags = 0
+                cursesflags |= curses.A_REVERSE
 
             if n < len(self.records):
                 self.myscr.addnstr(n+2, 0, s, curses.COLS-2, cursesflags)
@@ -53,7 +54,7 @@ class MLBClassicsMenuWin(MLBListWin):
 
 
     def titleRefresh(self,mysched=None):
-        titleStr = 'MLB CLASSIC GAMES PLAYLISTS'
+        titleStr = 'MLB CLASSIC CONTENT PLAYLISTS'
         padding = curses.COLS - (len(titleStr) + 6)
         titleStr += ' '*padding
         pos = curses.COLS - 6
@@ -72,18 +73,16 @@ class MLBClassicsMenuWin(MLBListWin):
             self.statuswin.addnstr(0,0,status_str,curses.COLS-2)
             self.statuswin.refresh()
             return
-        #statusStr = self.records[self.current_cursor]['desc'][:curses.COLS-2]
-        statusStr = 'Select a playlist'
-        #speedStr = SPEEDTOGGLE.get(str(self.mycfg.get('speed')))
+        posStr = "%s of %s" % ( self.current_cursor + self.record_cursor + 1,
+                                len(self.data) )
+        authorStr = "[%s]" % self.records[self.current_cursor]['author']
         if self.mycfg.get('debug'):
             debugStr = '[DEBUG]'
         else:
             debugStr = ''
-        #statusStrLen = len(statusStr) + len(speedStr) + len(debugStr) + 2
-        statusStrLen = len(statusStr) + 2
+        statusStrLen = len(posStr) + len(authorStr) + len(debugStr) + 2
         padding = curses.COLS - statusStrLen
-        #statusStr+=' '*padding + debugStr + speedStr
-        statusStr+=' '*padding + debugStr
+        statusStr=posStr + ' '*padding + debugStr + authorStr
         if padding < 0:
             statusStr=statusStr[:padding]
         self.statuswin.addnstr(0,0,statusStr,curses.COLS-2,curses.A_BOLD)

@@ -10,6 +10,7 @@
 # mlbviewer.py.
 
 import sys
+import time
 
 try:
     import gdata
@@ -37,8 +38,19 @@ class MLBClassics:
         self.data = []
 
     def getFeed(self,feed='MLBClassics'):
-        self.listFeed = self.ytService.GetYouTubePlaylistFeed(username=feed)
-        for playlist in self.listFeed.entry:
+        # Populate a catch-all for all uploads even those not in a playlist
+        tmp = dict()
+        uri = 'http://gdata.youtube.com/feeds/api/users/%s/uploads' % feed
+        tmp['title'] = 'All Uploads by %s' % feed
+        tmp['url'] = uri
+        tmp['author'] = feed
+        # set a special flag for the gui code
+        tmp['all'] = True
+        self.data.append(tmp)
+
+        # now handle all the playlists
+        feed = self.ytService.GetYouTubePlaylistFeed(username=feed)
+        for playlist in feed.entry:
             self.data.append(self.getPlaylist(playlist))
         return self.data
 
@@ -46,6 +58,7 @@ class MLBClassics:
         tmp = dict()
         tmp['title'] = playlist.title.text
         tmp['url'] = playlist.feed_link[0].href
+        tmp['author'] = playlist.author[0].name.text
         tmp['raw'] = playlist
         return tmp
 
@@ -74,6 +87,8 @@ class MLBClassics:
         tmp['title'] = entry.title.text
         tmp['url'] = entry.media.player.url
         tmp['desc'] = entry.media.description.text
+        tmp['author'] = entry.author[0].name.text
+        tmp['duration'] = time.strftime('%H:%M:%S',time.gmtime(int(entry.media.duration.seconds)))
         tmp['raw'] = entry
         return tmp
 
