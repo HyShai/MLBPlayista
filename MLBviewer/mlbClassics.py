@@ -19,6 +19,7 @@ except:
     print "Missing dependency: python-gdata required for mlbclassics"
     sys.exit()
 
+from operator import itemgetter
 
 # Filter out the Japanese results
 def only_roman_chars(s):
@@ -62,6 +63,8 @@ class MLBClassics:
                     tmp['entries'].append(e)
             remaining=int(feed.total_results.text)-len(feed.entry)
             feed=self.ytService.GetNext(feed)
+        sortedEntries=sorted(tmp['entries'], key=itemgetter('title'))
+        tmp['entries']=sortedEntries
         return tmp
 
     def getEntry(self,entry):

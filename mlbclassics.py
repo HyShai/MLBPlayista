@@ -115,6 +115,7 @@ def mainloop(myscr,mycfg,mykeys):
         # TODO: Handle multiple feed sources better.
         available = classics.getFeed()      
         available = classics.getFeed(feed='ClassicMLB11')
+        available = classics.getFeed(feed='TheMLBhistory')
     except:
         optwin.statusWrite('ERROR: Could not retrieve playlist. Abort.',wait=2)
         curses.nocbreak()
@@ -200,6 +201,8 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.statusWrite('Press a key to continue...',wait=-1)
 
         if c in mykeys.get('VIDEO') or c in ( 'Enter', 10 ):
+            if len(mywin.records) == 0:
+                continue
             if mywin in ( optwin, ):
                 continue
             if mywin == mlbClassicsMenu:
