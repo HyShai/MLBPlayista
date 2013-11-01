@@ -59,7 +59,6 @@ class MLBClassics:
         tmp['title'] = playlist.title.text
         tmp['url'] = playlist.feed_link[0].href
         tmp['author'] = playlist.author[0].name.text
-        tmp['raw'] = playlist
         return tmp
 
     def getPlaylistEntries(self,feedUrl):
@@ -85,10 +84,9 @@ class MLBClassics:
             return None
         tmp = dict()
         tmp['title'] = entry.title.text
-        tmp['url'] = entry.media.player.url
-        tmp['desc'] = entry.media.description.text
+        tmp['url'] = entry.media.player.url.split('&')[0]
+        tmp['description'] = entry.media.description.text
         tmp['author'] = entry.author[0].name.text
         tmp['duration'] = time.strftime('%H:%M:%S',time.gmtime(int(entry.media.duration.seconds)))
-        tmp['raw'] = entry
         return tmp
 

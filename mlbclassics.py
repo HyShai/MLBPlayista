@@ -11,6 +11,7 @@ import errno
 import signal
 import sys
 import time
+from math import ceil
 from MLBviewer import *
 
 locale.setlocale(locale.LC_ALL,"")
@@ -71,6 +72,7 @@ def mainloop(myscr,mycfg,mykeys):
     DISABLED_FEATURES = []
     # add in a keybinding for listings that makes sense, e.g. Menu
     mykeys.set('LISTINGS','m')
+    mykeys.set('MEDIA_INFO','i')
     CFG_SPEED = int(mycfg.get('speed'))
     if CFG_SPEED >= 1800:
         mycfg.set('speed',1800)
@@ -189,6 +191,49 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('OPTIONS'):
             optwin = MLBOptWin(myscr,mycfg)
             mywin = optwin
+
+        if c in mykeys.get('MEDIA_INFO'):
+            if mywin in ( optwin, ):
+                continue
+            myscr.clear()
+            mywin.titlewin.clear()
+            mywin.titlewin.addstr(0,0,'MEDIA INFORMATION')
+            mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
+            output=[]
+            for k in ( 'title', 'author', 'url', 'duration', 'description' ):
+                if mywin.records[mywin.current_cursor].has_key(k):
+                    infoStr="%-8s: %s" % (k.upper(),
+                                         mywin.records[mywin.current_cursor][k])
+                    # break up string into words and break lines at word
+                    # boundaries
+                    tmp_str=''
+                    for word in infoStr.split(' '):
+                        if word.find('\n') > -1:
+                            for w in word.split('\n'):
+                                if w == '':
+                                    output.append(tmp_str)
+                                    tmp_str=''
+                                elif len(tmp_str) + len(w) < (curses.COLS-2):
+                                    tmp_str+=w + ' '
+                                else:
+                                    output.append(tmp_str)
+                                    tmp_str=w + ' '
+                        elif len(tmp_str) + len(word) < (curses.COLS-2):
+                            tmp_str+=word + ' '
+                        else:
+                            output.append(tmp_str)
+                            tmp_str=word + ' '
+                    output.append(tmp_str)
+            n=2
+            for line in output:
+                if n < curses.LINES-3:    
+                    myscr.addstr(n,0,line)
+                    n+=1
+                else:
+                    break
+            myscr.refresh()
+            mywin.titlewin.refresh()
+            mywin.statusWrite('Press a key to continue...',wait=-1)
 
         if c in mykeys.get('MEDIA_DEBUG'):
             if mywin in ( optwin, ):
