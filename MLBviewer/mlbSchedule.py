@@ -30,9 +30,11 @@ from mlbProcess import MLBprocess
 from mlbConstants import *
 from mlbLog import MLBLog
 from mlbError import *
+from mlbHttp import MLBHttp
 
 try:
     from xml.dom.minidom import parse
+    from xml.dom.minidom import parseString
 except:
     print "Missing python external dependencies."
     print "Please read the REQUIREMENTS-2012.txt file."
@@ -71,6 +73,7 @@ class MLBSchedule:
         self.month = ymd_tuple[1]
         self.day = ymd_tuple[2]
         self.shift = time_shift
+        self.http = MLBHttp(accept_gzip=True)
         self.grid = "http://gdx.mlb.com/components/game/mlb/year_"\
             + padstr(self.year)\
             + "/month_" + padstr(self.month)\
@@ -86,9 +89,10 @@ class MLBSchedule:
     def __getSchedule(self):
         txheaders = {'User-agent' : USERAGENT}
         data = None
-        req = urllib2.Request(self.grid,data,txheaders)
+        #req = urllib2.Request(self.grid,data,txheaders)
         try:
-            fp = urllib2.urlopen(req)
+            #fp = urllib2.urlopen(req)
+            fp = self.http.getUrl(self.grid)
             return fp
         except urllib2.HTTPError:
             self.error_str = "UrlError: Could not retrieve listings."
@@ -100,12 +104,13 @@ class MLBSchedule:
         txheaders = {'User-agent' : USERAGENT}
         data = None
         self.multiangle = self.grid.replace('grid.xml','multi_angle_epg.xml')
-        req = urllib2.Request(self.multiangle,data,txheaders)
+        #req = urllib2.Request(self.multiangle,data,txheaders)
         try:
-            fp = urllib2.urlopen(req)
+            #fp = urllib2.urlopen(req)
+            fp = self.http.getUrl(self.multiangle)
         except urllib2.HTTPError:
             raise MLBUrlError
-        xp = parse(fp)
+        xp = parseString(fp)
         for node in xp.getElementsByTagName('game'):
             id = node.getAttribute('calendar_event_id')
             if id != event_id:
@@ -152,7 +157,7 @@ class MLBSchedule:
     def __scheduleFromXml(self):
         out = []
         gameinfo = dict()
-        fp = parse(self.__getSchedule())
+        fp = parseString(self.__getSchedule())
         for node in fp.getElementsByTagName('game'):
             id = node.getAttribute('id')
             gameinfo[id] = dict()
@@ -388,14 +393,15 @@ class MLBSchedule:
         url += content_id[-3] + '/' + content_id[-2] + '/' + content_id[-1]
         url += '/' + content_id + '.xml'
         try:
-            req = urllib2.Request(url)
-            rsp = urllib2.urlopen(req)
+            #req = urllib2.Request(url)
+            #rsp = urllib2.urlopen(req)
+            rsp = self.http.getUrl(url)
         except Exception,detail:
             self.error_str = 'Error while locating condensed game:'
             self.error_str = '\n\n' + str(detail)
             raise
         try:
-            media = parse(rsp)
+            media = parseString(rsp)
         except Exception,detail:
             self.error_str = 'Error parsing condensed game location'
             self.error_str += '\n\n' + str(detail)
@@ -414,14 +420,15 @@ class MLBSchedule:
         url = self.grid.replace('grid.xml','gid_' + gid + '/media/highlights.xml')
         out = []
         try:
-            req = urllib2.Request(url)
-            rsp = urllib2.urlopen(req)
+            #req = urllib2.Request(url)
+            #rsp = urllib2.urlopen(req)
+            self.http.getUrl(url)
         except:
             return out
             self.error_str = "Could not find highlights.xml for " + gameid
             raise Exception,self.error_str
         try:
-            xp  = parse(rsp)
+            xp  = parseString(rsp)
         except:
             return out
             self.error_str = "Could not parse highlights.xml for " + gameid
@@ -580,14 +587,15 @@ class MLBSchedule:
 	gameid, year, month, day = event_id.split('-')[1:5]
         url = 'http://mlb.mlb.com/mlb/mmls%s/%s.xml' % (year, gameid)
         self.log.write('parseInningsXml(): url = %s\n'%url)
-        req = urllib2.Request(url)
+        #req = urllib2.Request(url)
         try:
-            rsp = urllib2.urlopen(req)
+            #rsp = urllib2.urlopen(req)
+            rsp = self.http.getUrl(url)
         except:
             self.error_str = "Could not open " + url
             raise Exception,self.error_str
         try:
-            iptr = parse(rsp)
+            iptr = parseString(rsp)
         except:
             self.error_str = "Could not parse the innings xml."
             raise Exception,self.error_str

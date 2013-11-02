@@ -1,6 +1,7 @@
 from xml.dom.minidom import parse
 from xml.dom.minidom import parseString
 from xml.dom import *
+from mlbHttp import MLBHttp
 import urllib2
 import datetime
 from mlbError import *
@@ -15,17 +16,19 @@ class MLBBoxScore:
         league = self.gameid.split('_')[4][-3:]
         self.boxUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/gid_%s/boxscore.xml' % ( league, year, month, day, self.gameid )
         self.boxscore = None
+        self.http = MLBHttp(accept_gzip=True)
 
 
     def getBoxData(self):
         try: 
-            req = urllib2.Request(self.boxUrl)
-            rsp = urllib2.urlopen(req)
+            #req = urllib2.Request(self.boxUrl)
+            #rsp = urllib2.urlopen(req)
+            rsp = self.http.getUrl(self.boxUrl)
         except urllib2.URLError:
             self.error_str = "UrlError: Could not retrieve box score."
             raise MLBUrlError
         try:
-            xp = parse(rsp)
+            xp = parseString(rsp)
         except:
             raise
         # if we got this far, initialize the data structure
