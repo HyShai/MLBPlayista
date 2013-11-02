@@ -9,6 +9,8 @@ from mlbSchedule import gameTimeConvert
 import datetime
 import curses
 from xml.dom.minidom import parse
+from xml.dom.minidom import parseString
+from mlbHttp import MLBHttp
 
 class MLBRssWin(MLBListWin):
 
@@ -25,6 +27,7 @@ class MLBRssWin(MLBListWin):
         self.record_cursor = 0
         self.game_cursor = 0
         self.htmlParser = HTMLParser()
+        self.http = MLBHttp(accept_gzip=True)
 
     def getFeedFromUser(self):
         feed = self.prompter(self.statuswin,'Enter teamcode of feed:')
@@ -51,15 +54,16 @@ class MLBRssWin(MLBListWin):
         else:
             rssUrl = self.rssUrl.replace('mlb.xml','%s.xml'%team)
         try:
-            req = urllib2.Request(rssUrl)
-            rsp = urllib2.urlopen(req)
+            #req = urllib2.Request(rssUrl)
+            #rsp = urllib2.urlopen(req)
+            rsp = self.http.getUrl(rssUrl)
         except:
             self.error_str = "UrlError: Could not retrieve RSS."
             self.statusWrite(self.error_str,wait=2)
             return
             #raise MLBUrlError
         try:
-            xp = parse(rsp)
+            xp = parseString(rsp)
         except:
             self.error_str = "XmlError: Could not parse RSS."
             raise MLBXmlError

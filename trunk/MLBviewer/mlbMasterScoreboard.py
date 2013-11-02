@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+
 from xml.dom.minidom import parse
 from xml.dom.minidom import parseString
 from xml.dom import *
 from mlbError import *
+from mlbHttp import MLBHttp
 import urllib2
 import datetime
 import time
@@ -16,18 +19,20 @@ class MLBMasterScoreboard:
         league = self.gameid.split('_')[4][-3:]
         self.sbUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/master_scoreboard.xml' % ( league, year, month, day )
         self.error_str = "Could not retrieve master_scoreboard.xml file"
+        self.http = MLBHttp(accept_gzip=True)
         self.scoreboard = []
 
 
     def getScoreboardData(self):
         try: 
-            req = urllib2.Request(self.sbUrl)
-            rsp = urllib2.urlopen(req)
+            #req = urllib2.Request(self.sbUrl)
+            #rsp = urllib2.urlopen(req)
+            rsp = self.http.getUrl(self.sbUrl)
         except urllib2.URLError:
             self.error_str = "Could not retrieve master_scoreboard.xml file"
             raise MLBUrlError, self.error_str
         try:
-            xp = parse(rsp)
+            xp = parseString(rsp)
         except:
             self.error_str = "Could not parse master_scoreboard.xml file"
             raise MLBXmlError, self.error_str
