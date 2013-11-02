@@ -7,6 +7,7 @@ import httplib
 
 from mlbError import *
 from mlbConstants import *
+from mlbHttp import MLBHttp
 
 class MLBStats:
 
@@ -15,6 +16,7 @@ class MLBStats:
         self.mycfg = cfg
         self.last_update = ""
         self.date = datetime.datetime.now()
+        self.http = MLBHttp(accept_gzip=True)
         if self.mycfg is None:
             self.type = 'pitching'
             self.sort = 'era'
@@ -78,16 +80,18 @@ class MLBStats:
             self.prepareTripleCrownUrl()
         else:
             self.prepareStatsUrl()
-        request = urllib2.Request(self.url)
-        request.add_header('Referer','http://mlb.com')
-        opener = urllib2.build_opener()
+        #request = urllib2.Request(self.url)
+        #request.add_header('Referer','http://mlb.com')
+        #opener = urllib2.build_opener()
         try:
-            f = opener.open(request)
+            #f = opener.open(request)
+            rsp = self.http.getUrl(self.url)
         except urllib2.URLError:
             self.error_str = "UrlError: Could not retrieve statistics"
             raise MLBUrlError,self.url
         try:
-            self.json = json.loads(f.read())
+            #self.json = json.loads(f.read())
+            self.json = json.loads(rsp)
         except Exception,error:
             raise MLBUrlError,self.url
             #raise MLBJsonError,error
