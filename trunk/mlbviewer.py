@@ -317,7 +317,10 @@ def mainloop(myscr,mycfg,mykeys):
                 # recreate master scoreboard if current screen
                 if mywin in ( sbwin, ):
                     GAMEID = listwin.records[listwin.current_cursor][6]
-                    sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                    if sbwin in ( None, [] ):
+                        sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                    else:
+                        sbwin.updateGameid(GAMEID)
                     try:
                         sbwin.getScoreboardData()
                     except MLBUrlError:
@@ -347,7 +350,7 @@ def mainloop(myscr,mycfg,mykeys):
                 listwin.record_cursor = 0
                 listwin.current_cursor = 0
             except (KeyError,MLBXmlError),detail:
-                if cfg['debug']:
+                if mycfg.get('debug'):
                     raise Exception,detail
                 available = []
                 listwin.statusWrite("There was a parser problem with the listings page",wait=2)
@@ -355,7 +358,10 @@ def mainloop(myscr,mycfg,mykeys):
             # recreate master scoreboard if current screen
             if mywin in ( sbwin, ):
                 GAMEID = listwin.records[listwin.current_cursor][6]
-                sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                if sbwin in ( None, [] ):
+                    sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                else:
+                    sbwin.updateGameid(GAMEID)
                 try:
                     sbwin.getScoreboardData()
                 except MLBUrlError:
@@ -403,7 +409,10 @@ def mainloop(myscr,mycfg,mykeys):
                 except IndexError:
                     sbwin.sb = []
                     continue
-                sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                if sbwin in ( None, [] ):
+                    sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+                else:
+                    sbwin.updateGameid(GAMEID)
                 try:
                     sbwin.getScoreboardData()
                 except MLBUrlError:
@@ -549,7 +558,10 @@ def mainloop(myscr,mycfg,mykeys):
             except IndexError:
                 continue
             mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
-            sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+            if sbwin in ( None, [] ):
+                sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
+            else:
+                sbwin.updateGameid(GAMEID)
             try:
                 sbwin.getScoreboardData()
             except MLBUrlError:

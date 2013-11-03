@@ -28,9 +28,16 @@ class MLBMasterScoreboardWin(MLBListWin):
         self.current_cursor = 0
         self.record_cursor = 0
         self.game_cursor = 0
+        self.scoreboard = MLBMasterScoreboard(self.gid)
+
+    def updateGameid(self,gid):
+        self.gid = gid
+        self.scoreboard.gameid = gid
 
     def getScoreboardData(self):
-        self.scoreboard = MLBMasterScoreboard(self.gid)
+        self.sb = []
+        self.data = []
+        self.records = []
         #self.sb = self.scoreboard.getScoreboardData()
         try:
             self.sb = self.scoreboard.getScoreboardData()
