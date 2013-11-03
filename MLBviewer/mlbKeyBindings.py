@@ -73,6 +73,7 @@ class MLBKeyBindings:
             259 : 'Up',
             260 : 'Left',
             261 : 'Right',
+            409 : 'Mouse (if enabled)',
         }
         if TRANSLATE.has_key(value):
             return TRANSLATE[value]

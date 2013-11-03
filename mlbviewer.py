@@ -130,6 +130,12 @@ def mainloop(myscr,mycfg,mykeys):
     stdwin = None
     statwin = None
     stats = MLBStats(mycfg)
+    # initialize some variables to re-use for 304 caching
+    boxscore = None
+    linescore = None
+    standings = None
+
+    # now it's go time!
     mywin = listwin
     mywin.Splash()
     mywin.statusWrite('Logging into mlb.com...',wait=0)
@@ -512,7 +518,8 @@ def mainloop(myscr,mycfg,mykeys):
                 mywin.statusWrite('Standings are not supported for MiLB',wait=2)
                 continue
             mywin.statusWrite('Retrieving standings...')
-            standings = MLBStandings()
+            if standings is None:
+                standings = MLBStandings()
             try:
                 standings.getStandingsData()
             except MLBUrlError:
@@ -580,9 +587,10 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
             GAMEID = listwin.records[listwin.current_cursor][6]
             mywin.statusWrite('Retrieving box score for %s...' % GAMEID)
-            boxscore=MLBBoxScore(GAMEID)
+            if boxscore in ( None, [] ):
+                boxscore=MLBBoxScore(GAMEID)
             try:
-                data = boxscore.getBoxData()
+                data = boxscore.getBoxData(GAMEID)
             except MLBUrlError:
                 listwin.statusWrite(boxscore.error_str,wait=2)
                 continue
@@ -598,9 +606,10 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.statusWrite('Retrieving linescore for %s...' % GAMEID)
             # TODO: might want to embed linescore code in MLBLineScoreWin
             # and create a MLBLineScoreWin.getLineData() method like scoreboard
-            linescore = MLBLineScore(GAMEID)
+            if linescore in ( None, ):
+                linescore = MLBLineScore(GAMEID)
             try:
-                data = linescore.getLineData()
+                data = linescore.getLineData(GAMEID)
             except MLBUrlError:
                 listwin.statusWrite(linescore.error_str,wait=2)
                 continue
