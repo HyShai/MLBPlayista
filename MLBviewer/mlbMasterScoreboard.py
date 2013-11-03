@@ -17,13 +17,17 @@ class MLBMasterScoreboard:
         self.gameid = self.gameid.replace('-','_')
         ( year, month, day ) = self.gameid.split('_')[:3]
         league = self.gameid.split('_')[4][-3:]
-        self.sbUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/master_scoreboard.xml' % ( league, year, month, day )
         self.error_str = "Could not retrieve master_scoreboard.xml file"
         self.http = MLBHttp(accept_gzip=True)
-        self.scoreboard = []
 
 
     def getScoreboardData(self):
+        self.scoreboard = []
+        self.gameid = self.gameid.replace('/','_')
+        self.gameid = self.gameid.replace('-','_')
+        ( year, month, day ) = self.gameid.split('_')[:3]
+        league = self.gameid.split('_')[4][-3:]
+        self.sbUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/master_scoreboard.xml' % ( league, year, month, day )
         try: 
             #req = urllib2.Request(self.sbUrl)
             #rsp = urllib2.urlopen(req)
