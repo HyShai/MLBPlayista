@@ -80,17 +80,12 @@ class MLBStats:
             self.prepareTripleCrownUrl()
         else:
             self.prepareStatsUrl()
-        #request = urllib2.Request(self.url)
-        #request.add_header('Referer','http://mlb.com')
-        #opener = urllib2.build_opener()
         try:
-            #f = opener.open(request)
             rsp = self.http.getUrl(self.url)
         except urllib2.URLError:
             self.error_str = "UrlError: Could not retrieve statistics"
             raise MLBUrlError,self.url
         try:
-            #self.json = json.loads(f.read())
             self.json = json.loads(rsp)
         except Exception,error:
             raise MLBUrlError,self.url

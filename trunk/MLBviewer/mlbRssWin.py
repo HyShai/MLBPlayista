@@ -54,8 +54,6 @@ class MLBRssWin(MLBListWin):
         else:
             rssUrl = self.rssUrl.replace('mlb.xml','%s.xml'%team)
         try:
-            #req = urllib2.Request(rssUrl)
-            #rsp = urllib2.urlopen(req)
             rsp = self.http.getUrl(rssUrl)
         except:
             self.error_str = "UrlError: Could not retrieve RSS."

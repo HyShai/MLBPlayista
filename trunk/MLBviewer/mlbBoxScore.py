@@ -28,8 +28,6 @@ class MLBBoxScore:
         self.boxUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/gid_%s/boxscore.xml' % ( league, year, month, day, self.gameid )
         self.boxscore = None
         try: 
-            #req = urllib2.Request(self.boxUrl)
-            #rsp = urllib2.urlopen(req)
             rsp = self.http.getUrl(self.boxUrl)
         except urllib2.URLError:
             self.error_str = "UrlError: Could not retrieve box score."

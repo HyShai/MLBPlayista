@@ -37,11 +37,7 @@ class MLBStandings:
         self.jUrl = 'http://mlb.mlb.com/lookup/json/named.standings_schedule_date.bam?&sit_code=%27h0%27&league_id=103&league_id=104&all_star_sw=%27N%27&version=2'
         self.jUrl += '&season=%s&schedule_game_date.game_date=%%27%s%%27' % \
                               ( now.year, now.strftime('%Y/%m/%d') )
-        #request = urllib2.Request(self.jUrl)
-        #request.add_header('Referer', 'http://mlb.com')
-        #opener = urllib2.build_opener()
         try:
-            #f = opener.open(request)
             rsp = self.http.getUrl(self.jUrl)
         except urllib2.URLError:
             self.error_str = "UrlError: Could not retrieve standings."

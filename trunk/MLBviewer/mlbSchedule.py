@@ -87,11 +87,7 @@ class MLBSchedule:
         self.error_str = "Something went wrong.  A more descriptive error should be here."
 
     def __getSchedule(self):
-        txheaders = {'User-agent' : USERAGENT}
-        data = None
-        #req = urllib2.Request(self.grid,data,txheaders)
         try:
-            #fp = urllib2.urlopen(req)
             fp = self.http.getUrl(self.grid)
             return fp
         except urllib2.HTTPError:
@@ -104,9 +100,7 @@ class MLBSchedule:
         txheaders = {'User-agent' : USERAGENT}
         data = None
         self.multiangle = self.grid.replace('grid.xml','multi_angle_epg.xml')
-        #req = urllib2.Request(self.multiangle,data,txheaders)
         try:
-            #fp = urllib2.urlopen(req)
             fp = self.http.getUrl(self.multiangle)
         except urllib2.HTTPError:
             raise MLBUrlError
@@ -393,8 +387,6 @@ class MLBSchedule:
         url += content_id[-3] + '/' + content_id[-2] + '/' + content_id[-1]
         url += '/' + content_id + '.xml'
         try:
-            #req = urllib2.Request(url)
-            #rsp = urllib2.urlopen(req)
             rsp = self.http.getUrl(url)
         except Exception,detail:
             self.error_str = 'Error while locating condensed game:'
@@ -420,9 +412,7 @@ class MLBSchedule:
         url = self.grid.replace('grid.xml','gid_' + gid + '/media/highlights.xml')
         out = []
         try:
-            #req = urllib2.Request(url)
-            #rsp = urllib2.urlopen(req)
-            self.http.getUrl(url)
+            rsp = self.http.getUrl(url)
         except:
             return out
             self.error_str = "Could not find highlights.xml for " + gameid
@@ -587,9 +577,7 @@ class MLBSchedule:
 	gameid, year, month, day = event_id.split('-')[1:5]
         url = 'http://mlb.mlb.com/mlb/mmls%s/%s.xml' % (year, gameid)
         self.log.write('parseInningsXml(): url = %s\n'%url)
-        #req = urllib2.Request(url)
         try:
-            #rsp = urllib2.urlopen(req)
             rsp = self.http.getUrl(url)
         except:
             self.error_str = "Could not open " + url
