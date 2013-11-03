@@ -30,8 +30,6 @@ class MLBLineScore:
         self.hrUrl = self.boxUrl.replace('linescore.xml','miniscoreboard.xml')
         self.linescore = None
         try: 
-            #req = urllib2.Request(self.boxUrl)
-            #rsp = urllib2.urlopen(req)
             rsp = self.http.getUrl(self.boxUrl)
         except urllib2.URLError:
             self.error_str = "UrlError: Could not retrieve linescore."
@@ -75,8 +73,6 @@ class MLBLineScore:
 
     def getHrData(self):
         try: 
-            #req = urllib2.Request(self.hrUrl)
-            #rsp = urllib2.urlopen(req)
             rsp = self.http.getUrl(self.hrUrl)
         except:
             self.error_str = "UrlError: Could not retrieve home run data."

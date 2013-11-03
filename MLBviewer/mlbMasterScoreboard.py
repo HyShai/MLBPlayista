@@ -30,8 +30,6 @@ class MLBMasterScoreboard:
         league = self.gameid.split('_')[4][-3:]
         self.sbUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/master_scoreboard.xml' % ( league, year, month, day )
         try: 
-            #req = urllib2.Request(self.sbUrl)
-            #rsp = urllib2.urlopen(req)
             rsp = self.http.getUrl(self.sbUrl)
         except urllib2.URLError:
             self.error_str = "Could not retrieve master_scoreboard.xml file"
