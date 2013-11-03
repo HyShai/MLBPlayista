@@ -19,7 +19,14 @@ class MLBBoxScore:
         self.http = MLBHttp(accept_gzip=True)
 
 
-    def getBoxData(self):
+    def getBoxData(self,gameid):
+        self.gameid = gameid
+        self.gameid = self.gameid.replace('/','_')
+        self.gameid = self.gameid.replace('-','_')
+        ( year, month, day ) = self.gameid.split('_')[:3]
+        league = self.gameid.split('_')[4][-3:]
+        self.boxUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/gid_%s/boxscore.xml' % ( league, year, month, day, self.gameid )
+        self.boxscore = None
         try: 
             #req = urllib2.Request(self.boxUrl)
             #rsp = urllib2.urlopen(req)

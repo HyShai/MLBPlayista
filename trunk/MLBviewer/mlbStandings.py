@@ -34,6 +34,7 @@ class MLBStandings:
         #schedule_game_date.game_date=%272013/06/12%27&season=2013
         # if not given a datetime, calculate it
         now=datetime.datetime.now()
+        self.jUrl = 'http://mlb.mlb.com/lookup/json/named.standings_schedule_date.bam?&sit_code=%27h0%27&league_id=103&league_id=104&all_star_sw=%27N%27&version=2'
         self.jUrl += '&season=%s&schedule_game_date.game_date=%%27%s%%27' % \
                               ( now.year, now.strftime('%Y/%m/%d') )
         #request = urllib2.Request(self.jUrl)
@@ -48,6 +49,7 @@ class MLBStandings:
         try:
             self.json = json.loads(rsp)
         except:
+            raise
             raise Exception,MLBJsonError
         self.parseStandingsJson()
 

@@ -20,7 +20,15 @@ class MLBLineScore:
         self.http = MLBHttp(accept_gzip=True)
 
 
-    def getLineData(self):
+    def getLineData(self,gameid):
+        self.gameid = gameid
+        self.gameid = self.gameid.replace('/','_')
+        self.gameid = self.gameid.replace('-','_')
+        ( year, month, day ) = self.gameid.split('_')[:3]
+        self.league = self.gameid.split('_')[4][-3:]
+        self.boxUrl = 'http://gdx.mlb.com/components/game/%s/year_%s/month_%s/day_%s/gid_%s/linescore.xml' % ( self.league, year, month, day, self.gameid )
+        self.hrUrl = self.boxUrl.replace('linescore.xml','miniscoreboard.xml')
+        self.linescore = None
         try: 
             #req = urllib2.Request(self.boxUrl)
             #rsp = urllib2.urlopen(req)
