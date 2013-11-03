@@ -319,10 +319,8 @@ def mainloop(myscr,mycfg,mykeys):
                     GAMEID = listwin.records[listwin.current_cursor][6]
                     if sbwin in ( None, [] ):
                         sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
-                    else:
-                        sbwin.updateGameid(GAMEID)
                     try:
-                        sbwin.getScoreboardData()
+                        sbwin.getScoreboardData(GAMEID)
                     except MLBUrlError:
                         sbwin.statusWrite(self.error_str,wait=2)
                         continue
@@ -360,10 +358,8 @@ def mainloop(myscr,mycfg,mykeys):
                 GAMEID = listwin.records[listwin.current_cursor][6]
                 if sbwin in ( None, [] ):
                     sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
-                else:
-                    sbwin.updateGameid(GAMEID)
                 try:
-                    sbwin.getScoreboardData()
+                    sbwin.getScoreboardData(GAMEID)
                 except MLBUrlError:
                     sbwin.statusWrite(self.error_str,wait=2)
                     continue
@@ -411,10 +407,8 @@ def mainloop(myscr,mycfg,mykeys):
                     continue
                 if sbwin in ( None, [] ):
                     sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
-                else:
-                    sbwin.updateGameid(GAMEID)
                 try:
-                    sbwin.getScoreboardData()
+                    sbwin.getScoreboardData(GAMEID)
                 except MLBUrlError:
                     sbwin.statusWrite(self.error_str,wait=2)
                     continue
@@ -560,10 +554,8 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
             if sbwin in ( None, [] ):
                 sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
-            else:
-                sbwin.updateGameid(GAMEID)
             try:
-                sbwin.getScoreboardData()
+                sbwin.getScoreboardData(GAMEID)
             except MLBUrlError:
                 sbwin.statusWrite(sbwin.error_str,wait=2)
                 continue
