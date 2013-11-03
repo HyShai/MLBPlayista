@@ -30,17 +30,15 @@ class MLBMasterScoreboardWin(MLBListWin):
         self.game_cursor = 0
         self.scoreboard = MLBMasterScoreboard(self.gid)
 
-    def updateGameid(self,gid):
-        self.gid = gid
-        self.scoreboard.gameid = gid
 
-    def getScoreboardData(self):
+    def getScoreboardData(self,gid):
+        self.gid = gid
         self.sb = []
         self.data = []
         self.records = []
         #self.sb = self.scoreboard.getScoreboardData()
         try:
-            self.sb = self.scoreboard.getScoreboardData()
+            self.sb = self.scoreboard.getScoreboardData(self.gid)
         except:
             self.error_str = "UrlError: Could not retrieve scoreboard."
             raise MLBUrlError

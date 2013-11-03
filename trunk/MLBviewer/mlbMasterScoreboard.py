@@ -21,8 +21,9 @@ class MLBMasterScoreboard:
         self.http = MLBHttp(accept_gzip=True)
 
 
-    def getScoreboardData(self):
+    def getScoreboardData(self,gameid):
         self.scoreboard = []
+        self.gameid = gameid
         self.gameid = self.gameid.replace('/','_')
         self.gameid = self.gameid.replace('-','_')
         ( year, month, day ) = self.gameid.split('_')[:3]
