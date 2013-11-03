@@ -18,12 +18,25 @@ class MLBHttp:
         if self.accept_gzip:
             request.add_header('Accept-encoding', 'gzip')
         request.add_header('User-agent', USERAGENT)
+        if self.cache.has_key(url):
+            request.add_header('If-Modified-Since', self.cache[url]['last-modified'])
+        else:
+            self.cache[url] = dict()
         # for now, let errors drop through to the calling class
-        rsp = self.opener.open(request)
+        try:
+            rsp = self.opener.open(request)
+        except urllib2.HTTPError, err:
+            if err.code == 304:
+                return self.cache[url]['response']
+            else:
+                raise
+        self.cache[url]['last-modified'] = rsp.headers.get('Last-Modified')
         if rsp.headers.get('Content-Encoding') == 'gzip':
             compressedData = rsp.read()
             compressedStream = StringIO.StringIO(compressedData)
             gzipper = gzip.GzipFile(fileobj=compressedStream)
-            return gzipper.read()
-        return rsp.read()
+            self.cache[url]['response']= gzipper.read()
+        else:
+            self.cache[url]['response'] = rsp.read()
+        return self.cache[url]['response']
     
