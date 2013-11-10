@@ -63,6 +63,7 @@ FEATURES OF MLBVIEWER
 - Top Plays for individual games (available for non-subscribers too)
 - Line score view including in game action (available for non-subscribers too)
 - Master Scoreboard view of listings (available to non-subscribers too)
+- Calendar view of listings by month and team (available to non-subscribers)
 - Box scores (available for non-subscribers too)
 - Jump to specific innings
 - Start live games from beginning (premium service only)
@@ -121,6 +122,7 @@ y                   : Play all highlights as a playlist (mplayer-dependent)*
 b                   : View line score
 x                   : View box score
 m                   : Master scoreboard view
+C                   : Calendar view
 g                   : View standings
 w                   : RSS feed for favorite team (or select teams)
 h                   : Display version and keybindings
