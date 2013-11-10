@@ -260,6 +260,7 @@ KEYBINDINGS_1 = {
     'MILBTV'              : 'Switch to MiLB.TV listings',
     'STANDINGS'           : 'View standings',
     'STATS'               : 'View hitting or pitching statistics',
+    'CALENDAR'            : 'Calendar view',
     }
 
 STATKEYBINDINGS = {
@@ -282,7 +283,7 @@ HELPBINDINGS = (
                   'COVERAGE', 'HIGHLIGHTS_PLAYLIST', 'INNINGS') ),
     ('LISTINGS', ('UP', 'DOWN', 'LEFT', 'RIGHT', 'JUMP', 'SPEED', 'REFRESH' )),
     ('SCREENS', ('HIGHLIGHTS', 'HELP', 'LISTINGS', 'LINE_SCORE', 'BOX_SCORE',
-     'MASTER_SCOREBOARD', 'STANDINGS', 'STATS', 'RSS', 'MILBTV' ) ),
+     'MASTER_SCOREBOARD', 'CALENDAR', 'STANDINGS', 'STATS', 'RSS', 'MILBTV' ) ),
     ('DEBUG', ( 'OPTIONS', 'DEBUG', 'MEDIA_DEBUG' )),
     )
 
