@@ -3,12 +3,13 @@
 import curses
 import curses.textpad
 import datetime
+import time
+import calendar
 import re
 import select
 import errno
 import signal
 import sys
-import time
 from MLBviewer import *
 
 # used for ignoring sigwinch signal
@@ -128,6 +129,7 @@ def mainloop(myscr,mycfg,mykeys):
     linewin = None
     boxwin = None
     stdwin = None
+    calwin = None
     statwin = None
     stats = MLBStats(mycfg)
     # initialize some variables to re-use for 304 caching
@@ -193,7 +195,11 @@ def mainloop(myscr,mycfg,mykeys):
     while True:
         myscr.clear()
 
-        mywin.Refresh()
+        try:
+            mywin.Refresh()
+        except MLBCursesError,detail:
+            mywin.titleRefresh(mysched)
+            mywin.statusWrite("ERROR: %s"%detail,wait=2)
         mywin.titleRefresh(mysched)
         mywin.statusRefresh()
         if mywin in ( listwin, sbwin ):
@@ -204,7 +210,7 @@ def mainloop(myscr,mycfg,mykeys):
                 # this can fail if mlbsched.getSchedule() fails
                 # that failure already prints out an error, so skip this
                 pass
-        if mywin == postwin:
+        elif mywin == postwin:
             try:
                 prefer['video'] = mywin.records[mywin.current_cursor][2] 
             except:
@@ -285,7 +291,7 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.PgUp()
 
         if c in mykeys.get('JUMP'):
-            if mywin not in ( listwin, sbwin ):
+            if mywin not in ( listwin, sbwin, ):
                 continue
             jump_prompt = 'Date (m/d/yy)? '
             if datetime.datetime(mysched.year,mysched.month,mysched.day) <> \
@@ -317,6 +323,7 @@ def mainloop(myscr,mycfg,mykeys):
                     available = []
                     listwin.statusWrite("There was a parser problem with the listings page",wait=2)
                     listwin.data = []
+                    listwin.records = []
                     listwin.current_cursor = 0
                     mywin = listwin
                     continue
@@ -353,11 +360,13 @@ def mainloop(myscr,mycfg,mykeys):
                 listwin.records = available[0:curses.LINES-4]
                 listwin.record_cursor = 0
                 listwin.current_cursor = 0
-            except (KeyError,MLBXmlError),detail:
+            except (KeyError,MLBXmlError,MLBUrlError),detail:
                 if mycfg.get('debug'):
                     raise Exception,detail
                 available = []
                 listwin.statusWrite("There was a parser problem with the listings page",wait=2)
+                listwin.data = []
+                listwin.records = []
                 listwin.current_cursor = 0
             # recreate master scoreboard if current screen
             if mywin in ( sbwin, ):
@@ -375,17 +384,17 @@ def mainloop(myscr,mycfg,mykeys):
             
 
         if c in mykeys.get('LEFT') or c in mykeys.get('RIGHT'):
-            if mywin not in ( listwin, sbwin, linewin ):
+            if mywin not in ( listwin, sbwin, linewin, calwin ):
                 continue
-            if mywin in ( listwin, sbwin ):
+            if mywin in ( listwin, sbwin, calwin ):
                 listwin.statusWrite('Refreshing listings...',wait=1)
             # handle linescore separately - this is for scrolling through 
-            # extra innings
-            if mywin in ( linewin, ):
+            # extra innings - calendar navigation is also different
+            if mywin in ( linewin, calwin ):
                 if c in mykeys.get('LEFT'):
-                    linewin.Left()
+                    mywin.Left()
                 else:
-                    linewin.Right()
+                    mywin.Right()
                 continue
             try:
                 if c in mykeys.get('LEFT'):
@@ -432,6 +441,12 @@ def mainloop(myscr,mycfg,mykeys):
                 except IndexError:
                     listwin.statusWrite("No media debug available.",wait=2)
                     continue
+            elif mywin == calwin:
+                try:
+                    gameid = mywin.gamedata[mywin.game_cursor][0]
+                except IndexError:
+                    mywin.statusWrite("No media debug available.",wait=2)
+                    continue
             else:
                 try:
                     gameid = listwin.records[listwin.current_cursor][6]
@@ -446,6 +461,9 @@ def mainloop(myscr,mycfg,mykeys):
             myscr.addnstr(2,0,'getListings() for current_cursor:',curses.COLS-2)
             if mywin in ( sbwin , boxwin ):
                 myscr.addstr(3,0,repr(listwin.records[listwin.current_cursor]))
+            elif mywin in ( calwin, ):
+                myscr.addnstr(3,0,repr(calwin.gamedata[calwin.game_cursor]),
+                              (curses.LINES-4)*(curses.COLS)-1)
             else:
                 myscr.addstr(3,0,repr(mywin.records[mywin.current_cursor]))
             # hack for scrolling - don't display these lines if screen too
@@ -547,6 +565,40 @@ def mainloop(myscr,mycfg,mykeys):
                 rsswin.getRssData(team=team)
             mywin = rsswin
 
+        if c in mykeys.get('CALENDAR'):
+            #if listwin.data in ( None, [] ):
+            #    continue
+            ( year, month ) = ( None, None )
+            if mywin not in ( calwin, ):
+                if len(mycfg.get('favorite')) > 0:
+                    team = mycfg.get('favorite')[0]
+                else:
+                    team = 'ana'
+                try:
+                    year = mysched.year
+                    month = mysched.month
+                except IndexError:
+                    now=datetime.datetime.now()
+                    year = now.year
+                    month = now.month
+            else:
+                team = calwin.getTeamFromUser()
+                year = calwin.year
+                month = calwin.month
+            if team is None:
+                continue
+            try:
+                teamid = int(TEAMCODES[team][0])
+            except:
+                teamid = int(TEAMCODES['ana'][0])
+            mywin.statusWrite('Retrieving calendar for %s %s %s...' % \
+                             (team.upper(), calendar.month_name[month], year ) )
+            if calwin is None:
+                calwin = MLBCalendarWin(myscr,mycfg)
+            calwin.getData(teamid,year,month)
+            mywin = calwin
+            
+            
         if c in mykeys.get('MASTER_SCOREBOARD'):
             if mycfg.get('milbtv'):
                 # for now, not going to support master scoreboard for milb
@@ -860,6 +912,32 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
             if mywin in ( optwin , helpwin, stdwin, statwin ):
                 continue
+            if mywin in ( calwin, ):
+                GAMEID = calwin.gamedata[calwin.game_cursor][0]
+                isaway = calwin.gamedata[calwin.game_cursor][1]
+                coverage = ('home','away')[isaway]
+                mycfg.set('coverage', coverage)
+                (y,m,d) = GAMEID.split('/')[:3]
+                ymd_tuple = ( int(y), int(m), int(d) )
+                # Because the other streamtype related code later relies on
+                # aligned listwin.records and cursors, use the 
+                # listwin methods to loop through the data to find the correct
+                # record.
+                listwin.data = mlbsched.Jump(ymd_tuple,mycfg.get('speed'),mycfg.get('blackout'))
+                listwin.records = listwin.data[:curses.LINES-4]
+                listwin.current_cursor = 0
+                listwin.record_cursor = 0
+                prefer = dict()
+                for game in listwin.data:
+                    if game[6] != GAMEID:
+                        listwin.Down()
+                    else:
+                        prefer = mlbsched.getPreferred(game,mycfg)
+                        break
+                if prefer == {}:
+                    mywin.statusWrite('Could not get preferred media for %s' %\
+                                       GAMEID,wait=2)
+                    continue
             if c in mykeys.get('AUDIO'):
                 if mywin == topwin:
                     listwin.statusWrite(UNSUPPORTED,wait=2)

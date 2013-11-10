@@ -16,6 +16,7 @@ Keypress              Feature
 ========              =======
 m                     Switch to master scoreboard view
 l                     Switch to listings view
+c                     Switch to calendar view
 r                     Refresh listings view
 Left                  Back one day
 Right                 Forward one day

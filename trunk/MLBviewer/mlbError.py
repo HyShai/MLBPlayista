@@ -30,3 +30,6 @@ class MLBCursesError(Error):
 
 class MLBJsonError(Error):
     pass
+
+class MLBScreenTooSmall(Error):
+    pass

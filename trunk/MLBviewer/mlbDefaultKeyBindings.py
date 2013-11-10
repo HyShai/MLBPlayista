@@ -34,4 +34,5 @@ DEFAULT_KEYBINDINGS = {
     'DEBUG'              : [ ord('d') ],
     'MILBTV'             : [ ord('M') ],
     'POSTSEASON'         : [ ord('P') ],
+    'CALENDAR'           : [ ord('C') ],
 }

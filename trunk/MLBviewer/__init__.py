@@ -16,6 +16,7 @@ from mlbMediaStream import MediaStream
 from mlbConfig import MLBConfig
 from mlbError import MLBUrlError
 from mlbError import MLBXmlError
+from mlbError import MLBCursesError
 from mlbLogin import MLBAuthError
 from LIRC import LircConnection
 from mlbConstants import *
@@ -53,3 +54,5 @@ from mlbClassicsPlistWin import MLBClassicsPlistWin
 from mlbClassics import MLBClassics
 from mlbClassicsStream import MLBClassicsStream
 from mlbHttp import MLBHttp
+from mlbCalendar import MLBCalendar
+from mlbCalendarWin import MLBCalendarWin

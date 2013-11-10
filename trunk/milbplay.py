@@ -171,7 +171,7 @@ mysched = MiLBSchedule(ymd_tuple=startdate,time_shift=mycfg.get('time_offset'))
 try:
     available = mysched.getListings(mycfg.get('speed'), mycfg.get('blackout'))
 except (KeyError, MLBXmlError), detail:
-    if cfg.get('debug'):
+    if mycfg.get('debug'):
         raise Exception, detail
     available = []
     #raise 
