@@ -387,7 +387,7 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin not in ( listwin, sbwin, linewin, calwin ):
                 continue
             if mywin in ( listwin, sbwin, calwin ):
-                listwin.statusWrite('Refreshing listings...',wait=1)
+                listwin.statusWrite('Refreshing listings...')
             # handle linescore separately - this is for scrolling through 
             # extra innings - calendar navigation is also different
             if mywin in ( linewin, calwin ):
@@ -566,8 +566,10 @@ def mainloop(myscr,mycfg,mykeys):
             mywin = rsswin
 
         if c in mykeys.get('CALENDAR'):
-            #if listwin.data in ( None, [] ):
-            #    continue
+            if mycfg.get('milbtv'):
+                # for now, not going to support calendar for milb
+                mywin.statusWrite('Calendar not supported for MiLB.',wait=2)
+                continue
             ( year, month ) = ( None, None )
             if mywin not in ( calwin, ):
                 if len(mycfg.get('favorite')) > 0:
