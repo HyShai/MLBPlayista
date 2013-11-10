@@ -908,7 +908,7 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('VIDEO') or \
            c in mykeys.get('AUDIO') or \
            c in mykeys.get('CONDENSED_GAME'):
-            if len(listwin.records) == 0:
+            if len(mywin.records) == 0:
                 continue
             if mywin in ( optwin , helpwin, stdwin, statwin ):
                 continue
