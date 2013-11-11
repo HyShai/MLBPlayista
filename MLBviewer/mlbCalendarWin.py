@@ -35,6 +35,28 @@ class MLBCalendarWin(MLBListWin):
         self.game_cursor = 0
         self.calendar = MLBCalendar()
 
+    def alignCursors(self,mysched,listwin):
+        ( gameid, isaway ) = self.gamedata[self.game_cursor][:2]
+        coverage = ('home','away')[isaway]
+        self.mycfg.set('coverage', coverage)
+        ( year, month, day ) = gameid.split('/')[:3]
+        ymd_tuple = ( int(year), int(month), int(day) )
+        listwin.data = mysched.Jump(ymd_tuple,
+                                     self.mycfg.get('speed'),
+                                     self.mycfg.get('blackout'))
+        listwin.records = listwin.data[:curses.LINES-4]
+        listwin.current_cursor = 0
+        listwin.record_cursor = 0
+        prefer = dict()
+        for game in listwin.data:
+            if game[6] != gameid:
+                listwin.Down()
+            else:
+                prefer = mysched.getPreferred(game,self.mycfg)
+                break
+        return prefer
+        
+
     def getData(self,team,year=None,month=None):
         self.data = []
         self.team = team
