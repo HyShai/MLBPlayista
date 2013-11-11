@@ -73,12 +73,13 @@ class MLBBoxScoreWin(MLBListWin):
         if len(self.boxdata) == 0:
             titlestr = "NO BOX SCORE AVAILABLE FOR THIS GAME"
         else:
+            (year,month,day) = self.boxdata['game']['game_id'].split('/')[:3]
             titlestr = "BOX SCORE FOR  " +\
                 self.boxdata['game']['game_id'] +\
                 ' (' +\
-                str(mysched.month) + '/' +\
-                str(mysched.day) + '/' +\
-                str(mysched.year) + ' ' +\
+                str(month) + '/' +\
+                str(day) + '/' +\
+                str(year) +\
                 ')'
 
         padding = curses.COLS - (len(titlestr) + 6)

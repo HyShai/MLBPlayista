@@ -78,12 +78,13 @@ class MLBLineScoreWin(MLBListWin):
         if len(self.data) == 0:
             titlestr = "NO LINE SCORE AVAILABLE FOR THIS GAME"
         else:
+            (year,month,day) = self.data['game']['id'].split('/')[:3]
             titlestr = "LINE SCORE FOR  " +\
                 self.data['game']['id'] +\
                 ' (' +\
-                str(mysched.month) + '/' +\
-                str(mysched.day) + '/' +\
-                str(mysched.year) + ' ' +\
+                str(month) + '/' +\
+                str(day) + '/' +\
+                str(year) +\
                 ')'
 
         padding = curses.COLS - (len(titlestr) + 6)

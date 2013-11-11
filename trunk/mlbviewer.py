@@ -635,11 +635,22 @@ def mainloop(myscr,mycfg,mykeys):
             listwin.records = available[listwin.record_cursor:listwin.record_cursor+curses.LINES-4]
 
         if c in mykeys.get('BOX_SCORE'):
-            if len(listwin.records) == 0:
+            if len(mywin.records) == 0:
+                continue
+            elif mywin == calwin and len(calwin.gamedata) == 0:
                 continue
             if mywin in ( stdwin, statwin ):
                 continue
-            GAMEID = listwin.records[listwin.current_cursor][6]
+            if mywin in ( calwin, ):
+                GAMEID = calwin.gamedata[calwin.game_cursor][0]
+            elif mywin == linewin:
+                GAMEID = linewin.data['game']['id']
+            else:
+                try:
+                    GAMEID = listwin.records[listwin.current_cursor][6]
+                except IndexError:
+                    mywin.statusWrite('Listings out of sync. Please refresh.',wait=2)
+                    continue
             mywin.statusWrite('Retrieving box score for %s...' % GAMEID)
             if boxscore in ( None, [] ):
                 boxscore=MLBBoxScore(GAMEID)
@@ -652,11 +663,22 @@ def mainloop(myscr,mycfg,mykeys):
             mywin = boxwin
 
         if c in mykeys.get('LINE_SCORE'):
-            if len(listwin.records) == 0:
+            if len(mywin.records) == 0:
+                continue
+            elif mywin == calwin and len(calwin.gamedata) == 0:
                 continue
             if mywin in ( stdwin, statwin ):
                 continue
-            GAMEID = listwin.records[listwin.current_cursor][6]
+            if mywin in ( calwin, ):
+                GAMEID = calwin.gamedata[calwin.game_cursor][0]
+            elif mywin == boxwin:
+                GAMEID = boxwin.boxdata['game']['game_id']
+            else:
+                try:
+                    GAMEID = listwin.records[listwin.current_cursor][6]
+                except IndexError:
+                    mywin.statusWrite('Listings out of sync. Please refresh.',wait=2)
+                    continue
             mywin.statusWrite('Retrieving linescore for %s...' % GAMEID)
             # TODO: might want to embed linescore code in MLBLineScoreWin
             # and create a MLBLineScoreWin.getLineData() method like scoreboard
@@ -737,14 +759,16 @@ def mainloop(myscr,mycfg,mykeys):
             play.waitInteractive(myscr)
 
 
-        # NEEDS ATTENTION FOR SCROLLING
+        # TODO: Needs attention for calendar
         if c in mykeys.get('INNINGS'):
-            if len(listwin.records) == 0:
+            if len(mywin.records) == 0:
+                continue
+            elif mywin==calwin and len(calwin.gamedata)==0:
                 continue
             if mycfg.get('milbtv'):
                 mywin.statusWrite('Jump to inning not supported for MiLB.',wait=2)
                 continue
-            if mywin in ( optwin, helpwin, stdwin ):
+            if mywin in ( optwin, helpwin, stdwin, calwin ):
                 continue
             if mycfg.get('use_nexdef') or \
                listwin.records[listwin.current_cursor][5] in ('F', 'CG')  or \
@@ -911,6 +935,8 @@ def mainloop(myscr,mycfg,mykeys):
            c in mykeys.get('AUDIO') or \
            c in mykeys.get('CONDENSED_GAME'):
             if len(mywin.records) == 0:
+                continue
+            elif mywin == calwin and len(calwin.gamedata)==0:
                 continue
             if mywin in ( optwin , helpwin, stdwin, statwin ):
                 continue
