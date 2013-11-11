@@ -291,7 +291,7 @@ def mainloop(myscr,mycfg,mykeys):
             mywin.PgUp()
 
         if c in mykeys.get('JUMP'):
-            if mywin not in ( listwin, sbwin, ):
+            if mywin not in ( listwin, sbwin, calwin ):
                 continue
             jump_prompt = 'Date (m/d/yy)? '
             if datetime.datetime(mysched.year,mysched.month,mysched.day) <> \
@@ -321,14 +321,19 @@ def mainloop(myscr,mycfg,mykeys):
                     if mycfg.get('debug'):
                         raise Exception,detail
                     available = []
-                    listwin.statusWrite("There was a parser problem with the listings page",wait=2)
                     listwin.data = []
                     listwin.records = []
                     listwin.current_cursor = 0
-                    mywin = listwin
+                    if mywin != calwin:
+                        listwin.statusWrite("There was a parser problem with the listings page",wait=2)
+                        mywin = listwin
+                        continue
+                # recreate calendar if current screen
+                if mywin == calwin:
+                    calwin.Jump(ymd_tuple)
                     continue
                 # recreate master scoreboard if current screen
-                if mywin in ( sbwin, ):
+                elif mywin in ( sbwin, ):
                     GAMEID = listwin.records[listwin.current_cursor][6]
                     if sbwin in ( None, [] ):
                         sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
@@ -368,8 +373,12 @@ def mainloop(myscr,mycfg,mykeys):
                 listwin.data = []
                 listwin.records = []
                 listwin.current_cursor = 0
+            # recreate calendar if current screen
+            if mywin == calwin:
+                calwin.Jump((myyear,mymonth,myday))
+                continue
             # recreate master scoreboard if current screen
-            if mywin in ( sbwin, ):
+            elif mywin in ( sbwin, ):
                 GAMEID = listwin.records[listwin.current_cursor][6]
                 if sbwin in ( None, [] ):
                     sbwin = MLBMasterScoreboardWin(myscr,mycfg,GAMEID)
@@ -613,6 +622,7 @@ def mainloop(myscr,mycfg,mykeys):
             try:
                 GAMEID = listwin.records[listwin.current_cursor][6]
             except IndexError:
+                mywin.statusWrite("No games today.  Cannot switch to master scoreboard from here.",wait=2)
                 continue
             mywin.statusWrite('Retrieving master scoreboard for %s...' % GAMEID)
             if sbwin in ( None, [] ):

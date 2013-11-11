@@ -36,7 +36,11 @@ class MLBCalendarWin(MLBListWin):
         self.calendar = MLBCalendar()
 
     def alignCursors(self,mysched,listwin):
-        ( gameid, isaway ) = self.gamedata[self.game_cursor][:2]
+        prefer = dict()
+        if len(self.gamedata) > 0:
+            ( gameid, isaway ) = self.gamedata[self.game_cursor][:2]
+        else:
+            return prefer
         coverage = ('home','away')[isaway]
         self.mycfg.set('coverage', coverage)
         ( year, month, day ) = gameid.split('/')[:3]
@@ -47,7 +51,6 @@ class MLBCalendarWin(MLBListWin):
         listwin.records = listwin.data[:curses.LINES-4]
         listwin.current_cursor = 0
         listwin.record_cursor = 0
-        prefer = dict()
         for game in listwin.data:
             if game[6] != gameid:
                 listwin.Down()
@@ -56,6 +59,11 @@ class MLBCalendarWin(MLBListWin):
                 break
         return prefer
         
+    def Jump(self,ymd_tuple):
+        (year,month,day) = ymd_tuple
+        self.year = int(year)
+        self.month = int(month)
+        self.getData(self.team,self.year,self.month)
 
     def getData(self,team,year=None,month=None):
         self.data = []
