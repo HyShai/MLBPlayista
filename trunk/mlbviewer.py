@@ -608,6 +608,8 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
                 #mycfg.set('milbtv', False)
                 #listwin.PgUp()
+            if mywin == calwin:
+                prefer = calwin.alignCursors(mysched,listwin)
             try:
                 GAMEID = listwin.records[listwin.current_cursor][6]
             except IndexError:
@@ -643,6 +645,7 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
             if mywin in ( calwin, ):
                 GAMEID = calwin.gamedata[calwin.game_cursor][0]
+                prefer = calwin.alignCursors(mysched,listwin)
             elif mywin == linewin:
                 GAMEID = linewin.data['game']['id']
             else:
@@ -671,6 +674,7 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
             if mywin in ( calwin, ):
                 GAMEID = calwin.gamedata[calwin.game_cursor][0]
+                prefer = calwin.alignCursors(mysched,listwin)
             elif mywin == boxwin:
                 GAMEID = boxwin.boxdata['game']['game_id']
             else:
@@ -761,15 +765,17 @@ def mainloop(myscr,mycfg,mykeys):
 
         # TODO: Needs attention for calendar
         if c in mykeys.get('INNINGS'):
+            if mycfg.get('milbtv'):
+                mywin.statusWrite('Jump to inning not supported for MiLB.',wait=2)
+                continue
             if len(mywin.records) == 0:
                 continue
             elif mywin==calwin and len(calwin.gamedata)==0:
                 continue
-            if mycfg.get('milbtv'):
-                mywin.statusWrite('Jump to inning not supported for MiLB.',wait=2)
+            if mywin in ( optwin, helpwin, stdwin ):
                 continue
-            if mywin in ( optwin, helpwin, stdwin, calwin ):
-                continue
+            if mywin==calwin:
+                prefer = calwin.alignCursors(mysched,listwin)
             if mycfg.get('use_nexdef') or \
                listwin.records[listwin.current_cursor][5] in ('F', 'CG')  or \
                listwin.records[listwin.current_cursor][7] == 'media_archive':
@@ -941,27 +947,8 @@ def mainloop(myscr,mycfg,mykeys):
             if mywin in ( optwin , helpwin, stdwin, statwin ):
                 continue
             if mywin in ( calwin, ):
-                GAMEID = calwin.gamedata[calwin.game_cursor][0]
-                isaway = calwin.gamedata[calwin.game_cursor][1]
-                coverage = ('home','away')[isaway]
-                mycfg.set('coverage', coverage)
-                (y,m,d) = GAMEID.split('/')[:3]
-                ymd_tuple = ( int(y), int(m), int(d) )
-                # Because the other streamtype related code later relies on
-                # aligned listwin.records and cursors, use the 
-                # listwin methods to loop through the data to find the correct
-                # record.
-                listwin.data = mlbsched.Jump(ymd_tuple,mycfg.get('speed'),mycfg.get('blackout'))
-                listwin.records = listwin.data[:curses.LINES-4]
-                listwin.current_cursor = 0
-                listwin.record_cursor = 0
                 prefer = dict()
-                for game in listwin.data:
-                    if game[6] != GAMEID:
-                        listwin.Down()
-                    else:
-                        prefer = mlbsched.getPreferred(game,mycfg)
-                        break
+                prefer = calwin.alignCursors(mysched,listwin)
                 if prefer == {}:
                     mywin.statusWrite('Could not get preferred media for %s' %\
                                        GAMEID,wait=2)
