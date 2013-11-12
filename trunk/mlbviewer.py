@@ -833,6 +833,8 @@ def mainloop(myscr,mycfg,mykeys):
                 
         if c in mykeys.get('LISTINGS') or c in mykeys.get('REFRESH') or \
            c in mykeys.get('MILBTV'):
+            if mywin == calwin:
+                prefer = calwin.alignCursors(mysched,listwin)
             mywin = listwin
             # refresh
             mywin.statusWrite('Refreshing listings...',wait=1)
@@ -862,6 +864,9 @@ def mainloop(myscr,mycfg,mykeys):
                     except Exception,detail:
                         error_str = str(detail)
                         mywin.statusWrite(error_str,wait=2)
+                    # align with mlbsched listings
+                    (y,m,d) = (mlbsched.year,mlbsched.month,mlbsched.day)
+                    milbsched.Jump((y,m,d),mycfg.get('speed'), mycfg.get('blackout'))
                 mysched = milbsched
             elif c in mykeys.get('LISTINGS'):
                 if mycfg.get('milbtv'):
