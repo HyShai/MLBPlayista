@@ -32,7 +32,7 @@ class MLBCalendar:
             rsp = self.http.getUrl(self.url)
         except urllib2.URLError:
             self.error_str = "UrlError: Could not retrieve calendar."
-            raise MLBUrlError
+            raise MLBUrlError,self.url
         try:
             jp = json.loads(rsp)
         except:
