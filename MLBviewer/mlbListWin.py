@@ -150,7 +150,7 @@ class MLBListWin:
                 #s = self.records[n][1].strftime('%l:%M %p') + ': ' +\
                 #    ' '.join(TEAMCODES[away][1:]).strip() + ' at ' +\
                 #    ' '.join(TEAMCODES[home][1:]).strip()
-                if self.records[n][9]:
+                if len(self.records[n]) > 8 and self.records[n][9]:
                     s += ' [FREE]'
                 if self.records[n][7] == 'media_archive':
                     s += ' (Archived)'
@@ -181,7 +181,7 @@ class MLBListWin:
                         cursesflags = cursesflags |curses.color_pair(COLOR_FAVORITE)
                     else:
                         cursesflags = cursesflags | curses.A_UNDERLINE
-                elif self.records[n][9]:
+                elif len(self.records[n])> 8 and self.records[n][9]:
                     if self.mycfg.get('use_color'):
                         cursesflags = cursesflags | curses.color_pair(COLOR_FREE)
                     else:
