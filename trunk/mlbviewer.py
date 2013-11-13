@@ -718,10 +718,11 @@ def mainloop(myscr,mycfg,mykeys):
             except IndexError:
                 continue
             topwin = MLBTopWin(myscr,mycfg,available)
-            #topwin.data = available
             topwin.data = listwin.records
             listwin.statusWrite('Fetching Top Plays list...')
             try:
+                if mywin == calwin:
+                    prefer = calwin.alignCursors(mysched,listwin)
                 available = mysched.getTopPlays(GAMEID)
             except:
                 if mycfg.get('debug'):
