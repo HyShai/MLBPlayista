@@ -347,16 +347,20 @@ def mainloop(myscr,mycfg,mykeys):
                                      listwin.current_cursor)
                     mywin = sbwin
                 continue
-            pattern = re.compile(r'([0-9]{1,2})(/)([0-9]{1,2})(/)([0-9]{2})')
-            parsed = re.match(pattern,query)
-            if not parsed:
-                listwin.statusWrite("Date not in correct format",wait=2)
-		continue
-            listwin.statusWrite('Refreshing listings...',wait=1)
-            split = parsed.groups()
-            mymonth = int(split[0])
-            myday = int(split[2])
-            myyear = int('20' + split[4])
+            try:
+                # Try 4-digit year first
+                jumpstruct=time.strptime(query.strip(),'%m/%d/%Y')
+            except ValueError:
+                try:
+                    # backwards compatibility 2-digit year?
+                    jumpstruct=time.strptime(query.strip(),'%m/%d/%y')
+                except ValueError:
+                    listwin.statusWrite("Date not in correct format",wait=2)
+		    continue
+            listwin.statusWrite('Refreshing listings...')
+            mymonth = jumpstruct.tm_mon
+            myday = jumpstruct.tm_mday
+            myyear = jumpstruct.tm_year
             try:
                 available = mysched.Jump((myyear, mymonth, myday),
                                           mycfg.get('speed'),
