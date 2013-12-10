@@ -88,5 +88,6 @@ class MLBClassics:
         tmp['description'] = entry.media.description.text
         tmp['author'] = entry.author[0].name.text
         tmp['duration'] = time.strftime('%H:%M:%S',time.gmtime(int(entry.media.duration.seconds)))
+        tmp['published'] = entry.published.text
         return tmp
 

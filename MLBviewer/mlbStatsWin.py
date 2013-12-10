@@ -221,7 +221,8 @@ class MLBStatsWin(MLBListWin):
         update_str = update_datetime.strftime('%Y-%m-%d %H:%M:%S')
         status_str = "Last Updated: %s" % update_str
         if self.mycfg.get('season_type') == 'ANY':
-            season_str = "[%4s]" % update_datetime.year
+            #season_str = "[%4s]" % update_datetime.year
+            season_str = "[%4s]" % self.mycfg.get('season')
         else:
             if int(self.mycfg.get('active_sw')):
                 season_str = "[ACTV]"

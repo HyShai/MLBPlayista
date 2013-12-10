@@ -16,6 +16,7 @@ class MLBStats:
         self.mycfg = cfg
         self.last_update = ""
         self.date = datetime.datetime.now()
+        self.season = self.date.year
         self.http = MLBHttp(accept_gzip=True)
         if self.mycfg is None:
             self.type = 'pitching'
@@ -37,7 +38,7 @@ class MLBStats:
                                                               self.sort)
         self.season_type = self.mycfg.get('season_type')
         if self.season_type == 'ANY':
-            self.url += '&season=%s' %  self.date.year 
+            self.url += '&season=%s' %  self.mycfg.get('season')
         else:
             self.url += '&season='
         self.url += '&season_type=%s' % self.season_type
@@ -126,8 +127,11 @@ class MLBStats:
     def parseStats(self):
         out = []
         self.last_update = self.json['stats_sortable_player']['queryResults']['created'] + '-04:00'
-        for player in self.json['stats_sortable_player']['queryResults']['row']:
-            out.append(player)
+        try:
+            for player in self.json['stats_sortable_player']['queryResults']['row']:
+                out.append(player)
+        except KeyError:
+            return out
         return out
 
     def parseTripleStats(self):
