@@ -273,6 +273,7 @@ STATKEYBINDINGS = {
      'SORT_ORDER'         : 'Toggle between default, ascending, and descending sort order',
      'SORT'               : 'Change the sort column',
      'TEAM'               : 'Filter leaders by team',
+     'YEAR'               : 'Filter leaders by year',
      'UP'                 : 'Move the cursor up a line',
      'DOWN'               : 'Move the cursor down a line',
      'STATS_DEBUG'        : 'View raw data for highlighted line',
@@ -289,7 +290,7 @@ HELPBINDINGS = (
 
 STATHELPBINDINGS = (
     ('SCREENS' , ('PITCHING', 'HITTING', 'PLAYER' ) ),
-    ('FILTERS' , ('SEASON_TYPE', 'LEAGUE', 'SORT_ORDER', 'SORT', 'ACTIVE', 'TEAM' ) ),
+    ('FILTERS' , ('SEASON_TYPE', 'LEAGUE', 'SORT_ORDER', 'SORT', 'ACTIVE', 'TEAM', 'YEAR' ) ),
     ('LISTINGS', ('UP', 'DOWN' ) ),
     ('DEBUG'   , ( 'STATS_DEBUG', ) ),
     )
