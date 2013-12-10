@@ -155,7 +155,7 @@ class MLBStatsWin(MLBListWin):
         playerStr = self.fmt['pitching'][wid] % \
                ( rank_or_year, name_or_space,
                  player['team_abbrev'], player['w'], player['l'],
-                 player['era'], player['g'], player['gs'], player['sv'],
+                 player['era'][:4], player['g'], player['gs'], player['sv'],
                  player['svo'], player['ip'], player['h'], 
                  player['r'], player['er'], 
                  player['hr'], player['bb'], 
