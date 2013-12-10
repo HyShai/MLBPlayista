@@ -68,7 +68,7 @@ class MLBClassicsPlistWin(MLBListWin):
 
         posStr = "%s of %s" % ( self.current_cursor + self.record_cursor + 1, 
                                 len(self.data) )
-        publishStr = "[Uploaded on %s]" % self.records[self.current_cursor]['published'][:-5]
+        publishStr = "[Uploaded on %s]" % self.records[self.current_cursor]['published'].split('T')[0]
         durationStr = "[%s]" % self.records[self.current_cursor]['duration']
         authorStr = "[%s]" % self.records[self.current_cursor]['author'] 
         if self.mycfg.get('debug'):
