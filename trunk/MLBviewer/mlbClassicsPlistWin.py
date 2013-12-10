@@ -68,15 +68,16 @@ class MLBClassicsPlistWin(MLBListWin):
 
         posStr = "%s of %s" % ( self.current_cursor + self.record_cursor + 1, 
                                 len(self.data) )
+        publishStr = "[Uploaded on %s]" % self.records[self.current_cursor]['published'][:-5]
         durationStr = "[%s]" % self.records[self.current_cursor]['duration']
         authorStr = "[%s]" % self.records[self.current_cursor]['author'] 
         if self.mycfg.get('debug'):
             debugStr = '[DEBUG]'
         else:
             debugStr = ''
-        statusStrLen = len(posStr) + len(durationStr) + len(authorStr) + len(debugStr) + 2
+        statusStrLen = len(posStr) + len(publishStr) + len(durationStr) + len(authorStr) + len(debugStr) + 2
         padding = curses.COLS - statusStrLen
-        statusStr = posStr + ' '*padding + debugStr + authorStr + durationStr
+        statusStr = posStr + ' '*padding + debugStr + publishStr + authorStr + durationStr
         if padding < 0:
             statusStr=statusStr[:padding]
         self.statuswin.addnstr(0,0,statusStr,curses.COLS-2,curses.A_BOLD)

@@ -238,7 +238,7 @@ def mainloop(myscr,mycfg,mykeys):
             tmp = dict()
             for t in STATS_TEAMS.keys():
                 tmp[STATS_TEAMS[t]] = t
-            teamPrompt = "Enter column to sort on (or 'mlb' for all): "
+            teamPrompt = "Enter teamcode to sort on (or 'mlb' for all): "
             teamCode = statwin.prompter(statwin.statuswin, teamPrompt).strip()
             if teamCode not in tmp.keys():
                 statwin.statusWrite('Invalid team code!',wait=1)
@@ -262,6 +262,24 @@ def mainloop(myscr,mycfg,mykeys):
             stats.getStatsData()
             statwin.data = stats.data
             mywin = statwin
+
+        if c in mykeys.get('YEAR'):
+            year_prompt = "Year? [YYYY]: "
+            query = statwin.prompter(statwin.statuswin,year_prompt).strip()
+            try:
+                year = time.strptime(query,"%Y").tm_year
+            except:
+                if query == '':
+                    statwin.statusWrite('Changing to current year...',wait=1)
+                    year = datetime.datetime.now().year
+                else:
+                    statwin.statusWrite('Invalid year format.',wait=2)
+                    continue
+            mycfg.set('season_type','ANY')
+            mycfg.set('season',year)
+            statwin.statusWrite('Refreshing statistics...')
+            stats.getStatsData()
+            statwin.data = stats.data
 
         if c in mykeys.get('SEASON_TYPE'):
             try:

@@ -26,4 +26,5 @@ STATS_KEYBINDINGS = {
     'RELOAD_CONFIG'      : [ ord('R') ],
     'QUIT'               : [ ord('q') ],
     'DEBUG'              : [ ord('d') ],
+    'YEAR'               : [ ord('y') ],
 }
