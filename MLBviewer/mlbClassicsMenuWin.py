@@ -76,13 +76,14 @@ class MLBClassicsMenuWin(MLBListWin):
         posStr = "%s of %s" % ( self.current_cursor + self.record_cursor + 1,
                                 len(self.data) )
         authorStr = "[%s]" % self.records[self.current_cursor]['author']
+        sortStr = "[Sort:%s]" % self.mycfg.get('entry_sort')[:7]
         if self.mycfg.get('debug'):
             debugStr = '[DEBUG]'
         else:
             debugStr = ''
-        statusStrLen = len(posStr) + len(authorStr) + len(debugStr) + 2
+        statusStrLen = len(posStr) + len(authorStr) + len(sortStr) + len(debugStr) + 2
         padding = curses.COLS - statusStrLen
-        statusStr=posStr + ' '*padding + debugStr + authorStr
+        statusStr=posStr + ' '*padding + debugStr + authorStr + sortStr
         if padding < 0:
             statusStr=statusStr[:padding]
         self.statuswin.addnstr(0,0,statusStr,curses.COLS-2,curses.A_BOLD)

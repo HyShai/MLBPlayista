@@ -33,9 +33,10 @@ def only_roman_chars(s):
 
 class MLBClassics:
   
-    def __init__(self):
+    def __init__(self,cfg):
         self.ytService = gdata.youtube.service.YouTubeService()
         self.data = []
+        self.cfg = cfg
 
     def getFeed(self,feed='MLBClassics'):
         # Populate a catch-all for all uploads even those not in a playlist
@@ -75,7 +76,13 @@ class MLBClassics:
                     tmp['entries'].append(e)
             remaining=int(feed.total_results.text)-len(feed.entry)
             feed=self.ytService.GetNext(feed)
-        sortedEntries=sorted(tmp['entries'], key=itemgetter('title'))
+        #sortedEntries=sorted(tmp['entries'], key=itemgetter('title'))
+        sortKey = self.cfg.get('entry_sort')
+        if sortKey == 'published':
+            rev=True
+        else:
+            rev=False
+        sortedEntries=sorted(tmp['entries'],key=itemgetter(sortKey),reverse=rev)
         tmp['entries']=sortedEntries
         return tmp
 
