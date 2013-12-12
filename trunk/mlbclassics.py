@@ -73,6 +73,7 @@ def mainloop(myscr,mycfg,mykeys):
     # add in a keybinding for listings that makes sense, e.g. Menu
     mykeys.set('LISTINGS','m')
     mykeys.set('MEDIA_INFO','i')
+    mykeys.set('ENTRY_SORT', 's')
     CFG_SPEED = int(mycfg.get('speed'))
     if CFG_SPEED >= 1800:
         mycfg.set('speed',1800)
@@ -108,10 +109,11 @@ def mainloop(myscr,mycfg,mykeys):
     inputlst = [sys.stdin]
 
     optwin = MLBOptWin(myscr,mycfg)
-    classics = MLBClassics()
+    classics = MLBClassics(mycfg)
     available = []
     mlbClassicsMenu = MLBClassicsMenuWin(myscr,mycfg,available)
     mlbClassicsMenu.Splash()
+    mlbClassicsPlistWin = MLBClassicsPlistWin(myscr,mycfg,available)
     optwin.statusWrite('Fetching YouTube feed and playlist data. Please wait.')
     try:
         # TODO: Handle multiple feed sources better.
@@ -191,6 +193,24 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('OPTIONS'):
             optwin = MLBOptWin(myscr,mycfg)
             mywin = optwin
+
+        if c in mykeys.get('ENTRY_SORT'):
+            key=CLASSICS_ENTRY_SORT.index(mycfg.get('entry_sort'))
+            mycfg.set('entry_sort', CLASSICS_ENTRY_SORT[not key])
+            if mywin == mlbClassicsPlistWin:
+                mywin.statusWrite('Fetching playlist entries...')
+                try:
+                    playlist = classics.getPlaylistEntries(mlbClassicsMenu.records[mlbClassicsMenu.current_cursor]['url'])
+                except:
+                    raise
+                    mywin.statusWrite('An error occurred retrieving playlist.',wait=2)
+                    continue
+                mlbClassicsPlistWin = MLBClassicsPlistWin(myscr,mycfg,playlist['entries'])
+                mywin = mlbClassicsPlistWin
+                mywin.current_cursor = 0
+                mywin.record_cursor = 0
+                continue
+            continue
 
         if c in mykeys.get('MEDIA_INFO'):
             if mywin in ( optwin, ):
@@ -305,6 +325,7 @@ if __name__ == "__main__":
                   'audio_follow': [],
                   'video_follow': [],
                   'classics_users': ['MLBClassics', 'ClassicMLB11', 'classicmlb1122', 'TheMLBhistory', 'TheBaseballHall', 'PhilliesClassics'],
+                  'entry_sort' : 'title',
                   'blackout': [],
                   'favorite': [],
                   'use_color': 0,

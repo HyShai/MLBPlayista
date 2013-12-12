@@ -559,3 +559,5 @@ DAYS_OF_WEEK = {
     5 : 'SAT',
     6 : 'SUN',
 }
+
+CLASSICS_ENTRY_SORT = ( 'title', 'published' )
