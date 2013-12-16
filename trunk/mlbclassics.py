@@ -80,6 +80,10 @@ def mainloop(myscr,mycfg,mykeys):
     else:
         mycfg.set('speed',1200)
 
+    # insurance of proper sort entry
+    if mycfg.get('entry_sort') not in CLASSICS_ENTRY_SORT:
+        mycfg.set('entry_sort',CLASSICS_ENTRY_SORT[0])
+
     # not sure if we need this for remote displays but couldn't hurt
     if mycfg.get('x_display'):
         os.environ['DISPLAY'] = mycfg.get('x_display')
