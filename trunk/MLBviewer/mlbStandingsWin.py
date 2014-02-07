@@ -64,8 +64,12 @@ class MLBStandingsWin(MLBListWin):
             self.data.append((header_str,curses.A_BOLD))
             
             for team in standings:
-                rs = "%.1f" % ( float(team['RS']) / float(team['G']) )
-                ra = "%.1f" % ( float(team['RA']) / float(team['G']) )
+                try:
+                    rs = "%.1f" % ( float(team['RS']) / float(team['G']) )
+                    ra = "%.1f" % ( float(team['RA']) / float(team['G']) )
+                except ZeroDivisionError:
+                    rs = 0.0
+                    ra = 0.0
                 dif = "%.1f" % ( float(rs) - float(ra) )
                 team_str = std_fmt % \
                        ( team['first'],

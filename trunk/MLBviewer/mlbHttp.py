@@ -19,7 +19,10 @@ class MLBHttp:
             request.add_header('Accept-encoding', 'gzip')
         request.add_header('User-agent', USERAGENT)
         if self.cache.has_key(url):
-            request.add_header('If-Modified-Since', self.cache[url]['last-modified'])
+            try:
+                request.add_header('If-Modified-Since', self.cache[url]['last-modified'])
+            except:
+                pass
         else:
             self.cache[url] = dict()
         # for now, let errors drop through to the calling class
