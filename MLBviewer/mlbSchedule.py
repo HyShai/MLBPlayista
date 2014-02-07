@@ -92,7 +92,7 @@ class MLBSchedule:
             return fp
         except urllib2.HTTPError:
             self.error_str = "UrlError: Could not retrieve listings."
-            raise MLBUrlError
+            raise MLBUrlError,self.grid
 
     def getMultiAngleFromXml(self,event_id):
         out = []

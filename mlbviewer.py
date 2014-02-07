@@ -416,7 +416,7 @@ def mainloop(myscr,mycfg,mykeys):
                 else:
                     available = mysched.Forward(mycfg.get('speed'), 
                                                 mycfg.get('blackout'))
-            except (KeyError, MLBXmlError), detail:
+            except (KeyError, MLBXmlError, MLBUrlError), detail:
                 if mycfg.get('debug'):
                     raise Exception,detail
                 available = []
@@ -839,7 +839,12 @@ def mainloop(myscr,mycfg,mykeys):
         if c in mykeys.get('LISTINGS') or c in mykeys.get('REFRESH') or \
            c in mykeys.get('MILBTV'):
             if mywin == calwin:
-                prefer = calwin.alignCursors(mysched,listwin)
+                try:
+                    prefer = calwin.alignCursors(mysched,listwin)
+                except:
+                    prefer = dict()
+                    prefer['audio'] = None
+                    prefer['video'] = None
             mywin = listwin
             # refresh
             mywin.statusWrite('Refreshing listings...',wait=1)
