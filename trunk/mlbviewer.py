@@ -460,6 +460,18 @@ def mainloop(myscr,mycfg,mykeys):
                 except IndexError:
                     mywin.statusWrite("No media debug available.",wait=2)
                     continue
+            elif mywin == rsswin:
+                try:
+                    myscr.clear()
+                    mywin.titlewin.addstr(0,0,"RSS ELEMENT DEBUG")
+                    mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
+                    myscr.addstr(2,0,repr(mywin.records[mywin.current_cursor]))
+                    myscr.refresh()
+                    mywin.titlewin.refresh()
+                    mywin.statusWrite('Press a key to continue...',wait=-1)
+                    continue
+                except:
+                    raise
             else:
                 try:
                     gameid = listwin.records[listwin.current_cursor][6]
@@ -552,7 +564,8 @@ def mainloop(myscr,mycfg,mykeys):
             if standings is None:
                 standings = MLBStandings()
             try:
-                standings.getStandingsData()
+                (year, month, day) = (mysched.year, mysched.month, mysched.day)
+                standings.getStandingsData((year,month,day))
             except MLBUrlError:
                 mywin.statusWrite(standings.error_str,wait=2)
                 continue
