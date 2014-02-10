@@ -24,17 +24,18 @@ class MLBStandings:
         self.jUrl = 'http://mlb.mlb.com/lookup/json/named.standings_schedule_date.bam?&sit_code=%27h0%27&league_id=103&league_id=104&all_star_sw=%27N%27&version=2'
         self.http = MLBHttp(accept_gzip=True)
 
-    def getStandingsData(self,offline=False,datetime=None,format='json'):
-        if format == 'xml':
-            self.getStandingsXmlData(offline)
-        else:
-            self.getStandingsJsonData(offline)
+    #def getStandingsData(self,offline=False,datetime=None,format='json'):
+    #    if format == 'xml':
+    #        self.getStandingsXmlData(offline)
+    #    else:
+    #        self.getStandingsJsonData(offline)
 
-    def getStandingsJsonData(self,ymd_tuple=None,offline=False):
+    def getStandingsData(self,ymd_tuple=None,offline=False):
         # this part needs to be added dynamically
         #schedule_game_date.game_date=%272013/06/12%27&season=2013
         # if not given a datetime, calculate it
-        if ymd_tuple != None:
+        self.data = []
+        if ymd_tuple is not None:
             now = datetime.datetime(ymd_tuple[0],ymd_tuple[1],ymd_tuple[2])
         else:
             now=datetime.datetime.now()
@@ -50,6 +51,7 @@ class MLBStandings:
             self.json = json.loads(rsp)
         except ValueError:
             if re.search(r'Check back soon',rsp) is not None:
+                #raise Exception,MLBJsonError
                 return
             raise Exception,rsp
             raise Exception,self.jUrl

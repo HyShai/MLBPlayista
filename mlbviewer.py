@@ -565,6 +565,8 @@ def mainloop(myscr,mycfg,mykeys):
                 standings = MLBStandings()
             try:
                 (year, month, day) = (mysched.year, mysched.month, mysched.day)
+                log.write('getStandingsData((%s,%s,%s))\n'%(year, month, day))
+                log.flush()
                 standings.getStandingsData((year,month,day))
             except MLBUrlError:
                 mywin.statusWrite(standings.error_str,wait=2)
