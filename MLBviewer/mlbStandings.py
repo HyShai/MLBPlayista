@@ -6,6 +6,7 @@ import StringIO
 import gzip
 import datetime
 import json
+import re
 from xml.dom.minidom import parseString
 from mlbConstants import STANDINGS_DIVISIONS
 from mlbConstants import STANDINGS_JSON_DIVISIONS
@@ -29,11 +30,14 @@ class MLBStandings:
         else:
             self.getStandingsJsonData(offline)
 
-    def getStandingsJsonData(self,offline=False):
+    def getStandingsJsonData(self,ymd_tuple=None,offline=False):
         # this part needs to be added dynamically
         #schedule_game_date.game_date=%272013/06/12%27&season=2013
         # if not given a datetime, calculate it
-        now=datetime.datetime.now()
+        if ymd_tuple != None:
+            now = datetime.datetime(ymd_tuple[0],ymd_tuple[1],ymd_tuple[2])
+        else:
+            now=datetime.datetime.now()
         self.jUrl = 'http://mlb.mlb.com/lookup/json/named.standings_schedule_date.bam?&sit_code=%27h0%27&league_id=103&league_id=104&all_star_sw=%27N%27&version=2'
         self.jUrl += '&season=%s&schedule_game_date.game_date=%%27%s%%27' % \
                               ( now.year, now.strftime('%Y/%m/%d') )
@@ -44,8 +48,11 @@ class MLBStandings:
             raise MLBUrlError
         try:
             self.json = json.loads(rsp)
-        except:
-            raise
+        except ValueError:
+            if re.search(r'Check back soon',rsp) is not None:
+                return
+            raise Exception,rsp
+            raise Exception,self.jUrl
             raise Exception,MLBJsonError
         self.parseStandingsJson()
 
@@ -85,6 +92,9 @@ class MLBStandings:
         tmp = dict()
         self.last_update = self.json['standings_schedule_date']['standings_all_date_rptr']['standings_all_date'][0]['queryResults']['created'] + '-04:00'
         for league in self.json['standings_schedule_date']['standings_all_date_rptr']['standings_all_date']:
+            if int(league['queryResults']['totalSize']) == 0:
+                #raise Exception,self.jUrl
+                return
             for div in STANDINGS_JSON_DIVISIONS.keys():
                 if not tmp.has_key(div):
                     tmp[div] = []
