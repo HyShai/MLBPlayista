@@ -8,9 +8,10 @@ from mlbSchedule import gameTimeConvert
 
 class MLBStandingsWin(MLBListWin):
 
-    def __init__(self,myscr,mycfg,data,last_update):
+    def __init__(self,myscr,mycfg,data,last_update,year):
         self.stdata = data
         self.last_update = last_update
+        self.year = year
         self.data = []
         self.records = []
         self.mycfg = mycfg
@@ -111,12 +112,14 @@ class MLBStandingsWin(MLBListWin):
         n = self.current_cursor
 
         status_str = 'Press L to return to listings...'
+        pad_len = (curses.COLS-2) - ( len(status_str) + len(str(self.year))+2 )
         if self.mycfg.get('curses_debug'):
             status_str = 'd_len=%s, r_len=%s, cc=%s, rc=%s, cl_-4: %s' %\
                 ( str(len(self.data)), str(len(self.records)),
                   str(self.current_cursor), str(self.record_cursor),
                   str(curses.LINES-4) )
 
+        status_str += pad_len*' ' + '[%s]'%self.year
         # And write the status
         try:
             self.statuswin.addnstr(0,0,status_str,curses.COLS-2,curses.A_BOLD)

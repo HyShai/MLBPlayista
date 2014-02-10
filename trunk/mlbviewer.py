@@ -572,7 +572,7 @@ def mainloop(myscr,mycfg,mykeys):
                 mywin.statusWrite(standings.error_str,wait=2)
                 continue
             stdwin = MLBStandingsWin(myscr,mycfg,standings.data,
-                                     standings.last_update)
+                                     standings.last_update,year)
             mywin = stdwin
 
         if c in mykeys.get('RSS'):
