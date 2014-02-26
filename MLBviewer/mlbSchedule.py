@@ -204,7 +204,7 @@ class MLBSchedule:
                tmp[attr] = str(media.getAttribute(attr))
            out = []
            try:
-               tmp['playback_scenario']
+               tmp['playback_scenario'] = tmp['playback_scenario'].strip()
            except:
                continue
                raise Exception,repr(tmp)
