@@ -411,7 +411,10 @@ class MediaStream:
         mlog.close()
         rtmp_base = rsp.getElementsByTagName('meta')[0].getAttribute('base')
         for elem in rsp.getElementsByTagName('video'):
-            speed = int(elem.getAttribute('system-bitrate'))/1000
+            try:
+                speed = int(elem.getAttribute('system-bitrate'))/1000
+            except ValueError:
+                continue
             if int(self.speed) == int(speed):
                #vid_src = elem.getAttribute('src').replace('mp4:','/')
                vid_src = elem.getAttribute('src')
