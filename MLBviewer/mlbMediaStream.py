@@ -88,7 +88,10 @@ class MediaStream:
             self.error_str = "No stream available for selected game."
 
         self.log.write(str(datetime.datetime.now()) + '\n')
-        self.session_key = None
+        try:
+            self.session_key = self.session.session_key
+        except:
+            self.session_key = None
         self.debug = cfg.get('debug')
 
         # The request format depends on the streamtype
@@ -127,7 +130,8 @@ class MediaStream:
             raise
 
         try:
-            sessionKey = urllib.unquote(self.session.cookies['ftmu'])
+            #sessionKey = urllib.unquote(self.session.cookies['ftmu'])
+            sessionKey = self.session.session_key
         except:
             sessionKey = None
       
@@ -173,6 +177,7 @@ class MediaStream:
     def updateSession(self,reply):
         try:
             self.session_key = reply.getElementsByTagName('session-key')[0].childNodes[0].data
+            self.session.session_key = self.session_key
             self.session_keys['ftmu'] = self.session_key
             self.session.writeSessionKey(self.session_key)
         except:
@@ -328,12 +333,13 @@ class MediaStream:
 
     def requestSpecificMedia(self):
         try:
-            sessionkey = urllib.unquote(self.session.cookies['ftmu'])
+            #sessionkey = urllib.unquote(self.session.cookies['ftmu'])
+            sessionKey = self.session.session_key
         except:
-            sessionkey = None
+            sessionKey = None
         query_values = {
             'subject': self.subject,
-            'sessionKey': sessionkey,
+            'sessionKey': sessionKey,
             'identityPointId': self.session.cookies['ipid'],
             'contentId': self.content_id,
             'playbackScenario': self.scenario,
@@ -400,6 +406,9 @@ class MediaStream:
 "An error occurred in the final request.\nThis is not a blackout or a media location error.\n\n\nIf the problem persists, try the non-Nexdef stream."
             raise Exception,self.error_str
         rsp = parse(handle)
+        mlog = open(FMSLOG, 'w')
+        rsp.writexml(mlog)
+        mlog.close()
         rtmp_base = rsp.getElementsByTagName('meta')[0].getAttribute('base')
         for elem in rsp.getElementsByTagName('video'):
             speed = int(elem.getAttribute('system-bitrate'))/1000

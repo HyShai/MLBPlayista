@@ -48,6 +48,7 @@ ERRORLOG_1 = os.path.join(os.environ['HOME'], AUTHDIR, 'unsuccessful-1.xml')
 ERRORLOG_2 = os.path.join(os.environ['HOME'], AUTHDIR, 'unsuccessful-2.xml')
 MEDIALOG_1 = os.path.join(os.environ['HOME'], AUTHDIR, 'successful-1.xml')
 MEDIALOG_2 = os.path.join(os.environ['HOME'], AUTHDIR, 'successful-2.xml')
+FMSLOG     = os.path.join(os.environ['HOME'], AUTHDIR, 'fmscloud.xml')
 SESSIONLOG = os.path.join(os.environ['HOME'], AUTHDIR, 'session.xml')
 USERAGENT = 'Mozilla/5.0 (Windows NT 5.1; rv:18.0) Gecko/20100101 Firefox/18.0'
 TESTXML = os.path.join(os.environ['HOME'], AUTHDIR, 'test_epg.xml')
