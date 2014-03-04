@@ -111,6 +111,7 @@ TEAMCODES = {
     'kc':  ('118', 'Kansas City Royals', ''),
     'kca': ('118', 'Kansas City Royals', ''),
     'la':  ('119', 'Los Angeles Dodgers', ''),
+    'lan':  ('119', 'Los Angeles Dodgers', ''),
     'mil': ('158', 'Milwaukee Brewers', ''),
     'min': ('142', 'Minnesota Twins', ''),
     'nl' : ( None, 'National League', ''),
