@@ -1,8 +1,8 @@
-REQUIREMENTS FOR MLBVIEWER 2013 SEASON
+REQUIREMENTS FOR MLBVIEWER 2014 SEASON
 
-FOR 2012 USERS:
+FOR 2013 USERS:
 
-If you used mlbviewer in 2012, not much has changed.
+If you used mlbviewer in 2013, not much has changed.
 
 1. Download mlbhls (if you plan to use nexdef), build it, install it.
 
@@ -14,9 +14,9 @@ sudo cp mlbhls /usr/bin
 !! YOU MUST UPDATE TO MINIMUM SVN REVISION 67 FOR MLBHLS !!
 
 2. If you were using speed=800 in $HOME/.mlb/config, change that to 1200. The
-800 stream may not exist in 2013.
+800 stream may not exist in 2014.
 
-Other than that, you should not have to do anything different for 2013.
+Other than that, you should not have to do anything different for 2014.
 
 NEW USERS:
 
@@ -97,7 +97,7 @@ other players like vlc are using.
 
 ---------------------------------------------------------------------------
 
-READ THE README FOR MORE HELP ON USING MLBVIEWER 2013.
+READ THE README FOR MORE HELP ON USING MLBVIEWER 2014.
 
 Also, you can post any support questions either to the Sourceforge forum at:
 
