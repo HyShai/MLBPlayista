@@ -37,13 +37,14 @@ try:
     from xml.dom.minidom import parseString
 except:
     print "Missing python external dependencies."
-    print "Please read the REQUIREMENTS-2012.txt file."
+    print "Please read the REQUIREMENTS-2014.txt file."
     sys.exit()
 
 def gameTimeConvert(listdate, time_shift=None):
-    etoffset=datetime.timedelta(0,(18000,14400)[time.daylight])
+    tmp=time.localtime()
+    etoffset=datetime.timedelta(0,(18000,14400)[tmp.tm_isdst])
     utcdate=listdate + etoffset
-    myzone=(time.timezone,time.altzone)[time.daylight]
+    myzone=(time.timezone,time.altzone)[tmp.tm_isdst]
     localoffset = datetime.timedelta(0,myzone)
     localtime=utcdate-localoffset
     return localtime
