@@ -111,10 +111,12 @@ class MiLBSchedule:
         try:
             self.data = self.__scheduleFromJson()
         except ValueError,detail:
+            self.error_str = repr(detail)
             raise MLBJsonError,detail
 
     def trimList(self):
         if not self.data:
+            self.error_str = "No games available today"
             raise MLBXmlError,"No games available today."
         out = []
         for game in self.data:
