@@ -891,7 +891,12 @@ def mainloop(myscr,mycfg,mykeys):
                         mywin.statusWrite(error_str,wait=2)
                     # align with mlbsched listings
                     (y,m,d) = (mlbsched.year,mlbsched.month,mlbsched.day)
-                    milbsched.Jump((y,m,d),mycfg.get('speed'), mycfg.get('blackout'))
+                    try:
+                        milbsched.Jump((y,m,d),mycfg.get('speed'), mycfg.get('blackout'))
+                    except:
+                        mywin.statusWrite(milbsched.error_str,wait=2)
+                        mycfg.set('milbtv', False)
+                        continue
                 mysched = milbsched
             elif c in mykeys.get('LISTINGS'):
                 if mycfg.get('milbtv'):
