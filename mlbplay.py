@@ -209,7 +209,7 @@ if teamcode is not None:
             if streamtype ==  'video':
                 media.append(available[n][2])
             elif streamtype == 'condensed':
-                media = available[n][2]
+                media.append(available[n][2])
                 condensed_media = available[n][4]
             else:
                 media.append(available[n][3])
