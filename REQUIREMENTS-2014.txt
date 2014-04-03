@@ -31,7 +31,7 @@ start mlbviewer using python2 with: "python2 mlbviewer.py"
 Please read on for further requirements depending on whether you are an MLB.TV
 Premium or MLB.TV Basic subscriber.
 
-PREMIUM USERS - NEXDEF STREAMS
+NEXDEF STREAMS
 
 You will need mlbhls (see above) to access the higher bitrates.
 
@@ -56,11 +56,11 @@ MLB.TV subscription):
 - Line Scores
 - Box Scores
 - Standings
+- Free Game Of The Day
 
-Leave user= and pass= blank in your ~/.mlb/config file to access the 
-free content.  You will get an authentication error at start up which you can 
-ignore.  This login code may eventually be deactivated for configurations
-without authentication information (blank user= and pass=)
+Non-subscribers should still fill in user= and pass= in ~/.mlb/config using
+their mlb.com username and password.  Without this, the Free Game Of The Day 
+will not be available.
 
 MLB CLASSICS
 
