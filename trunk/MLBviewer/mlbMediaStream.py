@@ -149,7 +149,11 @@ class MediaStream:
         
         # And make the request
         req = urllib2.Request(url)
-        response = urllib2.urlopen(req)
+        try:
+            response = urllib2.urlopen(req)
+        except urllib2.HTTPError, err:
+            self.log.write("Error (%s) for URL: %s" % ( err.code, url ))
+            raise
         reply = xml.dom.minidom.parse(response)
         return reply
 
