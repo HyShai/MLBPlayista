@@ -179,7 +179,10 @@ class MLBStatsWin(MLBListWin):
         if len(self.data) == 0:
             titlestr = "STATS NOT AVAILABLE"
         else:
-            upd = datetime.strptime(self.last_update, "%Y-%m-%dT%H:%M:%S-04:00")
+            try:
+                upd = datetime.strptime(self.last_update, "%Y-%m-%dT%H:%M:%S-04:00")
+            except:
+                upd = datetime.strptime(self.last_update, "%Y-%m-%dT%H:%M:%S")
             update_datetime = gameTimeConvert(upd)
             update_str = update_datetime.strftime('%Y-%m-%d %H:%M:%S')
             self.type = self.mycfg.get('stat_type')
@@ -216,7 +219,11 @@ class MLBStatsWin(MLBListWin):
     def statusRefresh(self):
         n = self.current_cursor
 
-        upd = datetime.strptime(self.last_update, "%Y-%m-%dT%H:%M:%S-04:00")
+        #upd = datetime.strptime(self.last_update, "%Y-%m-%dT%H:%M:%S-04:00")
+        try:
+            upd = datetime.strptime(self.last_update, "%Y-%m-%dT%H:%M:%S-04:00")
+        except:
+            upd = datetime.strptime(self.last_update, "%Y-%m-%dT%H:%M:%S")
         update_datetime = gameTimeConvert(upd)
         update_str = update_datetime.strftime('%Y-%m-%d %H:%M:%S')
         status_str = "Last Updated: %s" % update_str
