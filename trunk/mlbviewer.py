@@ -460,10 +460,14 @@ def mainloop(myscr,mycfg,mykeys):
                 except IndexError:
                     mywin.statusWrite("No media debug available.",wait=2)
                     continue
-            elif mywin == rsswin:
+            elif mywin in ( rsswin, boxwin ):
+                if mywin == boxwin:
+                    title_str="BOX SCORE LINE DEBUG"
+                else:
+                    title_str="RSS ELEMENT DEBUG"
                 try:
                     myscr.clear()
-                    mywin.titlewin.addstr(0,0,"RSS ELEMENT DEBUG")
+                    mywin.titlewin.addstr(0,0,title_str)
                     mywin.titlewin.hline(1, 0, curses.ACS_HLINE, curses.COLS-1)
                     myscr.addstr(2,0,repr(mywin.records[mywin.current_cursor]))
                     myscr.refresh()
@@ -979,6 +983,51 @@ def mainloop(myscr,mycfg,mykeys):
                 proc.open()
                 proc.wait()
                 continue
+            elif mywin == boxwin:
+                player=mywin.records[mywin.current_cursor][2]
+                if player is None:
+                    continue
+                (id,flag,name) = player
+                if flag:
+                    type='batting'
+                else:
+                    type='pitching'
+                status_str="Retrieving %s stats for %s (%s)..." %\
+                               ( type, name, id )
+                mywin.statusWrite(status_str,wait=2)
+                # almost there... 
+                # TODO: add in stats code including flags for url
+                if mycfg.get('milbtv'):
+                    mywin.statusWrite("Stats are not supported for MiLB",wait=2)
+                    continue
+                mywin.statusWrite('Retrieving stats...')
+                mycfg.set('league','MLB')
+                if type == 'pitching':
+                    mycfg.set('stat_type','pitching')
+                    mycfg.set('sort_column','era')
+                else:
+                    mycfg.set('stat_type','hitting')
+                    mycfg.set('sort_column','avg')
+                mycfg.set('player_id',0)
+                mycfg.set('sort_team',0)
+                mycfg.set('active_sw',0)
+                mycfg.set('season_type','ANY')
+                mycfg.set('sort_order',0)
+                mycfg.set('player_id',id)
+                mycfg.set('player_name',name)
+                mycfg.set('triple_crown', 0)
+                try:
+                    stats.getStatsData()
+                except MLBUrlError:
+                    raise
+                statwin = MLBStatsWin(myscr,mycfg,stats.data,stats.last_update)
+                mywin = statwin
+                continue
+            elif mywin == statwin:
+                mywin = boxwin
+                mywin.PgUp()
+                continue
+                
 
         # The Big Daddy Action  
         # With luck, it can handle audio, video, condensed, and highlights
@@ -989,7 +1038,7 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
             elif mywin == calwin and len(calwin.gamedata)==0:
                 continue
-            if mywin in ( optwin , helpwin, stdwin, statwin ):
+            if mywin in ( optwin , helpwin, stdwin, statwin, boxwin ):
                 continue
             if mywin in ( calwin, ):
                 prefer = dict()

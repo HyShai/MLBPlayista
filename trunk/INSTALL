@@ -1,6 +1,6 @@
 Requirements
 
-See REQUIREMENTS-2013.txt file for 2013 requirements.  This file is mostly
+See REQUIREMENTS-2014.txt file for 2014 requirements.  This file is mostly
 here for quick and dirty summary.
 ------------
 
@@ -15,6 +15,8 @@ svn co https://mlbtv-hls-nexdef.googlecode.com/svn/branches/experimental mlbhls
 * An MLB.TV account (http://mlb.mlb.com/mlb/subscriptions/index.jsp)
 * For non-subscriber features (highlights and condensed games only), leave
   user= and pass= blank in the ~/.mlb/config file.
+* python-gdata is also required for mlbclassics.py and should be available
+in the Linux distribution package manager (apt, yum, yast, etc.)
 
 For Windows:
 
