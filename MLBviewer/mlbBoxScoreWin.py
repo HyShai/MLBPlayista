@@ -123,7 +123,10 @@ class MLBBoxScoreWin(MLBListWin):
         header_str += ' ' + dots*'.'
         for stat in PITCHING_STATS:
             header_str += '%5s' % stat
-        self.data.append((header_str,curses.A_BOLD,None))
+        team_tuple=( self.boxdata['game'][team + '_id'],
+                     0,
+                     self.boxdata['game'][team + '_fname'] )
+        self.data.append((header_str,curses.A_BOLD,team_tuple))
         #self.data.append(('',0))
         for pitcher in pitching['pitchers']['pitching-order']:
             name_str = pitching['pitchers'][pitcher]['name']
@@ -190,7 +193,10 @@ class MLBBoxScoreWin(MLBListWin):
         header_str += ' ' + dots*'.'
         for stat in BATTING_STATS:
             header_str += '%5s' % stat
-        self.data.append((header_str,curses.A_BOLD,None))
+        team_tuple=( self.boxdata['game'][team + '_id'],
+                     1,
+                     self.boxdata['game'][team + '_fname'] )
+        self.data.append((header_str,curses.A_BOLD,team_tuple))
         #self.data.append(('',0))
 
         # now the batters in the order just built

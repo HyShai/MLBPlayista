@@ -703,7 +703,7 @@ def mainloop(myscr,mycfg,mykeys):
                 continue
             elif mywin == calwin and len(calwin.gamedata) == 0:
                 continue
-            if mywin in ( stdwin, statwin ):
+            if mywin in ( stdwin, ):
                 continue
             if mywin in ( calwin, ):
                 GAMEID = calwin.gamedata[calwin.game_cursor][0]
@@ -992,15 +992,14 @@ def mainloop(myscr,mycfg,mykeys):
                     type='batting'
                 else:
                     type='pitching'
-                status_str="Retrieving %s stats for %s (%s)..." %\
-                               ( type, name, id )
-                mywin.statusWrite(status_str,wait=2)
                 # almost there... 
                 # TODO: add in stats code including flags for url
                 if mycfg.get('milbtv'):
                     mywin.statusWrite("Stats are not supported for MiLB",wait=2)
                     continue
-                mywin.statusWrite('Retrieving stats...')
+                status_str="Retrieving %s stats for %s (%s)..." %\
+                               ( type, name, id )
+                mywin.statusWrite(status_str)
                 mycfg.set('league','MLB')
                 if type == 'pitching':
                     mycfg.set('stat_type','pitching')
@@ -1013,8 +1012,12 @@ def mainloop(myscr,mycfg,mykeys):
                 mycfg.set('active_sw',0)
                 mycfg.set('season_type','ANY')
                 mycfg.set('sort_order',0)
-                mycfg.set('player_id',id)
-                mycfg.set('player_name',name)
+                if int(id) > 1000:
+                    mycfg.set('player_id',id)
+                    mycfg.set('player_name',name)
+                else:
+                    mycfg.set('sort_team',id)
+                    mycfg.set('season',datetime.datetime.now().year)
                 mycfg.set('triple_crown', 0)
                 try:
                     stats.getStatsData()
