@@ -39,7 +39,10 @@ class MLBDailyVideos:
 
     def getXmlList(self,key='fastCast'):
         self.getJsonData(key)
-        self.parseJsonData(key)
+        try:
+            self.parseJsonData(key)
+        except:
+            raise Exception,repr(self.rawData[key])
         self.xmlList[key] = []
         for item in self.data[key]:
             date=item['date_added']
