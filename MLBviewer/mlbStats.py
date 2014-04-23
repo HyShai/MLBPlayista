@@ -114,6 +114,9 @@ class MLBStats:
             except KeyError:
                 totals = self.json['sport_pitching_composed']['sport_career_pitching']['queryResults']['row']
             self.last_update = results['queryResults']['created']
+        if results['queryResults']['totalSize'] == '1':
+            # json doesn't make single row as list so tuple it for same effect
+            results['queryResults']['row'] = ( results['queryResults']['row'], )
         for year in results['queryResults']['row']:
             # neat but confusing to have minors mixed in
             if year['sport_code'] == 'mlb':
