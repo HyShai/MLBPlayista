@@ -21,7 +21,7 @@ DEFAULT_KEYBINDINGS = {
     'HIGHLIGHTS_PLAYLIST': [ ord('y') ],
     'STANDINGS'          : [ ord('g') ],
     'INNINGS'            : [ ord('i') ],
-    'LISTINGS'           : [ ord('l') ],
+    'LISTINGS'           : [ ord('l'), ord('L') ],
     'REFRESH'            : [ ord('r') ],
     'NEXDEF'             : [ ord('n') ],
     'COVERAGE'           : [ ord('s') ],
