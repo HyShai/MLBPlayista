@@ -185,10 +185,13 @@ class MLBCalendarWin(MLBListWin):
         if game is None:
             return ' '*9
         status = game['game_status']
-        if status in ( 'F', ):
+        if status in ( 'F', 'I' ):
             thisRuns=int(this['runs'])
             thatRuns=int(that['runs'])
-            result = ( 'L', 'W' )[(thisRuns > thatRuns)]
+            if status == 'F':
+                result = ( 'L', 'W' )[(thisRuns > thatRuns)]
+            else:
+                result = ""
             result += ' ' + str(thisRuns) + '-' + str(thatRuns)
         elif status in ( 'S', ):
             if game['time_is_tbd']:
