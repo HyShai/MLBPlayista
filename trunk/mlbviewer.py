@@ -497,7 +497,7 @@ def mainloop(myscr,mycfg,mykeys):
                 myscr.addstr(3,0,repr(mywin.records[mywin.current_cursor]))
             # hack for scrolling - don't display these lines if screen too
             # small
-            if curses.LINES-4 > 14:
+            if curses.LINES-4 > 14 and mywin != calwin:
                 myscr.addstr(11,0,'preferred media for current cursor:')
                 myscr.addstr(12,0,repr(prefer))
             myscr.refresh()
