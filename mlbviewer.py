@@ -189,6 +189,13 @@ def mainloop(myscr,mycfg,mykeys):
     mywin.data = available
     mywin.records = available[0:curses.LINES-4]
     mywin.titleRefresh(mysched)
+
+    # If favorite is not none, focus the cursor on favorite team
+    if mycfg.get('favorite') is not None:
+        try:
+            mywin.focusFavorite()
+        except IndexError:
+            raise Exception,repr(mywin.records)
     
     # PLACEHOLDER - LircConnection() goes here
 
@@ -200,6 +207,9 @@ def mainloop(myscr,mycfg,mykeys):
         except MLBCursesError,detail:
             mywin.titleRefresh(mysched)
             mywin.statusWrite("ERROR: %s"%detail,wait=2)
+        except IndexError:
+            raise Exception,"current_cursor=%s, record_cursor=%s, cl-4=%s, lr=%s,ld=%s" %\
+                (mywin.current_cursor,mywin.record_cursor,curses.LINES-4,len(mywin.records),len(mywin.data) )
         mywin.titleRefresh(mysched)
         mywin.statusRefresh()
         if mywin in ( listwin, sbwin ):
@@ -317,6 +327,7 @@ def mainloop(myscr,mycfg,mykeys):
                     listwin.records = available[0:curses.LINES-4]
                     listwin.record_cursor = 0
                     listwin.current_cursor = 0
+                    listwin.focusFavorite()
                 except (KeyError,MLBXmlError),detail:
                     if mycfg.get('debug'):
                         raise Exception,detail
@@ -426,6 +437,7 @@ def mainloop(myscr,mycfg,mykeys):
             listwin.records = available[0:curses.LINES-4]
             listwin.current_cursor = 0
             listwin.record_cursor = 0
+            listwin.focusFavorite()
             # recreate the master scoreboard view if current screen
             if mywin in ( sbwin, ):
                 try:
@@ -920,6 +932,7 @@ def mainloop(myscr,mycfg,mykeys):
             else:
                 mywin.data = available
                 mywin.records = available[mywin.record_cursor:mywin.record_cursor+curses.LINES-4]
+                listwin.focusFavorite()
 
         # TOGGLES
         if c in mykeys.get('NEXDEF'):

@@ -100,7 +100,7 @@ class MLBListWin:
         # still have more records?
         # Move down a window.
         if self.current_cursor + 1 >= len(self.records) and\
-           self.record_cursor + self.current_cursor + 1 < len(self.data):
+          self.record_cursor + self.current_cursor + 1 < len(self.data):
            self.record_cursor += self.current_cursor + 1
            self.current_cursor = 0
            self.records = self.data[self.record_cursor:self.record_cursor+curses.LINES-4]
@@ -129,6 +129,34 @@ class MLBListWin:
         self.record_cursor = len(self.data)- remaining
         self.current_cursor = len(self.records) - 1
 
+    def focusFavorite(self):
+        for n in range(len(self.data)):
+            home = str(self.data[n][0]['home'])
+            away = str(self.data[n][0]['away'])
+            if home in self.mycfg.get('favorite') or \
+               away in self.mycfg.get('favorite'):
+                # Find the correct screen to focus on.
+                # This is intended only on initial listing so record_cursor
+                # is assumed to be zero (first screen.)  Check to see if we
+                # need to scroll a screen.
+                if n > (curses.LINES-4):
+                    # Not on this screen. Check to see how many screens to 
+                    # advance.
+                    screens = n / (curses.LINES-4)
+                    self.record_cursor = (curses.LINES-4) * screens
+                    self.current_cursor = n % self.record_cursor
+                    remaining=len(self.data) - self.record_cursor
+                    if remaining > (curses.LINES-4):
+                        remaining=(curses.LINES-4)+self.record_cursor + 1
+                    else:
+                        remaining+=self.record_cursor + 1
+                    self.records=self.data[self.record_cursor:remaining]
+                    return
+                else:
+                    self.current_cursor = n
+                    return
+            n+=1
+                
     def Refresh(self):
         if len(self.data) == 0:
             #status_str = "There was a parser problem with the listings page"
