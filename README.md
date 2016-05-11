@@ -8,7 +8,7 @@
 
 **Pythonista** is a wonderful app that can run Python applications on an iOS device - it's not strictly necessary for MLBPlayista - but I highly recommend it.
 
-MLBPlayista has one objective - play _live_ (currently playing) mlb.tv games on an iOS device without using the MLB AtBat app. This can be useful for some people; I won't enumerate the reason(s) - they may fall into the gray area of the Terms Of Service. (You are still required to [purchase](http://mlb.mlb.com/mlb/subscriptions/) an mlb.tv Premium or Single Team subscription.)
+MLBPlayista has one objective - play _live_ (currently playing) mlb.tv games on an iOS device without using the MLB AtBat app. This can be useful for some people; I won't enumerate the reason(s) - they may fall into the gray area of the Terms Of Service. (You are still required to [purchase](http://mlb.mlb.com/mlb/subscriptions/) an mlb.tv Premium or Single Team subscription in order to use MLBPlayista.)
 
 MLBPlayista is based on the [`mlbplay.py`](https://sourceforge.net/p/mlbviewer/code/HEAD/tree/trunk/mlbplay.py) script that is included in the `mlbviewer` project.
 
