@@ -54,16 +54,15 @@ def get_config():
 		if not config.get(prop):
 			raise Exception(prop + ' is required')
 	return config
-
+	
 def get_listings(config):
-	#First create a schedule object
 	now = datetime.datetime.now()
 	if now.hour < 9:
-		# go back to yesterday if before 9am
+	# go back to yesterday if before 9am
 		now = now - datetime.timedelta(1)
 	startdate = (now.year, now.month, now.day)
 	mysched = MLBSchedule(ymd_tuple=startdate, time_shift=config.get('time_offset'), international=config.get('international'))
-
+	
 	# Now retrieve the listings for that day
 	available = mysched.getListings(config.get('speed'), config.get('blackout'))
 	return available
@@ -73,14 +72,13 @@ def sort_listings(config,listings):
 	for listing in listings:
 		hometeam = listing[0]['home']
 		awayteam = listing[0]['away']
-
-		title = '%s: \n%s \nat %s' % (listing[1].strftime('%l:%M %p'), TEAMCODES[awayteam][1], TEAMCODES[hometeam][1])
+		title = '%s \nat %s\n%s (%s)' % (TEAMCODES[awayteam][1], TEAMCODES[hometeam][1],listing[1].strftime('%l:%M %p').strip(),STATUSLINE[listing[5]].strip('Status: ').replace(' (Condensed Game Available)',''))
 		teamlist.append({'title': title.strip(), 'hometeam': hometeam, 'awayteam': awayteam})
 	favorites = mycfg.get('favorite')
 	teamlist = sorted(teamlist, key=lambda i: str(favorites.index(i['hometeam']) if i['hometeam'] in favorites else favorites.index(i['awayteam']) if i['awayteam'] in favorites else 'z'))
-
+	
 	return teamlist
-
+	
 def select_game(listings):
 	listings_view = ListingsView(listings)
 	listings_view.view.name = 'Select a game'
@@ -89,7 +87,7 @@ def select_game(listings):
 	if not listings_view.selected_item:
 		raise Exception('Please select a game')
 	return listings_view.selected_item
-
+	
 def get_media(config,listings,teamcode):
 	# First create a schedule object
 	# Determine media tuple using teamcode e.g. if teamcode is in home or away, use
@@ -168,7 +166,7 @@ def get_media(config,listings,teamcode):
 	global jsonUrl
 	jsonUrl = '{"ChannelName":"MLBista","Code":"...","Description":"MLBista","StreamId":0,"ShowURL":1,"Links":["%s"],"Result":"Success","Reason":""}' % rtmp_link.strip(' "')#.replace('/','\/')
 
-
+		
 def serve_json_url():
 	server = HTTPServer(('',4242),MyHandler)
 	import webbrowser
@@ -204,11 +202,11 @@ class ListingsView(object):
 		self.view.delegate = ds
 		#self.view.present('sheet')
 		#self.view.wait_modal()
-
+	
 	def row_selected(self, ds):
 		self.selected_item = self.items[ds.selected_row]
 		self.view.close()
-
+		
 if __name__=='__main__':
 	try:
 		mycfg = get_config()
@@ -216,6 +214,8 @@ if __name__=='__main__':
 		gamelist = sort_listings(mycfg,listings)
 		game = select_game(gamelist)
 		team = dialogs.list_dialog(title='Select team broadcast',items=[{'teamcode':k, 'title':TEAMCODES[k][1]} for k in [game['hometeam'],game['awayteam']]])
+		if not team:
+			raise Exception('No broadcast selected')
 		teamcode = team['teamcode']
 		get_media(config=mycfg,listings=listings,teamcode=teamcode)
 		serve_json_url()
