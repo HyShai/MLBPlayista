@@ -6,8 +6,7 @@ from MLBviewer import *
 from StringIO import StringIO
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import shutil
-#global jsonUrl
-#global available
+
 mlbConstants.AUTHDIR = os.getcwd()
 AUTHFILE = 'config.txt'
 #other constants are defined in MLBViewer/mlbConstants.py
@@ -72,7 +71,7 @@ def sort_listings(config,listings):
 	for listing in listings:
 		hometeam = listing[0]['home']
 		awayteam = listing[0]['away']
-		title = '%s \nat %s\n%s (%s)' % (TEAMCODES[awayteam][1], TEAMCODES[hometeam][1],listing[1].strftime('%l:%M %p').strip(),STATUSLINE[listing[5]].strip('Status: ').replace(' (Condensed Game Available)',''))
+		title = '%s \nat %s\n%s (%s)' % (TEAMCODES[awayteam][1], TEAMCODES[hometeam][1],listing[1].strftime('%l:%M %p').strip(),STATUSLINE[listing[5]].replace('Status: ','').replace(' (Condensed Game Available)',''))
 		teamlist.append({'title': title.strip(), 'hometeam': hometeam, 'awayteam': awayteam})
 	favorites = mycfg.get('favorite')
 	teamlist = sorted(teamlist, key=lambda i: str(favorites.index(i['hometeam']) if i['hometeam'] in favorites else favorites.index(i['awayteam']) if i['awayteam'] in favorites else 'z'))
@@ -174,6 +173,14 @@ def serve_json_url():
 	#potential for race condition... :(
 	server.handle_request()
 
+def live_player_is_installed():
+	from objc_util import ObjCClass, nsurl, ObjCInstance
+	LSApplicationWorkspace = ObjCClass('LSApplicationWorkspace')
+	workspace = LSApplicationWorkspace.defaultWorkspace()
+	if workspace.applicationForOpeningResource_(nsurl('fb493207460770675:')) or workspace.applicationForOpeningResource_(nsurl('fb1574042342908027:')):
+		return True
+	return False
+	
 class MyHandler(BaseHTTPRequestHandler):
 
 	def do_GET(self):
@@ -209,6 +216,8 @@ class ListingsView(object):
 		
 if __name__=='__main__':
 	try:
+		if not live_player_is_installed():
+			raise Exception('Please install Live Player')
 		mycfg = get_config()
 		listings = get_listings(mycfg)
 		gamelist = sort_listings(mycfg,listings)
