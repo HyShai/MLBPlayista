@@ -61,7 +61,6 @@ def get_listings(config):
 	if now.hour < 9:
 		# go back to yesterday if before 9am
 		now = now - datetime.timedelta(1)
-	now = now - datetime.timedelta(1)
 	startdate = (now.year, now.month, now.day)
 	mysched = MLBSchedule(ymd_tuple=startdate, time_shift=config.get('time_offset'), international=config.get('international'))
 
