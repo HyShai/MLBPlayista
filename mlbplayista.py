@@ -6,7 +6,8 @@ from MLBviewer import *
 from StringIO import StringIO
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import shutil
-global jsonUrl
+#global jsonUrl
+#global available
 mlbConstants.AUTHDIR = os.getcwd()
 AUTHFILE = 'config.txt'
 #other constants are defined in MLBViewer/mlbConstants.py
@@ -40,26 +41,58 @@ def get_config():
 
 	config = MLBConfig(mydefaults)
 	config.loads(myconf)
-	if not config.get('speed'):
-		config.set('speed', dialogs.list_dialog(title='Select a speed', items=STREAM_SPEEDS))
-	if not config.get('user'):
-		config.set('user', dialogs.input_alert(title='Enter your MLB.tv username'))
-	if not config.get('pass'):
-		config.set('pass', dialogs.password_alert(title='Enter your MLB.tv password'))
-	for prop in ['speed', 'user', 'pass']:
+	try:
+		if not config.get('user'):
+			config.set('user', dialogs.input_alert(title='Enter your MLB.tv username'))
+		if not config.get('pass'):
+			config.set('pass', dialogs.password_alert(title='Enter your MLB.tv password'))
+		if not config.get('speed'):
+			config.set('speed', dialogs.list_dialog(title='Select a speed', items=STREAM_SPEEDS))
+	except KeyboardInterrupt:
+		pass
+	for prop in ['user','pass', 'speed']:
 		if not config.get(prop):
-			raise Exception(prop + ' is required.')
+			raise Exception(prop + ' is required')
 	return config
 
-def get_media(config,teamcode):
-	# First create a schedule object
+def get_listings(config):
+	#First create a schedule object
 	now = datetime.datetime.now()
+	if now.hour < 9:
+		# go back to yesterday if before 9am
+		now = now - datetime.timedelta(1)
+	now = now - datetime.timedelta(1)
 	startdate = (now.year, now.month, now.day)
 	mysched = MLBSchedule(ymd_tuple=startdate, time_shift=config.get('time_offset'), international=config.get('international'))
 
 	# Now retrieve the listings for that day
 	available = mysched.getListings(config.get('speed'), config.get('blackout'))
+	return available
 
+def sort_listings(config,listings):
+	teamlist = []
+	for listing in listings:
+		hometeam = listing[0]['home']
+		awayteam = listing[0]['away']
+
+		title = '%s: \n%s \nat %s' % (listing[1].strftime('%l:%M %p'), TEAMCODES[awayteam][1], TEAMCODES[hometeam][1])
+		teamlist.append({'title': title.strip(), 'hometeam': hometeam, 'awayteam': awayteam})
+	favorites = mycfg.get('favorite')
+	teamlist = sorted(teamlist, key=lambda i: str(favorites.index(i['hometeam']) if i['hometeam'] in favorites else favorites.index(i['awayteam']) if i['awayteam'] in favorites else 'z'))
+
+	return teamlist
+
+def select_game(listings):
+	listings_view = ListingsView(listings)
+	listings_view.view.name = 'Select a game'
+	listings_view.view.present('sheet')
+	listings_view.view.wait_modal()
+	if not listings_view.selected_item:
+		raise Exception('Please select a game')
+	return listings_view.selected_item
+
+def get_media(config,listings,teamcode):
+	# First create a schedule object
 	# Determine media tuple using teamcode e.g. if teamcode is in home or away, use
 	# that media tuple.  A media tuple has the format:
 	#     ( call_letters, code, content-id, event-id )
@@ -71,18 +104,16 @@ def get_media(config,teamcode):
 		if teamcode not in TEAMCODES.keys():
 			raise Exception('Invalid teamcode: ' + teamcode)
 		media = []
-		for n in range(len(available)):
-			home = available[n][0]['home']
-			away = available[n][0]['away']
+		for listing in listings:
+			home = listing[0]['home']
+			away = listing[0]['away']
 			if teamcode in ( home, away ):
-				listing = available[n]
-				media.append(available[n][2])
-				eventId = available[n][6] # ?
+				media.append(listing[2])
+				eventId = listing[6] # ?
 
 	# media assigned above will be a list of both home and away media tuples
 	# This next section determines which media tuple to use (home or away)
 	# and assign it to a stream tuple.
-
 	if len(media) > 0:
 		stream = None
 		for m in media:
@@ -134,16 +165,10 @@ def get_media(config,teamcode):
 	# prepareMediaStreamer turns a raw url into either an mlbhls command or an
 	# rtmpdump command that pipes to stdout
 	media_url = m.prepareMediaStreamer(mediaUrl)
-
 	rtmp_link   = m.preparePlayerCmd(media_url,eventId)
-
 	global jsonUrl
-	jsonUrl = '{"ChannelName":"MLBPlayista","Code":"...","Description":"MLBPlayista","StreamId":0,"ShowURL":1,"Links":["%s"],"Result":"Success","Reason":""}' % rtmp_link.strip(' "')
+	jsonUrl = '{"ChannelName":"MLBista","Code":"...","Description":"MLBista","StreamId":0,"ShowURL":1,"Links":["%s"],"Result":"Success","Reason":""}' % rtmp_link.strip(' "')#.replace('/','\/')
 
-def get_team_list(config):
-		favorites = mycfg.get('favorite')
-		team_list = sorted(MLB_TEAMS.items(), key=lambda i: str(favorites.index(i[0])) if i[0] in favorites else i[0])
-		return team_list
 
 def serve_json_url():
 	server = HTTPServer(('',4242),MyHandler)
@@ -166,15 +191,34 @@ class MyHandler(BaseHTTPRequestHandler):
 		self.end_headers()
 		shutil.copyfileobj(f, self.wfile)
 
+class ListingsView(object):
+	def __init__(self, listings):
+		self.items = listings
+		self.selected_item = None
+		import ui
+		self.view = ui.TableView()
+		ds = ui.ListDataSource(listings)
+		ds.number_of_lines = 3
+		ds.action = self.row_selected
+		self.view.data_source = ds
+		self.view.row_height = 75
+		self.view.delegate = ds
+		#self.view.present('sheet')
+		#self.view.wait_modal()
+
+	def row_selected(self, ds):
+		self.selected_item = self.items[ds.selected_row]
+		self.view.close()
+
 if __name__=='__main__':
 	try:
 		mycfg = get_config()
-		team_list = get_team_list(mycfg)
-		team = dialogs.list_dialog(items=[{'title': v, 'teamcode': k} for k, v in team_list])
-		if not team:
-			raise Exception('Please select a team.')
+		listings = get_listings(mycfg)
+		gamelist = sort_listings(mycfg,listings)
+		game = select_game(gamelist)
+		team = dialogs.list_dialog(title='Select team broadcast',items=[{'teamcode':k, 'title':TEAMCODES[k][1]} for k in [game['hometeam'],game['awayteam']]])
 		teamcode = team['teamcode']
-		get_media(config=mycfg,teamcode=teamcode)
+		get_media(config=mycfg,listings=listings,teamcode=teamcode)
 		serve_json_url()
 	except Exception as e:
 		dialogs.alert('Error: ' + str(e))

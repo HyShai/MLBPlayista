@@ -372,10 +372,10 @@ class MediaStream:
             # candidate for new procedure: this code block of writing
             # unsuccessful xml responses is being repeated...
             self.log.write("DEBUG (SOAPCODES!=1)>> writing unsuccessful soap response event_id = " + str(self.event_id) + " contend-id = " + self.content_id + "\n")
-            df = open('/tmp/unsuccessful.xml','w')
+            df = open(os.path.join(AUTHDIR,'unsuccessful.xml'),'w')
             reply.writexml(df)
             df.close()
-            df = open('/tmp/unsuccessful.xml')
+            df = open(os.path.join(AUTHDIR,'unsuccessful.xml'))
             msg = df.read()
             df.close()
             self.error_str = SOAPCODES[status_code]
