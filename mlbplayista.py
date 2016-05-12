@@ -43,6 +43,8 @@ def get_config():
 
 	config = MLBConfig(mydefaults)
 	config.loads(myconf)
+	if config.get('debug'):
+		print 'Config: ' + repr(config.data)
 	try:
 		if not config.get('user'):
 			config.set('user', dialogs.input_alert(title='Enter your MLB.tv username'))
@@ -73,6 +75,8 @@ def get_listings(config):
 
 	# Now retrieve the listings for that day
 	available = mysched.getListings(config.get('speed'), config.get('blackout'))
+	if config.get('debug'):
+		print 'Listings: ' + repr(available)
 	return available
 
 
@@ -111,7 +115,6 @@ def select_game(listings):
 
 
 def get_media(config, listings, teamcode):
-	# First create a schedule object
 	# Determine media tuple using teamcode e.g. if teamcode is in home or away,
 	# use that media tuple.  A media tuple has the format:
 	#     ( call_letters, code, content-id, event-id )
@@ -130,6 +133,8 @@ def get_media(config, listings, teamcode):
 				media.append(listing[2])
 				eventId = listing[6]  # ?
 
+	if config.get('debug'):
+		print 'Media: ' + repr(media)
 	# media assigned above will be a list of both home and away media tuples
 	# This next section determines which media tuple to use (home or away)
 	# and assign it to a stream tuple.
@@ -147,13 +152,14 @@ def get_media(config, listings, teamcode):
 					break
 	else:
 		raise Exception('Could not find media for teamcode: ' + teamcode)
-
+	if config.get('debug'):
+		print 'Stream: ' + repr(stream)
 	# Before creating GameStream object, get session data from login
 	session = MLBSession(
 		user=config.get('user'),
 		passwd=config.get('pass'),
 		debug=config.get('debug'))
-	if config.get('keydebug'):
+	if config.get('debug'):
 		sessionkey = session.readSessionKey()
 		print "readSessionKey: " + sessionkey
 	session.getSessionData()
@@ -166,37 +172,33 @@ def get_media(config, listings, teamcode):
 	# MediaStream object for the correct type of media
 	if stream is not None:
 		start_time = 0
-		if config.get('use_nexdef'):
-			if config.get('start_inning') is None:
-					start_time = mysched.getStartOfGame(listing, config)
-
 		m = MediaStream(
 			stream=stream,
 			session=session,
 			cfg=config,
 			start_time=start_time)
 	else:
-		print 'Media listing debug information:'
-		print 'media = ' + repr(media)
-		print 'prefer = ' + repr(stream)
 		raise Exception('Stream could not be found.')
 	# Post-rewrite, the url beast has been replaced with locateMedia() which
 	# returns a raw url.
 	mediaUrl = m.locateMedia()
-
-	if config.get('keydebug'):
-		sessionkey = session.readSessionKey()
-		print "Session-key from media request: " + sessionkey
-
+	if config.get('debug'):
+		print 'MediaURL: ' + mediaUrl
 	# prepareMediaStreamer turns a raw url into either an mlbhls command or an
 	# rtmpdump command that pipes to stdout
 	media_url = m.prepareMediaStreamer(mediaUrl)
+	if config.get('debug'):
+		print 'Prepared media_url: ' + mediaUrl
 	rtmp_link = m.preparePlayerCmd(media_url, eventId)
+	if config.get('debug'):
+		print 'rtmp link: ' + rtmp_link
 	global jsonUrl
 	jsonUrl = (
 		'{"ChannelName":"MLBista","Code":"...",'
 		'"Description":"MLBista","StreamId":0,"ShowURL":1,'
 		'"Links":["%s"],"Result":"Success","Reason":""}' % rtmp_link.strip(' "'))
+	if config.get('debug'):
+		print 'jsonUrl: ' + jsonUrl
 
 
 def serve_json_url():
@@ -276,6 +278,8 @@ if __name__ == '__main__':
 		console.show_activity()
 		get_media(config=mycfg, listings=listings, teamcode=teamcode)
 		console.hide_activity()
+		if config.get('debug'):
+			sys.exit()
 		serve_json_url()
 	except Exception as e:
 		dialogs.alert('Error: ' + str(e))
