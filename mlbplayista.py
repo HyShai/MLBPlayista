@@ -164,7 +164,7 @@ def get_media(config,listings,teamcode):
 	media_url = m.prepareMediaStreamer(mediaUrl)
 	rtmp_link   = m.preparePlayerCmd(media_url,eventId)
 	global jsonUrl
-	jsonUrl = '{"ChannelName":"MLBista","Code":"...","Description":"MLBista","StreamId":0,"ShowURL":1,"Links":["%s"],"Result":"Success","Reason":""}' % rtmp_link.strip(' "')#.replace('/','\/')
+	jsonUrl = '{"ChannelName":"MLBista","Code":"...","Description":"MLBista","StreamId":0,"ShowURL":1,"Links":["%s"],"Result":"Success","Reason":""}' % rtmp_link.strip(' "')
 
 		
 def serve_json_url():
@@ -212,9 +212,7 @@ class ListingsView(object):
 		self.view.data_source = ds
 		self.view.row_height = 75
 		self.view.delegate = ds
-		#self.view.present('sheet')
-		#self.view.wait_modal()
-	
+
 	def row_selected(self, ds):
 		self.selected_item = self.items[ds.selected_row]
 		self.view.close()
