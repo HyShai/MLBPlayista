@@ -6,6 +6,7 @@ from MLBviewer import *
 from StringIO import StringIO
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import shutil
+import console
 
 mlbConstants.AUTHDIR = os.getcwd()
 AUTHFILE = 'config.txt'
@@ -223,14 +224,18 @@ if __name__=='__main__':
 		if not live_player_is_installed():
 			raise Exception('Please install Live Player')
 		mycfg = get_config()
+		console.show_activity()
 		listings = get_listings(mycfg)
+		console.hide_activity()
 		gamelist = sort_listings(mycfg,listings)
 		game = select_game(gamelist)
 		team = dialogs.list_dialog(title='Select team broadcast',items=[{'teamcode':k, 'title':TEAMCODES[k][1]} for k in [game['hometeam'],game['awayteam']]])
 		if not team:
 			raise Exception('No broadcast selected')
 		teamcode = team['teamcode']
+		console.show_activity()
 		get_media(config=mycfg,listings=listings,teamcode=teamcode)
+		console.hide_activity()
 		serve_json_url()
 	except Exception as e:
 		dialogs.alert('Error: ' + str(e))
