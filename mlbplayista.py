@@ -46,7 +46,7 @@ def get_config():
 		if not config.get('pass'):
 			config.set('pass', dialogs.password_alert(title='Enter your MLB.tv password'))
 		if not config.get('speed'):
-			config.set('speed', dialogs.list_dialog(title='Select a speed', items=STREAM_SPEEDS))
+			config.set('speed', dialogs.list_dialog(title='Select a speed (Kbps)', items=STREAM_SPEEDS))
 	except KeyboardInterrupt:
 		pass
 	for prop in ['user','pass', 'speed']:
@@ -174,7 +174,11 @@ def serve_json_url():
 	server.handle_request()
 
 def live_player_is_installed():
-	from objc_util import ObjCClass, nsurl, ObjCInstance
+	try:
+		from objc_util import ObjCClass, nsurl, ObjCInstance
+	except ImportError:
+		# don't blow up if objc_util doesn't exist
+		return True
 	LSApplicationWorkspace = ObjCClass('LSApplicationWorkspace')
 	workspace = LSApplicationWorkspace.defaultWorkspace()
 	if workspace.applicationForOpeningResource_(nsurl('fb493207460770675:')) or workspace.applicationForOpeningResource_(nsurl('fb1574042342908027:')):

@@ -373,7 +373,8 @@ STATUSLINE = {
         "PO": "Status: Postponed",
         "GO": "Status: Game Over - stream not yet available",
         "NB": "Status: National Blackout",
-        "LB": "Status: Local Blackout"}
+        "LB": "Status: Local Blackout",
+        "Manager Challenge": "Manager Challenge"}
 
 SPEEDTOGGLE = {
         "450"  : "[ 450K]",
