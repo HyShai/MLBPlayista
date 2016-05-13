@@ -32,7 +32,7 @@ def get_config():
 		'debug': 0,
 		'x_display': '',
 		'top_plays_player': '',
-		'use_librtmp': 0,
+		'use_librtmp': 1,
 		'use_nexdef': 0,
 		'condensed': 0,
 		'nexdef_url': 0,
@@ -262,7 +262,7 @@ if __name__ == '__main__':
 		if not live_player_is_installed():
 			raise Exception('Please install Live Player')
 		config = get_config()
-		console.show_activity()
+		console.show_activity('Getting schedule...')
 		listings = get_listings(config)
 		console.hide_activity()
 		gamelist = sort_listings(config, listings)
@@ -275,7 +275,7 @@ if __name__ == '__main__':
 		if not team:
 			raise Exception('No broadcast selected')
 		teamcode = team['teamcode']
-		console.show_activity()
+		console.show_activity('Getting media...')
 		get_media(config=config, listings=listings, teamcode=teamcode)
 		console.hide_activity()
 		if config.get('debug'):

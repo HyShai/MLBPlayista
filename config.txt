@@ -1,14 +1,20 @@
-user=***REMOVED***
-pass=***REMOVED***
+user=
+pass=
 speed=
+postseason=1
+international=1
+time_offset=
+debug=
+favorite=
+
+# ignore the rest - not applicable
+
 video_player=
 audio_player=
 audio_follow=
 alt_audio_follow=
 video_follow=
 blackout=
-favorite=bos
-favorite=nyy
 use_color=1
 favorite_color=cyan
 free_color=green
@@ -16,7 +22,6 @@ division_color=red
 highlight_division=0
 bg_color=xterm
 show_player_command=0
-debug=
 curses_debug=0
 wiggle_timer=0.5
 x_display=
@@ -31,12 +36,8 @@ coverage=home
 show_inning_frames=1
 use_librtmp=1
 no_lirc=0
-postseason=1
 milbtv=0
 rss_browser=firefox-new-tab%s
 flash_browser=
-international=1
-time_offset=
-postseason=1
 zdebug=0
 nexdef_url=0
