@@ -282,4 +282,5 @@ if __name__ == '__main__':
 			sys.exit()
 		serve_json_url()
 	except Exception as e:
+		console.hide_activity()
 		dialogs.alert('Error: ' + str(e))
