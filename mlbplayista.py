@@ -93,7 +93,7 @@ def sort_listings(config, listings):
 				'Status: ', '').replace(' (Condensed Game Available)', ''))
 		teamlist.append({
 			'title': title.strip(), 'hometeam': hometeam, 'awayteam': awayteam})
-	favorites = mycfg.get('favorite')
+	favorites = config.get('favorite')
 	teamlist = sorted(
 		teamlist,
 		key=lambda i:
@@ -261,11 +261,11 @@ if __name__ == '__main__':
 	try:
 		if not live_player_is_installed():
 			raise Exception('Please install Live Player')
-		mycfg = get_config()
+		config = get_config()
 		console.show_activity()
-		listings = get_listings(mycfg)
+		listings = get_listings(config)
 		console.hide_activity()
-		gamelist = sort_listings(mycfg, listings)
+		gamelist = sort_listings(config, listings)
 		game = select_game(gamelist)
 		team = dialogs.list_dialog(
 			title='Select team broadcast',
@@ -276,7 +276,7 @@ if __name__ == '__main__':
 			raise Exception('No broadcast selected')
 		teamcode = team['teamcode']
 		console.show_activity()
-		get_media(config=mycfg, listings=listings, teamcode=teamcode)
+		get_media(config=config, listings=listings, teamcode=teamcode)
 		console.hide_activity()
 		if config.get('debug'):
 			sys.exit()
