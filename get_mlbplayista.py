@@ -90,6 +90,7 @@ import webbrowser
 import uuid
 import notification
 import cStringIO
+import plistlib
 
 ICON_STRING = 'iVBORw0KGgoAAAANSUhEUgAAAGAAAABgBAMAAAAQtmoLAAAAMFBMVEX///8xMTH19fUeKp3OJCQVHW6QGRkiIiKysrL///8KCgoLCwsMDAwNDQ0ODg4PDw9rzF0PAAAACnRSTlMA////////////fokUVgAAALBJREFUeJxjYBgFgwYIEgmGmQYhJYJAcThqMMYKjJSUXEBgVMOw1QBODqMahrsGI+TcP+w1KCkpY2hQUlIZ3hpCQ4NBlGloKFStWhoQpBCdlsCGk5L4BlgDITD8NIiXl3d0tJdDAJgF5VZ0QEB5eSF682fmzInQVg6YBeVKzoQALO2lQakBLA5WgaIBSgxTDRMxCIT+4awBTSvhUBpuGhAphcgMNAQ1EAGGlYZRMOAAANi2WZGK6JkyAAAAAElFTkSuQmCC'
 
@@ -119,7 +120,7 @@ data_buffer = cStringIO.StringIO()
 data_buffer.write(ICON_STRING.decode('base64'))
 icon_data = data_buffer.getvalue()
 unique_id = uuid.uuid4().urn[9:].upper()
-pythonista_version = 'pythonista3' if 'pythonista3' in os.path.expanduser('~').lower() else 'pythonista'
+plist = plistlib.readPlist(os.path.abspath(os.path.join(sys.executable, '..', 'Info.plist')))
 config = {'PayloadContent': [{'FullScreen': True,
             'Icon': plistlib.Data(icon_data), 'IsRemovable': True,
             'Label': 'MLBPlayista', 'PayloadDescription': 'Configures Web Clip',
@@ -128,7 +129,7 @@ config = {'PayloadContent': [{'FullScreen': True,
             'PayloadOrganization': 'hyshai:software',
             'PayloadType': 'com.apple.webClip.managed',
             'PayloadUUID': unique_id, 'PayloadVersion': 1,
-            'Precomposed': True, 'URL': '{}://MLBPlayista/mlbplayista?action=run'.format(pythonista_version)}],
+            'Precomposed': True, 'URL': '{CFBundleURLTypes[0].CFBundleURLSchemes[0]}://MLBPlayista/mlbplayista?action=run'.format(**plist)}],
             'PayloadDescription': 'MLBPlayista',
             'PayloadDisplayName': 'MLBPlayista (Shortcut)',
             'PayloadIdentifier': 'com.hyshai.mlbplayista.' + unique_id,
