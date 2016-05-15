@@ -68,9 +68,13 @@ def console_activity(msg):
 		@wraps(func)
 		def func_wrapper(*args, **kwargs):
 			console.show_activity(msg)
-			result = func(*args, **kwargs)
-			console.hide_activity()
-			return result
+			try:
+				result = func(*args, **kwargs)
+				console.hide_activity()
+				return result
+			except Exception:
+				console.hide_activity()
+				raise
 		return func_wrapper
 	return console_activity_decorator
 
@@ -293,5 +297,4 @@ if __name__ == '__main__':
 			sys.exit()
 		serve_json_url()
 	except Exception as e:
-		console.hide_activity()
 		dialogs.alert('Error: ' + str(e))
