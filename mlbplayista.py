@@ -7,6 +7,7 @@ from StringIO import StringIO
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import shutil
 import console
+from functools import wraps
 
 mlbConstants.AUTHDIR = os.getcwd()
 AUTHFILE = 'config.txt'
@@ -62,6 +63,19 @@ def get_config():
 	return config
 
 
+def console_activity(msg):
+	def console_activity_decorator(func):
+		@wraps(func)
+		def func_wrapper(*args, **kwargs):
+			console.show_activity(msg)
+			result = func(*args, **kwargs)
+			console.hide_activity()
+			return result
+		return func_wrapper
+	return console_activity_decorator
+
+
+@console_activity('Getting schedule...')
 def get_listings(config):
 	now = datetime.datetime.now()
 	if now.hour < 9:
@@ -114,6 +128,7 @@ def select_game(listings):
 	return listings_view.selected_item
 
 
+@console_activity('Getting media...')
 def get_media(config, listings, teamcode):
 	# Determine media tuple using teamcode e.g. if teamcode is in home or away,
 	# use that media tuple.  A media tuple has the format:
@@ -262,9 +277,7 @@ if __name__ == '__main__':
 		if not live_player_is_installed():
 			raise Exception('Please install Live Player')
 		config = get_config()
-		console.show_activity('Getting schedule...')
 		listings = get_listings(config)
-		console.hide_activity()
 		gamelist = sort_listings(config, listings)
 		game = select_game(gamelist)
 		team = dialogs.list_dialog(
@@ -275,9 +288,7 @@ if __name__ == '__main__':
 		if not team:
 			raise Exception('No broadcast selected')
 		teamcode = team['teamcode']
-		console.show_activity('Getting media...')
 		get_media(config=config, listings=listings, teamcode=teamcode)
-		console.hide_activity()
 		if config.get('debug'):
 			sys.exit()
 		serve_json_url()
