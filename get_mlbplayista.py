@@ -45,6 +45,10 @@ if not os.path.exists(TARGET_DIR):
     os.makedirs(TARGET_DIR)
 print('Unzipping into %s ...' % TARGET_DIR)
 
+cached_config = None
+if os.path.exists(os.path.join(TARGET_DIR,'config.txt')):
+  cached_config = open(os.path.join(TARGET_DIR,'config.txt'),'r+').read()
+
 with open(TEMP_ZIPFILE, 'rb') as ins:
     try:
         zipfp = zipfile.ZipFile(ins)
@@ -64,11 +68,13 @@ with open(TEMP_ZIPFILE, 'rb') as ins:
                     fp.write(data)
                 finally:
                     fp.close()
+        if cached_config:
+          open(os.path.join(TARGET_DIR,'config.txt'),'w').write(cached_config)
     except:
         sys.stderr.write('The zip file is corrupted. Pleases re-run the script.\n')
         sys.exit(1)
 
-print('Preparing the folder structure ...')
+
 
 # Remove setup files and possible legacy files
 try:
