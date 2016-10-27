@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
 # mlbviewer is free software; you can redistribute it and/or modify
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation, Version 2.
@@ -124,6 +124,7 @@ class MediaStream:
 
         # TODO: Has this findUserVerifiedEvent been updated?  Does this 
         # url need to be changed to reflect that?
+        # self.base_url= 'https://mlb-ws-mf.media.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.3?' # 😉
         self.base_url='https://secure.mlb.com/pubajaxws/bamrest/MediaService2_0/op-findUserVerifiedEvent/v-2.3?' 
 
 
@@ -144,6 +145,13 @@ class MediaStream:
             'sessionKey': sessionKey,
             'fingerprint': urllib.unquote(self.session.cookies['fprt']),
             'identityPointId': self.session.cookies['ipid'],
+            # 'playbackScenario': 'HTTP_CLOUD_TABLET_60', # 😉
+            # 'subject': 'LIVE_EVENT_COVERAGE', # 😉
+            # 'platform': 'IPAD', # 😉
+            # 'postalCode': '{{postalCode}}', # 😉
+            # 'country': '{{country}}', # 😉
+            # 'latitude': '{{latitude}}', # 😉
+            # 'longitude': '{{longitude}}' # 😉
             'playbackScenario': self.scenario,
             'subject': self.subject
         }
