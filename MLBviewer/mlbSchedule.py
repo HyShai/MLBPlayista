@@ -249,7 +249,7 @@ class MLBSchedule:
                        coverage = home
                    out = (tmp['display'], coverage, tmp['id'], event_id)
                    content['alt_audio'].append(out)
-           elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away'):
+           elif tmp['type'] in ('mlbtv_national', 'mlbtv_home', 'mlbtv_away','mlbtv_enhanced'):
                if tmp['playback_scenario'] in \
                      ( 'HTTP_CLOUD_WIRED', 'HTTP_CLOUD_WIRED_WEB', 'FMS_CLOUD'):
                    # candidate for new procedure: determine whether game is 
@@ -265,7 +265,7 @@ class MLBSchedule:
                        content['blackout'] = None
 
                    # candidate for new procedure: determine the coverage
-                   if tmp['type'] == 'mlbtv_national':
+                   if tmp['type'] == 'mlbtv_national' or tmp['type'] == 'mlbtv_enhanced':
                        coverage = '0'
                    elif tmp['type'] == 'mlbtv_away':
                        coverage = away

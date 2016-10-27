@@ -133,7 +133,7 @@ class MediaStream:
             raise
 
         try:
-            #sessionKey = urllib.unquote(self.session.cookies['ftmu'])
+            # sessionKey = urllib.unquote(self.session.cookies['ftmu'])
             sessionKey = self.session.session_key
         except:
             sessionKey = None
@@ -149,7 +149,7 @@ class MediaStream:
         }
         # Build query
         url = self.base_url + urllib.urlencode(query_values)
-        
+
         # And make the request
         req = urllib2.Request(url)
         try:

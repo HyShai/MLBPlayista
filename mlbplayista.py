@@ -103,6 +103,15 @@ def sort_listings(config, listings):
 	for listing in listings:
 		hometeam = listing[0]['home']
 		awayteam = listing[0]['away']
+		national = ''
+		try:
+			event_id = listing[2][0][3]
+		except:
+			event_id = '-1'
+		for d in listing[2]:
+			if d[1] == '0':
+				national = '0'
+		
 		title = '%s \nat %s\n%s (%s)' % (
 			TEAMCODES[awayteam][1],
 			TEAMCODES[hometeam][1],
@@ -110,7 +119,9 @@ def sort_listings(config, listings):
 			STATUSLINE[listing[5]].replace(
 				'Status: ', '').replace(' (Condensed Game Available)', ''))
 		teamlist.append({
-			'title': title.strip(), 'hometeam': hometeam, 'awayteam': awayteam})
+			'title': title.strip(), 'hometeam': hometeam, 'awayteam': awayteam,
+			'national': national,
+			'event_id': event_id})
 	favorites = config.get('favorite')
 	teamlist = sorted(
 		teamlist,
@@ -133,7 +144,7 @@ def select_game(listings):
 
 
 @console_activity('Getting media...')
-def get_media(config, listings, teamcode):
+def get_media(config, listings, teamcode, event_id_param):
 	# Determine media tuple using teamcode e.g. if teamcode is in home or away,
 	# use that media tuple.  A media tuple has the format:
 	#     ( call_letters, code, content-id, event-id )
@@ -142,7 +153,7 @@ def get_media(config, listings, teamcode):
 	# of zero is used for national broadcasts or a broadcast that isn't owned by
 	# one team or the other.
 	if teamcode is not None:
-		if teamcode not in TEAMCODES.keys():
+		if teamcode not in TEAMCODES.keys() and teamcode !=  '0':
 			raise Exception('Invalid teamcode: ' + teamcode)
 		media = []
 		for listing in listings:
@@ -151,7 +162,10 @@ def get_media(config, listings, teamcode):
 			if teamcode in (home, away):
 				media.append(listing[2])
 				eventId = listing[6]  # ?
-
+			elif '0' in [m_tuple[1] for m_tuple in listing[2]]: # for national broadcast
+				media.append(listing[2])
+				eventId = listing[6]  # ?
+	
 	if config.get('debug'):
 		print 'Media: ' + repr(media)
 	# media assigned above will be a list of both home and away media tuples
@@ -165,8 +179,8 @@ def get_media(config, listings, teamcode):
 					code,
 					content_id,
 					event_id) = m[n]
-
-				if code == TEAMCODES[teamcode][0] or code == '0':
+				
+				if event_id == event_id_param and ((teamcode == '0' and code == '0') or (teamcode != '0' and code == TEAMCODES[teamcode][0])):
 					stream = m[n]
 					break
 	else:
@@ -284,15 +298,19 @@ if __name__ == '__main__':
 		listings = get_listings(config)
 		gamelist = sort_listings(config, listings)
 		game = select_game(gamelist)
+		items = [{
+				'teamcode': k,
+				'title': TEAMCODES[k][1]} for k in [game['hometeam'], game['awayteam']]]
+		if game['national']:
+			items.append({'teamcode': '0', 'title': 'National'})
 		team = dialogs.list_dialog(
 			title='Select team broadcast',
-			items=[{
-				'teamcode': k,
-				'title': TEAMCODES[k][1]} for k in [game['hometeam'], game['awayteam']]])
+			items=items)
 		if not team:
 			raise Exception('No broadcast selected')
 		teamcode = team['teamcode']
-		get_media(config=config, listings=listings, teamcode=teamcode)
+		event_id = game['event_id']
+		get_media(config=config, listings=listings, teamcode=teamcode,event_id_param=event_id)
 		if config.get('debug'):
 			sys.exit()
 		serve_json_url()
