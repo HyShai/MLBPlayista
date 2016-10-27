@@ -47,7 +47,7 @@ For MLBPlayista there are only a few config options that are useful (complete co
 - [**Pythonista**](https://itunes.apple.com/us/app/pythonista/id528579881?mt=8&uo=4&at=11l6hc) is a wonderful, indispensable app which runs Python applications on an iOS device.
 - [**Live Player**](https://itunes.apple.com/us/app/live-player-professional-streaming/id1099439153?mt=8&uo=4&at=11l6hc) is the only app on the AppStore [which I could find](https://forum.videolan.org/viewtopic.php?t=126825) that can play rtmp streams _with parameters_.
 - Half of the installation script was plagiarized from [StaSh](https://github.com/ywangd/stash) tool.
-- The other half was taken from the [ShorcutGenerator](https://gist.github.com/omz/7870550 ) script. (Written by the developer of Pythonista - [omz](https://twitter.com/olemoritz).)
+- The other half uses the html from the Pythonista's built in shortcut generator.
 - The shortcut icon was made by [Vicent Pla](https://www.iconfinder.com/icons/204717/mlb_icon)
 
  

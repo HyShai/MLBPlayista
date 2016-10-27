@@ -1,6 +1,5 @@
-# this script is a conglomeration of
-# the getstash installation script (https://github.com/ywangd/stash/blob/master/getstash.py)
-# and the shortcutgenerator script by omz (https://gist.github.com/omz/7870550)
+# the installation script was copied from the getstash installation script (https://github.com/ywangd/stash/blob/master/getstash.py)
+# the shortcut script uses omz's shortuct html
 # full credit to the authors
 # the icon was made by Vicent Pla (https://www.iconfinder.com/icons/204717/mlb_icon)
 
@@ -84,63 +83,129 @@ except:
 
 
 print('Setup completed.')
-install_shortcut = console.alert('Would you like to install the MLBPlayista shortcut on your homescreen?', message='This is a regular webclip installed as a profile, which will give you quick access to MLBPlayista.', button1='Yes', button2='No', hide_cancel_button=True)
+install_shortcut = console.alert('Would you like to install the MLBPlayista shortcut on your homescreen?', message='This is a regular webclip, which will give you quick access to MLBPlayista.', button1='Yes', button2='No', hide_cancel_button=True)
 if install_shortcut == 2:
     print('Please run mlbplayista.py in the MLBPlayista directory to start MLBPlayista.')
     sys.exit()
 
 #---- Create homescreen shortcut
-import plistlib
-import BaseHTTPServer
+import base64
 import webbrowser
-import uuid
-import notification
-import cStringIO
-import plistlib
+import BaseHTTPServer
+import base64
+icons = {'icon' : 'iVBORw0KGgoAAAANSUhEUgAAAGAAAABgBAMAAAAQtmoLAAAAMFBMVEX///8xMTH19fUeKp3OJCQVHW6QGRkiIiKysrL///8KCgoLCwsMDAwNDQ0ODg4PDw9rzF0PAAAACnRSTlMA////////////fokUVgAAALBJREFUeJxjYBgFgwYIEgmGmQYhJYJAcThqMMYKjJSUXEBgVMOw1QBODqMahrsGI+TcP+w1KCkpY2hQUlIZ3hpCQ4NBlGloKFStWhoQpBCdlsCGk5L4BlgDITD8NIiXl3d0tJdDAJgF5VZ0QEB5eSF682fmzInQVg6YBeVKzoQALO2lQakBLA5WgaIBSgxTDRMxCIT+4awBTSvhUBpuGhAphcgMNAQ1EAGGlYZRMOAAANi2WZGK6JkyAAAAAElFTkSuQmCC'}
+html = '''
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>
+            mlbplayista
+        </title>
+        <link rel="apple-touch-icon" sizes="76x76" href="data:image/png;base64,{icon}">
+        <link rel="apple-touch-icon" sizes="120x120" href="data:image/png;base64,{icon}">
+        <link rel="apple-touch-icon" sizes="152x152" href="data:image/png;base64,{icon}">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="viewport" content="initial-scale=1 maximum-scale=1 user-scalable=no">
+        <style type="text/css">
+        body {{
+            background-color: #023a4e;
+            -webkit-text-size-adjust: 100%;
+            -webkit-user-select: none;
+        }}
+        #help {{
+            display: none;
+            color: white;
+            font-family: "Avenir Next", helvetica, sans-serif;
+            padding: 40px;
+        }}
+        .help-step {{
+            border-radius: 8px;
+            background-color: #047ea9;
+            color: white;
+            font-size: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }}
+        .icon {{
+            background-image: url(data:image/png;base64,{icon});
+            width: 76px;
+            height: 76px;
+            background-size: 76px 76px;
+            border-radius: 15px;
+            margin: 0 auto;
+        }}
+        .share-icon {{
+            width: 32px;
+            height: 27px;
+            display: inline-block;
+            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAA2CAQAAADdG1eJAAAAyElEQVRYw+3YvQrCMBSG4a/SKxC8M6dOnQShk9BJKAi9OcFLKrwuaamDRRtMLHxnCBySch7yR6i07aCjy1seyEbgxhhd3vI5CKH8ddamJNAD0EoAEm1SQijfSCNAoklGoAcG6pAFgMQpCYELMFBN+QSQqBmA828BBx4cZ/kMIFFxZ5/2NLwA1sQu92VuQHZAubTB3vcVRfz4/5+BZfnnY5cPqjehAQYYYIABBhhQxn3+zYPFS2CAAQYYYIABBqx6kMT+htzADDwBk2GVUD9m13YAAAAASUVORK5CYII=);
+            background-size: 32px 27px;
+            vertical-align: -4px;
+        }}
+        .icon-title {{
+            font-family: "Helvetica Neue", helvetica, sans-serif;
+            text-align: center;
+            font-size: 16px;
+            margin-top: 10px;
+            margin-bottom: 30px;
+        }}
+        @media only screen and (max-width: 767px) {{
+            #help {{
+                padding: 30px 0px 10px 0px;
+            }}
+            .help-step {{
+                padding: 10px;
+            }}
+        }}
+        </style>
+    </head>
+    <body>
+        <div id="help">
+            <div class="icon"></div>
+            <div class="icon-title">
+                mlbplayista
+            </div>
+            <div class="help-step">
+                <strong>1.</strong> Tap the
+                <div class="share-icon"></div>button in the toolbar
+            </div>
+            <div class="help-step">
+                <strong>2.</strong> Select "Add to Home Screen"
+            </div>
+            <div class="help-step">
+                <strong>3.</strong> Tap "Add"
+            </div>
+        </div><script type="text/javascript">
+if (navigator.standalone) {{
+          window.location = "pythonista3://MLBPlayista/mlbplayista.py?action=run&source=homescreen";
+        }} else {{
+          var helpDiv = document.getElementById("help");
+          helpDiv.style.display = "block";
+        }}
+        </script>
+    </body>
+</html>
+'''
+html = html.format(**icons)
 
-ICON_STRING = 'iVBORw0KGgoAAAANSUhEUgAAAGAAAABgBAMAAAAQtmoLAAAAMFBMVEX///8xMTH19fUeKp3OJCQVHW6QGRkiIiKysrL///8KCgoLCwsMDAwNDQ0ODg4PDw9rzF0PAAAACnRSTlMA////////////fokUVgAAALBJREFUeJxjYBgFgwYIEgmGmQYhJYJAcThqMMYKjJSUXEBgVMOw1QBODqMahrsGI+TcP+w1KCkpY2hQUlIZ3hpCQ4NBlGloKFStWhoQpBCdlsCGk5L4BlgDITD8NIiXl3d0tJdDAJgF5VZ0QEB5eSF682fmzInQVg6YBeVKzoQALO2lQakBLA5WgaIBSgxTDRMxCIT+4awBTSvhUBpuGhAphcgMNAQ1EAGGlYZRMOAAANi2WZGK6JkyAAAAAElFTkSuQmCC'
 
-class ConfigProfileHandler (BaseHTTPServer.BaseHTTPRequestHandler):
-	config = None
-	def do_GET(s):
-		s.send_response(200)
-		s.send_header('Content-Type', 'application/x-apple-aspen-config')
-		s.end_headers()
-		plist_string = plistlib.writePlistToString(ConfigProfileHandler.config)
-		s.wfile.write(plist_string)
-	def log_message(self, format, *args):
-		pass
+class ShortcutHandler (BaseHTTPServer.BaseHTTPRequestHandler):
+    html = None
 
-def run_server(config):
-	ConfigProfileHandler.config = config
-	server_address = ('', 0)
-	httpd = BaseHTTPServer.HTTPServer(server_address, ConfigProfileHandler)
-	sa = httpd.socket.getsockname()
-	webbrowser.open('safari-http://localhost:' + str(sa[1]))
-	httpd.handle_request()
-	notification.schedule('Tap "Install" to add the shortcut to your homescreen.', 0.75)
+    def do_GET(s):
+        s.send_response(301)
+        s.send_header('Location', 'data:text/html;base64,' + base64.b64encode(html))
+        s.end_headers()
 
 
-console.show_activity('Preparing shortcut...')
-data_buffer = cStringIO.StringIO()
-data_buffer.write(ICON_STRING.decode('base64'))
-icon_data = data_buffer.getvalue()
-unique_id = uuid.uuid4().urn[9:].upper()
-plist = plistlib.readPlist(os.path.abspath(os.path.join(sys.executable, '..', 'Info.plist')))
-config = {'PayloadContent': [{'FullScreen': True,
-            'Icon': plistlib.Data(icon_data), 'IsRemovable': True,
-            'Label': 'MLBPlayista', 'PayloadDescription': 'Configures Web Clip',
-            'PayloadDisplayName': 'MLBPlayista',
-            'PayloadIdentifier': 'com.hyshai.mlbplayista.' + unique_id,
-            'PayloadOrganization': 'hyshai:software',
-            'PayloadType': 'com.apple.webClip.managed',
-            'PayloadUUID': unique_id, 'PayloadVersion': 1,
-            'Precomposed': True, 'URL': '{CFBundleURLTypes[0].CFBundleURLSchemes[0]}://MLBPlayista/mlbplayista?action=run'.format(**plist)}],
-            'PayloadDescription': 'MLBPlayista',
-            'PayloadDisplayName': 'MLBPlayista (Shortcut)',
-            'PayloadIdentifier': 'com.hyshai.mlbplayista.' + unique_id,
-            'PayloadOrganization': 'hyshai:software',
-            'PayloadRemovalDisallowed': False, 'PayloadType':
-            'Configuration', 'PayloadUUID': unique_id, 'PayloadVersion': 1}
+def run_server(html):
+    ShortcutHandler.html = html
+    server_address = ('', 0)
+    httpd = BaseHTTPServer.HTTPServer(server_address, ShortcutHandler)
+    sa = httpd.socket.getsockname()
+    webbrowser.open('http://localhost:' + str(sa[1]))
+    httpd.handle_request()
 
-run_server(config)
+run_server(html)
