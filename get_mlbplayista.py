@@ -205,7 +205,7 @@ def run_server(html):
     server_address = ('', 0)
     httpd = BaseHTTPServer.HTTPServer(server_address, ShortcutHandler)
     sa = httpd.socket.getsockname()
-    webbrowser.open('http://localhost:' + str(sa[1]))
+    webbrowser.open('safari-http://localhost:' + str(sa[1]))
     httpd.handle_request()
 
 run_server(html)
