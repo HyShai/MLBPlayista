@@ -262,7 +262,7 @@ def live_player_is_installed():
 		nsurl('fb493207460770675:')) or workspace.applicationForOpeningResource_(
 		nsurl('fb1574042342908027:')):
 		return True
-	return False
+	return True
 
 
 class MyHandler(BaseHTTPRequestHandler):
