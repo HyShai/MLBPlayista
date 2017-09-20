@@ -104,6 +104,7 @@ def sort_listings(config, listings):
 		hometeam = listing[0]['home']
 		awayteam = listing[0]['away']
 		national = ''
+		plus = ''
 		try:
 			event_id = listing[2][0][3]
 		except:
@@ -111,6 +112,8 @@ def sort_listings(config, listings):
 		for d in listing[2]:
 			if d[1] == '0':
 				national = '0'
+			elif d[1] == '+':
+				plus = '+'
 		
 		title = '%s \nat %s\n%s (%s)' % (
 			TEAMCODES[awayteam][1],
@@ -121,6 +124,7 @@ def sort_listings(config, listings):
 		teamlist.append({
 			'title': title.strip(), 'hometeam': hometeam, 'awayteam': awayteam,
 			'national': national,
+			'plus': plus,
 			'event_id': event_id})
 	favorites = config.get('favorite')
 	teamlist = sorted(
@@ -151,9 +155,10 @@ def get_media(config, listings, teamcode, event_id_param):
 	# The code is a numerical value that maps to a teamcode.  It is used
 	# to identify a media stream as belonging to one team or the other.  A code
 	# of zero is used for national broadcasts or a broadcast that isn't owned by
-	# one team or the other.
+	# one team or the other. A code
+	# of '+' is used for MLB Plus broadcasts.
 	if teamcode is not None:
-		if teamcode not in TEAMCODES.keys() and teamcode !=  '0':
+		if teamcode not in TEAMCODES.keys() and teamcode !=  '0' and teamcode !=  '+':
 			raise Exception('Invalid teamcode: ' + teamcode)
 		media = []
 		for listing in listings:
@@ -163,6 +168,9 @@ def get_media(config, listings, teamcode, event_id_param):
 				media.append(listing[2])
 				eventId = listing[6]  # ?
 			elif '0' in [m_tuple[1] for m_tuple in listing[2]]: # for national broadcast
+				media.append(listing[2])
+				eventId = listing[6]  # ?
+			elif '+' in [m_tuple[1] for m_tuple in listing[2]]: # for plus broadcast
 				media.append(listing[2])
 				eventId = listing[6]  # ?
 	
@@ -180,7 +188,7 @@ def get_media(config, listings, teamcode, event_id_param):
 					content_id,
 					event_id) = m[n]
 				
-				if event_id == event_id_param and ((teamcode == '0' and code == '0') or (teamcode != '0' and code == TEAMCODES[teamcode][0])):
+				if event_id == event_id_param and ((teamcode == '0' and code == '0') or (teamcode == '+' and code == '+') or (teamcode != '0' and code == TEAMCODES[teamcode][0])):
 					stream = m[n]
 					break
 	else:
@@ -303,6 +311,8 @@ if __name__ == '__main__':
 				'title': TEAMCODES[k][1]} for k in [game['hometeam'], game['awayteam']]]
 		if game['national']:
 			items.append({'teamcode': '0', 'title': 'National'})
+		elif game['plus']:
+			items.append({'teamcode': '+', 'title': 'MLB Plus'})
 		team = dialogs.list_dialog(
 			title='Select team broadcast',
 			items=items)
