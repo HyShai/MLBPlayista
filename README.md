@@ -1,4 +1,4 @@
-### MLBPlayista
+### MLBPlayista - DEPRECATED 
 ---
 #### Overview
 
